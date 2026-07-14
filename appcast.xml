@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss xmlns:sparkle="http://www.andymatuschak.org/xml-namespaces/sparkle" version="2.0">
+    <channel>
+        <title>Token Meter Updates</title>
+        <link>https://github.com/TakeruF/token_meter</link>
+        <description>Token Meter release updates</description>
+        <language>en</language>
+        <item>
+            <title>1.0.0</title>
+            <pubDate>Wed, 15 Jul 2026 08:24:01 +0900</pubDate>
+            <link>https://github.com/TakeruF/token_meter/releases/tag/v1.0.0</link>
+            <sparkle:version>1</sparkle:version>
+            <sparkle:shortVersionString>1.0.0</sparkle:shortVersionString>
+            <sparkle:minimumSystemVersion>14.0</sparkle:minimumSystemVersion>
+            <enclosure url="https://github.com/TakeruF/token_meter/releases/download/v1.0.0/TokenMeter-1.0.0.zip" length="5682577" type="application/octet-stream" sparkle:edSignature="7qmPR3tkNS2ioeOCujJ5y2n2T7rIEAuX0n6XC/qOY8JWD+l5J/U1E5f7PMK2vBvy2MXJqVTsYO4J7QSmJ3UdDw=="/>
+        </item>
+    </channel>
+</rss>
