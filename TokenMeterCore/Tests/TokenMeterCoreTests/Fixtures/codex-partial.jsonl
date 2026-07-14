@@ -1,0 +1,4 @@
+{"timestamp":"2026-07-14T11:00:00.000Z","type":"event_msg","payload":{"type":"token_count","info":null,"rate_limits":null}}
+{"timestamp":"2026-07-14T11:01:00.000Z","type":"event_msg","payload":{"type":"token_count","brand_new_key":123,"info":{"total_token_usage":{"input_tokens":50,"cached_input_tokens":0,"output_tokens":10,"reasoning_output_tokens":5,"total_tokens":60,"future_token_kind":42},"model_context_window":400000},"rate_limits":{"primary":{"used_percent":7,"window_minutes":10080,"resets_at":1784494842},"secondary":null,"plan_type":"pro","new_field":"x"}}}
+{"timestamp":"2026-07-14T11:02:00.000Z","type":"event_msg","payload":{"type":"some_future_event"}}
+broken line {{{

@@ -1,0 +1,72 @@
+name: TokenMeter
+
+options:
+  bundleIdPrefix: com.tokenmeter
+  deploymentTarget:
+    macOS: "14.0"
+  createIntermediateGroups: true
+
+packages:
+  Sparkle:
+    url: https://github.com/sparkle-project/Sparkle
+    from: 2.9.4
+  TokenMeterCore:
+    path: TokenMeterCore
+
+settings:
+  base:
+    SWIFT_VERSION: "5.9"
+    MARKETING_VERSION: "1.0.0"
+    CURRENT_PROJECT_VERSION: "1"
+    DEVELOPMENT_TEAM: B97M43J5TT
+    CODE_SIGN_STYLE: Automatic
+    REGISTER_APP_GROUPS: YES
+    ENABLE_HARDENED_RUNTIME: YES
+
+targets:
+  TokenMeterApp:
+    type: application
+    platform: macOS
+    sources:
+      - TokenMeterApp
+    dependencies:
+      - package: Sparkle
+      - package: TokenMeterCore
+      - target: TokenMeterWidget
+        embed: true
+        codeSign: true
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.tokenmeter.app
+        PRODUCT_NAME: TokenMeter
+        INFOPLIST_FILE: TokenMeterApp/Info.plist
+        CODE_SIGN_ENTITLEMENTS: TokenMeterApp/TokenMeterApp.entitlements
+        ENABLE_APP_SANDBOX: NO
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+        COMBINE_HIDPI_IMAGES: YES
+
+  TokenMeterWidget:
+    type: app-extension
+    platform: macOS
+    sources:
+      - TokenMeterWidget
+    dependencies:
+      - package: TokenMeterCore
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.tokenmeter.app.widget
+        PRODUCT_NAME: TokenMeterWidget
+        INFOPLIST_FILE: TokenMeterWidget/Info.plist
+        CODE_SIGN_ENTITLEMENTS: TokenMeterWidget/TokenMeterWidget.entitlements
+        SKIP_INSTALL: YES
+
+schemes:
+  TokenMeter:
+    build:
+      targets:
+        TokenMeterApp: all
+        TokenMeterWidget: all
+    run:
+      config: Debug
+    # TokenMeterCore's tests live in the Swift package; run them with
+    # `swift test --package-path TokenMeterCore` (see README > Tests).

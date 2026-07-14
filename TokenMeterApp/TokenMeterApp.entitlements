@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<!-- The app is not sandboxed: it must read ~/.claude and ~/.codex, which live
+	     outside a sandbox container. It reads nothing else, writes only to its own
+	     Application Support directory and the App Group, and makes no network calls. -->
+	<key>com.apple.security.app-sandbox</key>
+	<false/>
+	<key>com.apple.security.application-groups</key>
+	<array>
+		<string>group.com.tokenmeter.b97m43j5tt.shared</string>
+	</array>
+</dict>
+</plist>
