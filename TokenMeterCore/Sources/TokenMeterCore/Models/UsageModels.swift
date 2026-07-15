@@ -220,6 +220,13 @@ public struct UsageEvent: Codable, Sendable, Equatable, Identifiable {
         self.totalTokens = totalTokens
         self.source = source
     }
+
+    /// Tokens that represent genuine new work: fresh input, cache writes, output,
+    /// and reasoning. Excludes cached context re-sent on every turn, which inflates
+    /// `totalTokens` without reflecting real usage.
+    public var workingTokens: Int {
+        inputTokens + cacheCreationTokens + outputTokens + (reasoningTokens ?? 0)
+    }
 }
 
 /// Token totals for one calendar day, in the user's local time zone.
@@ -233,6 +240,11 @@ public struct DailyUsage: Codable, Sendable, Equatable, Identifiable {
     /// nil when the provider does not report reasoning tokens at all (Claude Code).
     public let reasoningTokens: Int?
     public let totalTokens: Int
+
+    /// See `UsageEvent.workingTokens`: usage minus re-sent cached context.
+    public var workingTokens: Int {
+        inputTokens + cacheCreationTokens + outputTokens + (reasoningTokens ?? 0)
+    }
 
     public var id: String { "\(provider.rawValue)-\(day.timeIntervalSince1970)" }
 
@@ -257,9 +269,67 @@ public struct DailyUsage: Codable, Sendable, Equatable, Identifiable {
     }
 }
 
+/// One work session, rolled up from its individual events. Turns within a
+/// session re-send the same cached context every time, so a raw per-event list
+/// is mostly repetition; this collapses a session into what it actually did.
+public struct SessionSummary: Codable, Sendable, Equatable, Identifiable {
+    public let id: String
+    public let provider: UsageProviderID
+    public let start: Date
+    public let end: Date
+    /// Number of recorded events (turns) in the session.
+    public let turns: Int
+    /// The session's most-used model, if any event carried one.
+    public let model: String?
+    public let inputTokens: Int
+    public let cachedInputTokens: Int
+    public let cacheCreationTokens: Int
+    public let outputTokens: Int
+    public let reasoningTokens: Int?
+    public let totalTokens: Int
+
+    /// Tokens that represent genuine new work: fresh input, cache writes, output,
+    /// and reasoning. Excludes the cached context re-sent on every turn, which is
+    /// what makes a raw per-turn list look like the same row over and over.
+    public var workingTokens: Int {
+        inputTokens + cacheCreationTokens + outputTokens + (reasoningTokens ?? 0)
+    }
+
+    public init(
+        id: String,
+        provider: UsageProviderID,
+        start: Date,
+        end: Date,
+        turns: Int,
+        model: String?,
+        inputTokens: Int,
+        cachedInputTokens: Int,
+        cacheCreationTokens: Int,
+        outputTokens: Int,
+        reasoningTokens: Int?,
+        totalTokens: Int
+    ) {
+        self.id = id
+        self.provider = provider
+        self.start = start
+        self.end = end
+        self.turns = turns
+        self.model = model
+        self.inputTokens = inputTokens
+        self.cachedInputTokens = cachedInputTokens
+        self.cacheCreationTokens = cacheCreationTokens
+        self.outputTokens = outputTokens
+        self.reasoningTokens = reasoningTokens
+        self.totalTokens = totalTokens
+    }
+}
+
 public struct ModelUsage: Codable, Sendable, Equatable, Identifiable {
     public let model: String
     public let provider: UsageProviderID
+    /// Working tokens (real processing), not cache-inflated totals — so the "By
+    /// model" comparison reflects actual work per model. Named `totalTokens` for
+    /// source compatibility; see `UsageEvent.workingTokens`.
     public let totalTokens: Int
     public var id: String { "\(provider.rawValue)-\(model)" }
 

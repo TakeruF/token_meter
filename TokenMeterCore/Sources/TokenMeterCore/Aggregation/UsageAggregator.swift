@@ -52,6 +52,43 @@ public struct UsageAggregator: Sendable {
             .sorted { $0.day < $1.day }
     }
 
+    /// Start of the hour containing `date`, in the user's time zone.
+    public func startOfHour(_ date: Date) -> Date {
+        calendar.date(from: calendar.dateComponents([.year, .month, .day, .hour], from: date)) ?? date
+    }
+
+    /// Zero-filled hourly series for a single day (default: today), oldest first.
+    /// One bucket per hour from 00:00 through the hour containing `now`, so the
+    /// chart shows the day's shape so far without trailing empty future hours.
+    public func hourlySeries(
+        _ events: [UsageEvent],
+        provider: UsageProviderID,
+        now: Date = Date()
+    ) -> [DailyUsage] {
+        let start = startOfDay(now)
+        var buckets: [Date: [UsageEvent]] = [:]
+        for event in events where event.provider == provider && event.timestamp >= start {
+            buckets[startOfHour(event.timestamp), default: []].append(event)
+        }
+        let lastHour = calendar.component(.hour, from: now)
+        return (0...lastHour).map { hour in
+            let h = calendar.date(byAdding: .hour, value: hour, to: start) ?? start
+            if let evs = buckets[h] {
+                return combine(evs, day: h, provider: provider)
+            }
+            return DailyUsage(
+                day: h,
+                provider: provider,
+                inputTokens: 0,
+                cachedInputTokens: 0,
+                cacheCreationTokens: 0,
+                outputTokens: 0,
+                reasoningTokens: nil,
+                totalTokens: 0
+            )
+        }
+    }
+
     /// Zero-filled series for charts, where a day with genuinely no usage is a real 0.
     public func dailySeries(
         _ events: [UsageEvent],
@@ -179,7 +216,7 @@ public struct UsageAggregator: Sendable {
             if let provider, event.provider != provider { continue }
             guard let model = event.model, !model.isEmpty else { continue }
             let key = "\(event.provider.rawValue)|\(model)"
-            buckets[key, default: (event.provider, 0)].1 += event.totalTokens
+            buckets[key, default: (event.provider, 0)].1 += event.workingTokens
         }
         return buckets
             .map { key, value in
@@ -190,6 +227,65 @@ public struct UsageAggregator: Sendable {
                 )
             }
             .sorted { $0.totalTokens > $1.totalTokens }
+    }
+
+    /// Recent work sessions, newest first by last activity. Events are grouped by
+    /// `sessionID` within each provider; an event with no session id becomes its
+    /// own single-turn session so nothing is dropped.
+    public func recentSessions(
+        _ events: [UsageEvent],
+        limit: Int = 20
+    ) -> [SessionSummary] {
+        var buckets: [String: [UsageEvent]] = [:]
+        for event in events {
+            let session = event.sessionID ?? event.id
+            buckets["\(event.provider.rawValue)|\(session)", default: []].append(event)
+        }
+        return buckets.values
+            .compactMap(summarize)
+            .sorted { $0.end > $1.end }
+            .prefix(limit)
+            .map { $0 }
+    }
+
+    /// Rolls a session's events into one summary. The model shown is the one used
+    /// on the most turns — a session that switched models is named by its primary.
+    private func summarize(_ events: [UsageEvent]) -> SessionSummary? {
+        guard let first = events.first else { return nil }
+
+        var input = 0, cached = 0, cacheCreation = 0, output = 0, total = 0
+        var reasoning: Int?
+        var start = first.timestamp, end = first.timestamp
+        var modelCounts: [String: Int] = [:]
+
+        for e in events {
+            input += e.inputTokens
+            cached += e.cachedInputTokens
+            cacheCreation += e.cacheCreationTokens
+            output += e.outputTokens
+            total += e.totalTokens
+            if let r = e.reasoningTokens { reasoning = (reasoning ?? 0) + r }
+            if e.timestamp < start { start = e.timestamp }
+            if e.timestamp > end { end = e.timestamp }
+            if let m = e.model, !m.isEmpty { modelCounts[m, default: 0] += 1 }
+        }
+
+        let model = modelCounts.max { a, b in a.value < b.value }?.key
+
+        return SessionSummary(
+            id: "\(first.provider.rawValue)|\(first.sessionID ?? first.id)",
+            provider: first.provider,
+            start: start,
+            end: end,
+            turns: events.count,
+            model: model,
+            inputTokens: input,
+            cachedInputTokens: cached,
+            cacheCreationTokens: cacheCreation,
+            outputTokens: output,
+            reasoningTokens: reasoning,
+            totalTokens: total
+        )
     }
 
     private func combine(_ events: [UsageEvent], day: Date, provider: UsageProviderID) -> DailyUsage {

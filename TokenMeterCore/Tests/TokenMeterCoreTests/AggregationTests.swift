@@ -121,4 +121,59 @@ final class AggregationTests: XCTestCase {
         XCTAssertEqual(12_500.abbreviatedTokens, "12.5K")
         XCTAssertEqual(842.abbreviatedTokens, "842")
     }
+
+    func testRecentSessionsGroupBySessionAndSeparateWorkFromCache() throws {
+        let aggregator = UsageAggregator(calendar: tokyo)
+        let events = [
+            // Session A: two turns, each re-sending the same cached context.
+            makeEvent(id: "a1", at: try date("2026-07-15T01:00:00.000Z"),
+                      session: "A", cached: 100_000, output: 500),
+            makeEvent(id: "a2", at: try date("2026-07-15T01:05:00.000Z"),
+                      session: "A", input: 40, cached: 101_000, output: 700),
+            // Session B: one turn, later — should sort first.
+            makeEvent(id: "b1", at: try date("2026-07-15T02:00:00.000Z"),
+                      session: "B", output: 300),
+        ]
+
+        let sessions = aggregator.recentSessions(events)
+        XCTAssertEqual(sessions.count, 2, "three events, two sessions")
+        XCTAssertEqual(sessions.first?.id, "claudeCode|B", "newest last-activity sorts first")
+
+        let a = try XCTUnwrap(sessions.first { $0.id == "claudeCode|A" })
+        XCTAssertEqual(a.turns, 2)
+        XCTAssertEqual(a.start, try date("2026-07-15T01:00:00.000Z"))
+        XCTAssertEqual(a.end, try date("2026-07-15T01:05:00.000Z"))
+        // Work excludes the re-sent cached context (201_000), leaving input+output.
+        XCTAssertEqual(a.workingTokens, 40 + 500 + 700)
+        XCTAssertEqual(a.cachedInputTokens, 201_000)
+        XCTAssertEqual(a.totalTokens, 100_500 + 101_740)
+    }
+
+    func testRecentSessionsWithoutSessionIDStayDistinct() throws {
+        let aggregator = UsageAggregator(calendar: tokyo)
+        let events = [
+            makeEvent(id: "x", at: try date("2026-07-15T01:00:00.000Z"), session: nil, output: 1),
+            makeEvent(id: "y", at: try date("2026-07-15T01:01:00.000Z"), session: nil, output: 1),
+        ]
+        XCTAssertEqual(aggregator.recentSessions(events).count, 2,
+                       "events with no session id are not merged together")
+    }
+
+    func testHourlySeriesZeroFillsUpToTheCurrentHour() throws {
+        let aggregator = UsageAggregator(calendar: tokyo)
+        // 12:30 in Tokyo on the 15th.
+        let now = try date("2026-07-15T03:30:00.000Z")
+        let events = [
+            // 09:00 Tokyo
+            makeEvent(id: "a", at: try date("2026-07-15T00:00:00.000Z"), output: 100),
+            // 12:10 Tokyo
+            makeEvent(id: "b", at: try date("2026-07-15T03:10:00.000Z"), output: 50),
+        ]
+
+        let series = aggregator.hourlySeries(events, provider: .claudeCode, now: now)
+        XCTAssertEqual(series.count, 13, "hours 0…12 inclusive, no future hours")
+        XCTAssertEqual(series[9].totalTokens, 100)
+        XCTAssertEqual(series[12].totalTokens, 50)
+        XCTAssertEqual(series[10].totalTokens, 0, "idle hours are a real zero")
+    }
 }
