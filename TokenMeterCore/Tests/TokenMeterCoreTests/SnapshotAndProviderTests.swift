@@ -47,6 +47,51 @@ final class SharedSnapshotTests: XCTestCase {
         XCTAssertNil(store.readIfPresent())
     }
 
+    private func snapshotWithData(_ tokens: Int) -> SharedSnapshot {
+        SharedSnapshot(
+            updatedAt: Date(),
+            claudeCode: .init(
+                displayName: "Claude Code",
+                remainingRatio: nil, usedRatio: nil, resetsAt: nil,
+                todayTokens: tokens, modelName: "m",
+                lastUpdated: Date(), hasQuotaInformation: false
+            )
+        )
+    }
+
+    /// An empty snapshot written mid-launch must not blank the widget: the
+    /// resilient read falls back to the last snapshot that had data.
+    func testReadResilientFallsBackToLastGoodSnapshotWhenPrimaryIsEmpty() throws {
+        let store = SharedSnapshotStore(containerURL: makeTempDirectory())
+        try store.write(snapshotWithData(1_000))
+
+        // A later, empty write (both providers nil) replaces the primary.
+        try store.write(SharedSnapshot(updatedAt: Date()))
+
+        XCTAssertNil(store.readIfPresent()?.claudeCode, "primary really is empty now")
+        let resilient = try XCTUnwrap(store.readResilient())
+        XCTAssertEqual(resilient.claudeCode?.todayTokens, 1_000, "kept the last good data")
+    }
+
+    /// An unreadable primary also falls back to the cache rather than nil.
+    func testReadResilientFallsBackWhenPrimaryIsCorrupt() throws {
+        let store = SharedSnapshotStore(containerURL: makeTempDirectory())
+        try store.write(snapshotWithData(2_000))
+        try Data("{ not json".utf8).write(to: store.fileURL)
+
+        XCTAssertNil(store.readIfPresent(), "corrupt primary reads as nil")
+        XCTAssertEqual(store.readResilient()?.claudeCode?.todayTokens, 2_000)
+    }
+
+    /// With nothing ever cached, a genuine first run still surfaces "no data".
+    func testReadResilientReturnsEmptyPrimaryWhenNothingCached() throws {
+        let store = SharedSnapshotStore(containerURL: makeTempDirectory())
+        try store.write(SharedSnapshot(updatedAt: Date()))
+        let resilient = store.readResilient()
+        XCTAssertNotNil(resilient, "an empty snapshot was written")
+        XCTAssertFalse(try XCTUnwrap(resilient).hasData)
+    }
+
     /// Writes go via a temp file and an atomic replace, so a reader racing the
     /// writer sees either the old file or the new one — never a partial one.
     func testConcurrentWritesNeverLeaveAPartialFile() throws {

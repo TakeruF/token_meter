@@ -12,11 +12,11 @@ struct Provider: TimelineProvider {
     }
 
     func getSnapshot(in context: Context, completion: @escaping (Entry) -> Void) {
-        completion(Entry(date: Date(), snapshot: store.readIfPresent(), isPlaceholder: context.isPreview))
+        completion(Entry(date: Date(), snapshot: store.readResilient(), isPlaceholder: context.isPreview))
     }
 
     func getTimeline(in context: Context, completion: @escaping (Timeline<Entry>) -> Void) {
-        let entry = Entry(date: Date(), snapshot: store.readIfPresent(), isPlaceholder: false)
+        let entry = Entry(date: Date(), snapshot: store.readResilient(), isPlaceholder: false)
         // The app reloads timelines whenever it writes a new snapshot; this is the
         // fallback so a widget still ages out if the app is not running. Retry sooner
         // while empty so a newly installed widget does not cache "No data" for 15m.

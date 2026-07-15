@@ -113,6 +113,11 @@ public struct SharedSnapshot: Codable, Sendable, Equatable {
         case .codex: return codex
         }
     }
+
+    /// True when at least one provider carries data worth showing. A snapshot
+    /// without this renders as the widget's empty state, so we neither cache it
+    /// nor let it replace a good one on screen.
+    public var hasData: Bool { claudeCode != nil || codex != nil }
 }
 
 /// Reads and writes the snapshot JSON in the App Group container.
@@ -126,7 +131,13 @@ public struct SharedSnapshotStore: Sendable {
     /// True when we are using the real App Group container rather than the fallback.
     public let usingAppGroup: Bool
 
+    public static let cacheFileName = "snapshot.cache.json"
+
     public var fileURL: URL { containerURL.appendingPathComponent(Self.fileName) }
+
+    /// The last snapshot that actually had data. The widget falls back to this
+    /// when the primary is transiently empty or unreadable.
+    public var cacheFileURL: URL { containerURL.appendingPathComponent(Self.cacheFileName) }
 
     public init(appGroupID: String) {
         // The widget only reads this directory. `isWritableFile(atPath:)` can return
@@ -173,6 +184,13 @@ public struct SharedSnapshotStore: Sendable {
         // Foundation creates and renames a sibling temporary file. This is atomic and
         // also works when snapshot.json does not exist yet (the first app launch).
         try data.write(to: fileURL, options: .atomic)
+        // Preserve the last snapshot with real data. The app can write an empty
+        // snapshot mid-launch (before the first parse, or while providers are
+        // still resolving); without this cache the widget would blank out until
+        // the next good write. An empty write never overwrites the cache.
+        if snapshot.hasData {
+            try? data.write(to: cacheFileURL, options: .atomic)
+        }
     }
 
     public func read() throws -> SharedSnapshot {
@@ -190,5 +208,22 @@ public struct SharedSnapshotStore: Sendable {
             NSLog("TokenMeter: could not read widget snapshot at %@: %@", fileURL.path, error.localizedDescription)
             return nil
         }
+    }
+
+    /// The freshest usable snapshot for the widget: the primary when it has data,
+    /// otherwise the last cached snapshot that did. This keeps the widget from
+    /// dropping to its empty state on a transient empty or unreadable primary.
+    /// Returns the (possibly empty) primary when there is nothing cached, so a
+    /// genuine first run still shows "no data".
+    public func readResilient() -> SharedSnapshot? {
+        let primary = readIfPresent()
+        if let primary, primary.hasData { return primary }
+
+        if FileManager.default.fileExists(atPath: cacheFileURL.path),
+           let data = try? Data(contentsOf: cacheFileURL),
+           let cached = try? Self.decoder().decode(SharedSnapshot.self, from: data) {
+            return cached
+        }
+        return primary
     }
 }
