@@ -89,6 +89,12 @@ generate_update_feed() {
             --link "$RELEASES_URL/tag/v$version" \
             --maximum-versions 5 \
             "$updates_dir"
+
+        # generate_appcast applies the newest download prefix to every retained
+        # archive. Point each full ZIP back to the release matching its version.
+        sed -E -i '' \
+            's#(releases/download/)v[^/]+/(TokenMeter-([0-9]+\.[0-9]+\.[0-9]+)\.zip)#\1v\3/\2#g' \
+            "$updates_dir/appcast.xml"
     } always {
         rm -rf "$key_dir"
     }
