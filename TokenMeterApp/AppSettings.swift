@@ -5,7 +5,7 @@ import TokenMeterCore
 
 enum MenuBarStyle: String, CaseIterable, Identifiable {
     case full          // "Claude 68% · Codex 42%"
-    case compact       // "C 68% · X 42%"
+    case compact       // Brand marks followed by values
     case iconOnly
 
     var id: String { rawValue }
@@ -13,7 +13,7 @@ enum MenuBarStyle: String, CaseIterable, Identifiable {
     var displayName: String {
         switch self {
         case .full: return "Full (Claude 68% · Codex 42%)"
-        case .compact: return "Compact (C 68% · X 42%)"
+        case .compact: return "Compact (brand icons + values)"
         case .iconOnly: return "Icon only"
         }
     }

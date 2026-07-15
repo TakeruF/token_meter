@@ -119,8 +119,8 @@ struct SetupView: View {
                 }
 
                 LabeledContent("Preview") {
-                    Text(monitor.menuBarTitle.isEmpty ? "(icon only)" : monitor.menuBarTitle)
-                        .font(.callout.monospaced())
+                    MenuBarLabel(monitor: monitor)
+                        .font(.callout)
                         .padding(.horizontal, 8).padding(.vertical, 3)
                         .background(.quaternary, in: RoundedRectangle(cornerRadius: 5))
                 }

@@ -13,14 +13,6 @@ public enum UsageProviderID: String, Codable, Sendable, CaseIterable, Identifiab
         }
     }
 
-    /// Short label used when the menu bar has no room for the full name.
-    public var shortLabel: String {
-        switch self {
-        case .claudeCode: return "C"
-        case .codex: return "X"
-        }
-    }
-
     public var compactName: String {
         switch self {
         case .claudeCode: return "Claude"

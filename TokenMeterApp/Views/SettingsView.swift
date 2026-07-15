@@ -72,8 +72,8 @@ struct SettingsView: View {
                     .disabled(!settings.showMenuBarExtra || settings.menuBarStyle == .iconOnly)
 
                 LabeledContent("Preview") {
-                    Text(monitor.menuBarTitle.isEmpty ? "(icon only)" : monitor.menuBarTitle)
-                        .font(.callout.monospaced())
+                    MenuBarLabel(monitor: monitor)
+                        .font(.callout)
                 }
             }
 

@@ -22,6 +22,13 @@ struct ProviderState: Identifiable {
     var displayName: String { id.displayName }
 }
 
+struct MenuBarProviderValue: Identifiable {
+    let providerID: UsageProviderID
+    let value: String
+
+    var id: UsageProviderID { providerID }
+}
+
 /// Owns the providers, the refresh schedule, the database and the widget snapshot.
 ///
 /// Refresh paths, all funnelled through one serialized `refresh()`:
@@ -331,31 +338,46 @@ final class UsageMonitor {
 
     // MARK: - Menu bar title
 
-    /// The string shown in the menu bar. A provider with no quota shows its token
-    /// count instead of a fabricated percentage, and each value type can be switched
-    /// off in Settings.
-    var menuBarTitle: String {
+    /// Values are kept separate from provider names so Compact mode can use the
+    /// real brand marks instead of textual C / X abbreviations.
+    var menuBarProviderValues: [MenuBarProviderValue] {
         let visible = UsageProviderID.allCases.filter { settings.enabledProviders().contains($0) }
-        guard !visible.isEmpty, settings.menuBarStyle != .iconOnly else { return "" }
-
-        let parts: [String] = visible.compactMap { id in
+        return visible.compactMap { id in
             guard let state = states[id] else { return nil }
-            let name = settings.menuBarStyle == .compact ? id.shortLabel : id.compactName
 
-            guard state.availability.isAvailable else { return "\(name) —" }
+            guard state.availability.isAvailable else {
+                return MenuBarProviderValue(providerID: id, value: "—")
+            }
 
             if settings.menuBarShowPercentage, let remaining = state.snapshot?.primaryWindow?.remainingRatio {
-                return "\(name) \(Int((remaining * 100).rounded()))% left"
+                return MenuBarProviderValue(
+                    providerID: id,
+                    value: "\(Int((remaining * 100).rounded()))% left"
+                )
             }
             // No quota published (or percentages switched off): show today's tokens.
             if settings.menuBarShowTokens, let tokens = state.snapshot?.totalTokens, tokens > 0 {
-                return "\(name) \(tokens.abbreviatedTokens)"
+                return MenuBarProviderValue(providerID: id, value: tokens.abbreviatedTokens)
             }
-            return "\(name) —"
+            return MenuBarProviderValue(providerID: id, value: "—")
+        }
+    }
+
+    var menuBarResetTitle: String? {
+        settings.menuBarShowReset ? nextResetCountdown() : nil
+    }
+
+    /// A text-only equivalent used by Full mode and VoiceOver. A provider with no
+    /// quota shows its token count instead of a fabricated percentage.
+    var menuBarTitle: String {
+        guard settings.menuBarStyle != .iconOnly else { return "" }
+
+        let parts = menuBarProviderValues.map { item in
+            "\(item.providerID.compactName) \(item.value)"
         }
 
         var title = parts.joined(separator: " · ")
-        if settings.menuBarShowReset, let countdown = nextResetCountdown() {
+        if let countdown = menuBarResetTitle {
             title += title.isEmpty ? countdown : " · \(countdown)"
         }
         return title

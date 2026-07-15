@@ -208,11 +208,31 @@ struct MenuBarLabel: View {
 
     var body: some View {
         let title = monitor.menuBarTitle
+        let values = monitor.menuBarProviderValues
+        let reset = monitor.menuBarResetTitle
+        let hasCompactContent = !values.isEmpty || reset != nil
+
         HStack(spacing: 4) {
-            if settings.showMenuBarIcon || title.isEmpty {
+            if settings.showMenuBarIcon
+                || settings.menuBarStyle == .iconOnly
+                || (settings.menuBarStyle == .compact && !hasCompactContent)
+                || (settings.menuBarStyle == .full && title.isEmpty) {
                 Image(systemName: "gauge.with.dots.needle.33percent")
             }
-            if !title.isEmpty {
+
+            if settings.menuBarStyle == .compact {
+                ForEach(Array(values.enumerated()), id: \.element.id) { index, item in
+                    if index > 0 { Text("·") }
+                    ProviderIcon(providerID: item.providerID, size: 12)
+                    Text(item.value)
+                        .monospacedDigit()
+                }
+                if let reset {
+                    if !values.isEmpty { Text("·") }
+                    Text(reset)
+                        .monospacedDigit()
+                }
+            } else if !title.isEmpty {
                 Text(title)
             }
         }
