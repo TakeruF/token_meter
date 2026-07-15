@@ -313,8 +313,7 @@ struct LargeWidgetView: View {
                                     tokens: provider.weeklyWindow?.tokens ?? provider.last7DaysTokens
                                 )
                             }
-                            Sparkline(points: provider.dailyTotals ?? [])
-                                .frame(height: 26)
+                            UsageBarChart(points: provider.dailyTotals ?? [])
                         }
                     }
                 }
@@ -395,9 +394,13 @@ struct CompactQuotaStrip: View {
     }
 }
 
-/// Line chart for the last 7 days. Drawn only when there is real usage to draw.
-struct Sparkline: View {
+/// Bar chart for the last 7 days with labelled axes. Used only in the large
+/// widget, where there is room for the axis text without crowding the bars.
+struct UsageBarChart: View {
     let points: [SharedSnapshot.DayPoint]
+
+    /// Height of the plot area (the bars). The axis labels live outside this.
+    private let plotHeight: CGFloat = 34
 
     var body: some View {
         let maxValue = points.map(\.totalTokens).max() ?? 0
@@ -407,38 +410,45 @@ struct Sparkline: View {
                 .foregroundStyle(.tertiary)
                 .frame(maxWidth: .infinity, alignment: .leading)
         } else {
-            GeometryReader { geo in
-                let inset: CGFloat = 2
-                let plotWidth = max(0, geo.size.width - inset * 2)
-                let plotHeight = max(0, geo.size.height - inset * 2)
-                let coordinates = points.enumerated().map { index, point in
-                    let progress = points.count == 1
-                        ? 0.5
-                        : CGFloat(index) / CGFloat(points.count - 1)
-                    let ratio = CGFloat(point.totalTokens) / CGFloat(maxValue)
-                    return CGPoint(
-                        x: inset + plotWidth * progress,
-                        y: inset + plotHeight * (1 - ratio)
-                    )
+            HStack(alignment: .top, spacing: 5) {
+                // Y axis: max at the top, zero on the baseline. Fixed to the plot
+                // height so "0" lines up with the bottom of the bars.
+                VStack(alignment: .trailing, spacing: 0) {
+                    Text(maxValue.abbreviatedTokens)
+                    Spacer(minLength: 0)
+                    Text(verbatim: "0")
                 }
+                .font(.system(size: 8))
+                .foregroundStyle(.tertiary)
+                .monospacedDigit()
+                .frame(height: plotHeight)
 
-                ZStack {
-                    Path { path in
-                        guard let first = coordinates.first else { return }
-                        path.move(to: first)
-                        coordinates.dropFirst().forEach { path.addLine(to: $0) }
+                VStack(spacing: 2) {
+                    HStack(alignment: .bottom, spacing: 3) {
+                        ForEach(points) { point in
+                            let ratio = CGFloat(point.totalTokens) / CGFloat(maxValue)
+                            RoundedRectangle(cornerRadius: 1.5)
+                                .fill(.tint)
+                                .frame(height: max(1, plotHeight * ratio))
+                                .frame(maxWidth: .infinity)
+                        }
                     }
-                    .stroke(
-                        .tint,
-                        style: StrokeStyle(lineWidth: 2, lineCap: .round, lineJoin: .round)
-                    )
+                    .frame(height: plotHeight, alignment: .bottom)
 
-                    ForEach(Array(coordinates.enumerated()), id: \.offset) { _, point in
-                        Circle()
-                            .fill(.tint)
-                            .frame(width: 4, height: 4)
-                            .position(point)
+                    // X axis line, then one narrow weekday label per bar. The
+                    // narrow symbol is a single letter, so labels never collide.
+                    Rectangle()
+                        .fill(.quaternary)
+                        .frame(height: 1)
+
+                    HStack(spacing: 3) {
+                        ForEach(points) { point in
+                            Text(point.day.formatted(.dateTime.weekday(.narrow)))
+                                .frame(maxWidth: .infinity)
+                        }
                     }
+                    .font(.system(size: 8))
+                    .foregroundStyle(.tertiary)
                 }
             }
             .accessibilityLabel("Token usage for the last 7 days")

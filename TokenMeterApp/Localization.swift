@@ -57,13 +57,18 @@ struct AppLanguagePicker: View {
     @State private var settings = AppSettings.shared
 
     var body: some View {
-        Picker("Language", selection: $settings.appLanguage) {
-            ForEach(AppLanguage.allCases) { language in
-                Text(verbatim: language.displayName).tag(language)
+        HStack {
+            Text("Language")
+            Spacer()
+            Picker("Language", selection: $settings.appLanguage) {
+                ForEach(AppLanguage.allCases) { language in
+                    Text(verbatim: language.displayName).tag(language)
+                }
             }
+            .labelsHidden()
+            .pickerStyle(.menu)
+            .fixedSize()
+            .accessibilityLabel(Text("App language"))
         }
-        .pickerStyle(.menu)
-        .fixedSize()
-        .accessibilityLabel(Text("App language"))
     }
 }

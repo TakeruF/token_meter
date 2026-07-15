@@ -342,13 +342,52 @@ struct DailyRow: Identifiable {
 struct DailyChart: View {
     let rows: [DailyRow]
 
+    /// The day the cursor is currently hovering over, if any.
+    @State private var selectedDay: Date?
+
+    /// Rows for the hovered day, ordered by provider, with a non-zero total.
+    private var selectedRows: [DailyRow] {
+        guard let selectedDay else { return [] }
+        return rows
+            .filter { Calendar.current.isDate($0.day, inSameDayAs: selectedDay) }
+            .sorted { $0.provider.rawValue < $1.provider.rawValue }
+    }
+
     var body: some View {
         Chart(rows) { row in
-            BarMark(
+            LineMark(
                 x: .value("Day", row.day, unit: .day),
                 y: .value("Tokens", row.tokens)
             )
             .foregroundStyle(by: .value("Provider", row.provider.displayName))
+            .symbol(by: .value("Provider", row.provider.displayName))
+            .interpolationMethod(.catmullRom)
+
+            if let selectedDay, Calendar.current.isDate(row.day, inSameDayAs: selectedDay) {
+                PointMark(
+                    x: .value("Day", row.day, unit: .day),
+                    y: .value("Tokens", row.tokens)
+                )
+                .foregroundStyle(by: .value("Provider", row.provider.displayName))
+                .symbolSize(90)
+            }
+        }
+        .chartXSelection(value: $selectedDay)
+        .chartOverlay { proxy in
+            // `chartXSelection` covers clicks/drags; add hover for the pointer.
+            GeometryReader { geo in
+                Rectangle().fill(.clear).contentShape(Rectangle())
+                    .onContinuousHover { phase in
+                        switch phase {
+                        case .active(let location):
+                            let origin = geo[proxy.plotFrame!].origin
+                            let x = location.x - origin.x
+                            selectedDay = proxy.value(atX: x, as: Date.self)
+                        case .ended:
+                            selectedDay = nil
+                        }
+                    }
+            }
         }
         .chartYAxis { AxisMarks(format: compactCount) }
         .chartXAxis {
@@ -358,7 +397,38 @@ struct DailyChart: View {
             }
         }
         .frame(height: 220)
+        .overlay(alignment: .topLeading) {
+            if !selectedRows.isEmpty {
+                selectionLabel
+            }
+        }
         .accessibilityLabel("Daily token usage by provider")
+    }
+
+    /// A floating tooltip listing each provider's usage on the hovered day.
+    private var selectionLabel: some View {
+        VStack(alignment: .leading, spacing: 4) {
+            Text(selectedDay ?? .now, format: Date.FormatStyle().month().day())
+                .font(.caption.bold())
+            ForEach(selectedRows) { row in
+                HStack(spacing: 6) {
+                    Circle()
+                        .fill(Color.accentColor)
+                        .frame(width: 6, height: 6)
+                    Text(row.provider.displayName)
+                        .foregroundStyle(.secondary)
+                    Spacer(minLength: 8)
+                    Text(row.tokens, format: compactCount)
+                        .monospacedDigit()
+                }
+                .font(.caption2)
+            }
+        }
+        .padding(8)
+        .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 8))
+        .shadow(radius: 4)
+        .padding(8)
+        .allowsHitTesting(false)
     }
 }
 
