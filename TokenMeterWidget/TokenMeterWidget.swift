@@ -292,13 +292,15 @@ struct LargeWidgetView: View {
         if entry.snapshot == nil {
             EmptyStateView()
         } else {
-            VStack(alignment: .leading, spacing: 12) {
+            VStack(alignment: .leading, spacing: 8) {
                 ForEach(UsageProviderID.allCases) { providerID in
                     if let provider = entry.snapshot?.provider(providerID) {
                         VStack(alignment: .leading, spacing: 5) {
+                            // Reset time is shown by CompactQuotaStrip below, so the
+                            // row omits it here to keep the large widget within bounds.
                             ProviderRow(
                                 provider: provider, providerID: providerID,
-                                showProgress: true, showReset: true
+                                showProgress: true, showReset: false
                             )
                             if provider.hasQuotaInformation {
                                 CompactQuotaStrip(provider: provider, showReset: true)
@@ -313,7 +315,7 @@ struct LargeWidgetView: View {
                                     tokens: provider.weeklyWindow?.tokens ?? provider.last7DaysTokens
                                 )
                             }
-                            UsageBarChart(points: provider.dailyTotals ?? [])
+                            UsageLineChart(points: provider.dailyTotals ?? [])
                         }
                     }
                 }
@@ -394,13 +396,14 @@ struct CompactQuotaStrip: View {
     }
 }
 
-/// Bar chart for the last 7 days with labelled axes. Used only in the large
-/// widget, where there is room for the axis text without crowding the bars.
-struct UsageBarChart: View {
+/// Line chart for the last 7 days with labelled axes. Used only in the large
+/// widget, where there is room for the axis text without crowding the plot.
+/// Points are joined with straight lines and sit above their weekday labels.
+struct UsageLineChart: View {
     let points: [SharedSnapshot.DayPoint]
 
-    /// Height of the plot area (the bars). The axis labels live outside this.
-    private let plotHeight: CGFloat = 34
+    /// Height of the plot area (the line). The axis labels live outside this.
+    private let plotHeight: CGFloat = 30
 
     var body: some View {
         let maxValue = points.map(\.totalTokens).max() ?? 0
@@ -412,7 +415,7 @@ struct UsageBarChart: View {
         } else {
             HStack(alignment: .top, spacing: 5) {
                 // Y axis: max at the top, zero on the baseline. Fixed to the plot
-                // height so "0" lines up with the bottom of the bars.
+                // height so "0" lines up with the bottom of the plot.
                 VStack(alignment: .trailing, spacing: 0) {
                     Text(maxValue.abbreviatedTokens)
                     Spacer(minLength: 0)
@@ -424,18 +427,39 @@ struct UsageBarChart: View {
                 .frame(height: plotHeight)
 
                 VStack(spacing: 2) {
-                    HStack(alignment: .bottom, spacing: 3) {
-                        ForEach(points) { point in
+                    GeometryReader { geo in
+                        // One slot per point; place each point at its slot centre
+                        // so it lines up with the weekday label below it.
+                        let coordinates = points.enumerated().map { index, point -> CGPoint in
+                            let slot = geo.size.width / CGFloat(points.count)
                             let ratio = CGFloat(point.totalTokens) / CGFloat(maxValue)
-                            RoundedRectangle(cornerRadius: 1.5)
-                                .fill(.tint)
-                                .frame(height: max(1, plotHeight * ratio))
-                                .frame(maxWidth: .infinity)
+                            return CGPoint(
+                                x: slot * (CGFloat(index) + 0.5),
+                                y: plotHeight * (1 - ratio)
+                            )
+                        }
+                        ZStack {
+                            Path { path in
+                                guard let first = coordinates.first else { return }
+                                path.move(to: first)
+                                coordinates.dropFirst().forEach { path.addLine(to: $0) }
+                            }
+                            .stroke(
+                                .tint,
+                                style: StrokeStyle(lineWidth: 2, lineCap: .round, lineJoin: .round)
+                            )
+
+                            ForEach(Array(coordinates.enumerated()), id: \.offset) { _, point in
+                                Circle()
+                                    .fill(.tint)
+                                    .frame(width: 4, height: 4)
+                                    .position(point)
+                            }
                         }
                     }
-                    .frame(height: plotHeight, alignment: .bottom)
+                    .frame(height: plotHeight)
 
-                    // X axis line, then one narrow weekday label per bar. The
+                    // X axis line, then one narrow weekday label per point. The
                     // narrow symbol is a single letter, so labels never collide.
                     Rectangle()
                         .fill(.quaternary)
