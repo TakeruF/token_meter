@@ -361,7 +361,7 @@ struct DailyChart: View {
             )
             .foregroundStyle(by: .value("Provider", row.provider.displayName))
             .symbol(by: .value("Provider", row.provider.displayName))
-            .interpolationMethod(.catmullRom)
+            .interpolationMethod(.linear)
 
             if let selectedDay, Calendar.current.isDate(row.day, inSameDayAs: selectedDay) {
                 PointMark(
@@ -407,26 +407,32 @@ struct DailyChart: View {
 
     /// A floating tooltip listing each provider's usage on the hovered day.
     private var selectionLabel: some View {
-        VStack(alignment: .leading, spacing: 4) {
-            Text(selectedDay ?? .now, format: Date.FormatStyle().month().day())
-                .font(.caption.bold())
+        Grid(alignment: .leading, horizontalSpacing: 12, verticalSpacing: 2) {
+            GridRow {
+                Text(selectedDay ?? .now, format: Date.FormatStyle().month().day())
+                    .font(.caption2.bold())
+                    .gridCellColumns(2)
+            }
             ForEach(selectedRows) { row in
-                HStack(spacing: 6) {
-                    Circle()
-                        .fill(Color.accentColor)
-                        .frame(width: 6, height: 6)
+                GridRow {
                     Text(row.provider.displayName)
                         .foregroundStyle(.secondary)
-                    Spacer(minLength: 8)
                     Text(row.tokens, format: compactCount)
                         .monospacedDigit()
+                        .gridColumnAlignment(.trailing)
                 }
                 .font(.caption2)
             }
         }
-        .padding(8)
-        .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 8))
-        .shadow(radius: 4)
+        .fixedSize()
+        .padding(.horizontal, 8)
+        .padding(.vertical, 6)
+        .background(
+            RoundedRectangle(cornerRadius: 6)
+                .fill(Color(nsColor: .windowBackgroundColor))
+                .stroke(.quaternary, lineWidth: 1)
+        )
+        .shadow(color: .black.opacity(0.15), radius: 3, y: 1)
         .padding(8)
         .allowsHitTesting(false)
     }
