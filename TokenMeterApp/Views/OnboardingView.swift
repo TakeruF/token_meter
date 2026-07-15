@@ -440,19 +440,20 @@ private struct MenuBarPreview: View {
     }
 
     private var compactPreview: some View {
-        HStack(spacing: 5) {
+        HStack(spacing: 6) {
             if settings.showClaudeCode {
-                MenuBarProviderIcon(providerID: .claudeCode)
-                Text("68%")
-                    .monospacedDigit()
-            }
-            if settings.showClaudeCode && settings.showCodex {
-                Text("·")
+                HStack(spacing: 2) {
+                    MenuBarProviderIcon(providerID: .claudeCode)
+                    Text("68%")
+                        .monospacedDigit()
+                }
             }
             if settings.showCodex {
-                MenuBarProviderIcon(providerID: .codex)
-                Text("42%")
-                    .monospacedDigit()
+                HStack(spacing: 2) {
+                    MenuBarProviderIcon(providerID: .codex)
+                    Text("42%")
+                        .monospacedDigit()
+                }
             }
         }
     }

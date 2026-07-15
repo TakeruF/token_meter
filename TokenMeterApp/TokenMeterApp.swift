@@ -221,11 +221,13 @@ struct MenuBarLabel: View {
             }
 
             if settings.menuBarStyle == .compact {
-                ForEach(Array(values.enumerated()), id: \.element.id) { index, item in
-                    if index > 0 { Text("·") }
-                    MenuBarProviderIcon(providerID: item.providerID)
-                    Text(item.value)
-                        .monospacedDigit()
+                ForEach(values) { item in
+                    HStack(spacing: 2) {
+                        MenuBarProviderIcon(providerID: item.providerID)
+                        Text(item.compactValue)
+                            .monospacedDigit()
+                    }
+                    .fixedSize()
                 }
                 if let reset {
                     if !values.isEmpty { Text("·") }

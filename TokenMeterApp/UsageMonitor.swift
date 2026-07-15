@@ -25,6 +25,7 @@ struct ProviderState: Identifiable {
 struct MenuBarProviderValue: Identifiable {
     let providerID: UsageProviderID
     let value: String
+    let compactValue: String
 
     var id: UsageProviderID { providerID }
 }
@@ -346,20 +347,23 @@ final class UsageMonitor {
             guard let state = states[id] else { return nil }
 
             guard state.availability.isAvailable else {
-                return MenuBarProviderValue(providerID: id, value: "—")
+                return MenuBarProviderValue(providerID: id, value: "—", compactValue: "—")
             }
 
             if settings.menuBarShowPercentage, let remaining = state.snapshot?.primaryWindow?.remainingRatio {
+                let percentage = "\(Int((remaining * 100).rounded()))%"
                 return MenuBarProviderValue(
                     providerID: id,
-                    value: "\(Int((remaining * 100).rounded()))% left"
+                    value: "\(percentage) left",
+                    compactValue: percentage
                 )
             }
             // No quota published (or percentages switched off): show today's tokens.
             if settings.menuBarShowTokens, let tokens = state.snapshot?.totalTokens, tokens > 0 {
-                return MenuBarProviderValue(providerID: id, value: tokens.abbreviatedTokens)
+                let tokenValue = tokens.abbreviatedTokens
+                return MenuBarProviderValue(providerID: id, value: tokenValue, compactValue: tokenValue)
             }
-            return MenuBarProviderValue(providerID: id, value: "—")
+            return MenuBarProviderValue(providerID: id, value: "—", compactValue: "—")
         }
     }
 
