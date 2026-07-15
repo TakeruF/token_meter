@@ -6,6 +6,21 @@
         <description>Token Meter release updates</description>
         <language>en</language>
         <item>
+            <title>1.1.2</title>
+            <pubDate>Wed, 15 Jul 2026 10:18:03 +0900</pubDate>
+            <link>https://github.com/TakeruF/token_meter/releases/tag/v1.1.2</link>
+            <sparkle:version>5</sparkle:version>
+            <sparkle:shortVersionString>1.1.2</sparkle:shortVersionString>
+            <sparkle:minimumSystemVersion>14.0</sparkle:minimumSystemVersion>
+            <enclosure url="https://github.com/TakeruF/token_meter/releases/download/v1.1.2/TokenMeter-1.1.2.zip" length="5850058" type="application/octet-stream" sparkle:edSignature="GYPtlVZB/QxDn+oSt6X4Kl4wSH3aIXVBdEW2F3IGcevhA+vZhi+0kiqqftGmi/Pei/GqcbWs6qdsXxS9QA0OBg=="/>
+            <sparkle:deltas>
+                <enclosure url="https://github.com/TakeruF/token_meter/releases/download/v1.1.2/TokenMeter5-4.delta" sparkle:deltaFrom="4" length="137290" type="application/octet-stream" sparkle:deltaFromSparkleExecutableSize="975840" sparkle:deltaFromSparkleLocales="de,he,ar,el,ja,fa,uk" sparkle:edSignature="b/GdRV7WRKegQYP9aLnWmNHHjlYRnxQdgTfnwnBEZ/xL33S7sS5m11IHdcdRrLEB5RQdSYbmUEZzcdJWizX7BQ=="/>
+                <enclosure url="https://github.com/TakeruF/token_meter/releases/download/v1.1.2/TokenMeter5-3.delta" sparkle:deltaFrom="3" length="160198" type="application/octet-stream" sparkle:deltaFromSparkleExecutableSize="975840" sparkle:deltaFromSparkleLocales="de,he,ar,el,ja,fa,uk" sparkle:edSignature="KTOwbCpCs98adDgY5zhq+zLYfsVhYTQipuYNvJ1L5a87VRK4rOd/zQSeVQoW2HHXKKJwCnm+ROGle9qSI484AA=="/>
+                <enclosure url="https://github.com/TakeruF/token_meter/releases/download/v1.1.2/TokenMeter5-2.delta" sparkle:deltaFrom="2" length="315798" type="application/octet-stream" sparkle:deltaFromSparkleExecutableSize="975840" sparkle:deltaFromSparkleLocales="de,he,ar,el,ja,fa,uk" sparkle:edSignature="gsdJ40m7mbwu1Zw7QpbMkTr4M6WYI1Cb3KPcLCQrOg29PS86UHEMIdlKLtjDc8z0ztCjHZEFkzEkY5Ezwc2tCQ=="/>
+                <enclosure url="https://github.com/TakeruF/token_meter/releases/download/v1.1.2/TokenMeter5-1.delta" sparkle:deltaFrom="1" length="473098" type="application/octet-stream" sparkle:deltaFromSparkleExecutableSize="975840" sparkle:deltaFromSparkleLocales="de,he,ar,el,ja,fa,uk" sparkle:edSignature="9oswy6Pxhzhv6lg3wRIXX0/iaJWe66vGGzteemKq3fh2rGf5tUykOySrdflAPGhrX1+SrVuYgUlp9Qoc6s+tAA=="/>
+            </sparkle:deltas>
+        </item>
+        <item>
             <title>1.1.1</title>
             <pubDate>Wed, 15 Jul 2026 10:08:30 +0900</pubDate>
             <link>https://github.com/TakeruF/token_meter/releases/tag/v1.1.1</link>
