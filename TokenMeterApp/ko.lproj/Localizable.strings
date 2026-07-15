@@ -119,6 +119,7 @@
 "These are token counts from local logs. Provider-reported quota percentages are displayed separately above." = "이 값은 로컬 로그에서 계산한 토큰 수입니다. 제공자가 보고한 한도 비율은 위에 별도로 표시됩니다.";
 "Claude vs Codex" = "Claude와 Codex";
 "Daily tokens" = "일별 토큰";
+"Today by hour" = "오늘 시간대별";
 "Token breakdown" = "토큰 세부 내역";
 "Input" = "입력";
 "Cache read" = "캐시 읽기";
@@ -131,6 +132,15 @@
 "Provider" = "제공자";
 "Model" = "모델";
 "Tokens" = "토큰";
+"Usage windows" = "사용 구간";
+"total" = "합계";
+"left" = "남음";
+"tokens" = "토큰";
+"Percentages are provider-reported; token counts come from local logs." = "비율은 제공자 기준, 토큰 수는 로컬 로그 기준입니다.";
+"Session" = "세션";
+"Turns" = "턴";
+"Work" = "실처리";
+"of" = "／";
 "No data" = "데이터 없음";
 "%@%% quota left" = "한도 %@%% 남음";
 "No quota info" = "한도 정보 없음";

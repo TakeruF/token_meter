@@ -38,9 +38,7 @@ struct DashboardView: View {
             VStack(alignment: .leading, spacing: 20) {
                 rangePicker
                 summaryCards
-                quotaSection
-                windowsSection
-                comparisonChart
+                usageWindowsSection
                 dailyChart
                 breakdownSection
                 modelSection
@@ -81,12 +79,15 @@ struct DashboardView: View {
     private var summaryCards: some View {
         HStack(spacing: 12) {
             ForEach(providers) { id in
-                let total = events(id).reduce(0) { $0 + $1.totalTokens }
+                let all = events(id)
+                // Headline is real work; total (cache-inflated) is the context.
+                let work = all.reduce(0) { $0 + $1.workingTokens }
+                let total = all.reduce(0) { $0 + $1.totalTokens }
                 SummaryCard(
                     providerID: id,
-                    value: total > 0 ? total.abbreviatedTokens : nil,
-                    caption: AppLocalization.format("tokens · %@", range.label),
-                    window: monitor.states[id]?.snapshot?.primaryWindow
+                    value: work > 0 ? work.abbreviatedTokens : nil,
+                    total: total > 0 ? total.abbreviatedTokens : nil,
+                    caption: AppLocalization.format("tokens · %@", range.label)
                 )
             }
             if providers.isEmpty {
@@ -95,143 +96,101 @@ struct DashboardView: View {
         }
     }
 
+    /// The live 5-hour and weekly windows, one row each per provider, combining the
+    /// provider-reported quota % and the locally-counted token total. The 5-hour /
+    /// weekly visibility toggles gate the whole row here (they previously hid only
+    /// the token counts, leaving the percentages on screen — a visible mismatch).
+    /// Ignores the range picker on purpose: a 5-hour window over 30 days is a lie.
     @ViewBuilder
-    private var quotaSection: some View {
-        let showing = providers.filter { monitor.states[$0]?.snapshot?.hasQuotaInformation == true }
+    private var usageWindowsSection: some View {
+        let showFive = settings.showFiveHourWindow
+        let showWeekly = settings.showWeeklyWindow
+        let showing = providers.filter { id in
+            let s = monitor.states[id]?.snapshot
+            let hasFive = showFive && (s?.shortWindowUsage != nil || s?.shortWindow != nil)
+            let hasWeekly = showWeekly
+                && (s?.weeklyWindowUsage != nil || s?.weeklyWindow != nil || s?.sonnetWeeklyWindow != nil)
+            return hasFive || hasWeekly
+        }
+
         if !showing.isEmpty {
-            SectionBox("Plan usage remaining") {
+            SectionBox("Usage windows") {
                 HStack(alignment: .top, spacing: 24) {
                     ForEach(showing) { id in
-                        let snapshot = monitor.states[id]?.snapshot
-                        VStack(alignment: .leading, spacing: 8) {
+                        let s = monitor.states[id]?.snapshot
+                        VStack(alignment: .leading, spacing: 10) {
                             ProviderLabel(providerID: id)
-                            if let five = snapshot?.shortWindow {
-                                QuotaWindowRow(title: "5-hour", window: five)
-                            }
-                            if let weekly = snapshot?.weeklyWindow {
-                                QuotaWindowRow(title: "Weekly", window: weekly)
-                            }
-                            if let sonnet = snapshot?.sonnetWeeklyWindow {
-                                QuotaWindowRow(title: "Sonnet weekly", window: sonnet)
-                            }
-                            if snapshot?.quotaIsCached == true {
-                                Label(
-                                    AppLocalization.string(
-                                        snapshot?.quotaError == nil ? "Showing cached value" : "Showing last successful value"
-                                    ),
-                                    systemImage: snapshot?.quotaError == nil ? "clock" : "clock.badge.exclamationmark"
+
+                            if showFive, s?.shortWindowUsage != nil || s?.shortWindow != nil {
+                                WindowSummaryRow(
+                                    title: "5-hour",
+                                    usage: s?.shortWindowUsage,
+                                    quota: s?.shortWindow
                                 )
-                                    .font(.caption)
-                                    .foregroundStyle(
-                                        snapshot?.quotaError == nil
-                                            ? AnyShapeStyle(.secondary)
-                                            : AnyShapeStyle(.orange)
+                            }
+                            if showWeekly {
+                                if s?.weeklyWindowUsage != nil || s?.weeklyWindow != nil {
+                                    let rolling = s?.weeklyWindow == nil
+                                        && s?.weeklyWindowUsage?.boundary == .rolling
+                                    WindowSummaryRow(
+                                        title: rolling ? "Last 7 days" : "Weekly",
+                                        usage: s?.weeklyWindowUsage,
+                                        quota: s?.weeklyWindow
                                     )
+                                }
+                                if let sonnet = s?.sonnetWeeklyWindow {
+                                    WindowSummaryRow(title: "Sonnet weekly", usage: nil, quota: sonnet)
+                                }
                             }
-                            if let updated = snapshot?.quotaUpdatedAt {
-                                Text("Last updated \(updated.formatted(date: .abbreviated, time: .shortened))")
-                                    .font(.caption2)
-                                    .foregroundStyle(.secondary)
-                            }
-                            if let error = snapshot?.quotaError?.errorDescription {
-                                Label(error, systemImage: "exclamationmark.triangle")
-                                    .font(.caption2)
-                                    .foregroundStyle(.orange)
-                                    .fixedSize(horizontal: false, vertical: true)
-                            }
+
+                            QuotaProvenanceFootnote(snapshot: s)
                         }
                         .frame(maxWidth: .infinity, alignment: .leading)
                     }
                 }
+
+                Text("Percentages are provider-reported; token counts come from local logs.")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
             }
         } else if settings.claudeOAuthUsageEnabled,
                   providers.contains(.claudeCode),
                   let message = monitor.states[.claudeCode]?.snapshot?.quotaError?.errorDescription {
-            SectionBox("Claude plan usage") {
+            SectionBox("Usage windows") {
                 Label(message, systemImage: "exclamationmark.triangle")
                     .foregroundStyle(.orange)
             }
         }
     }
 
-    /// The two live windows, side by side per provider. These ignore the range picker
-    /// on purpose: a "5-hour window" that honoured a 30-day range would be a lie.
-    @ViewBuilder
-    private var windowsSection: some View {
-        let showing = providers.filter {
-            monitor.states[$0]?.snapshot?.shortWindowUsage != nil
-                || monitor.states[$0]?.snapshot?.weeklyWindowUsage != nil
-        }
-        if !showing.isEmpty, settings.showFiveHourWindow || settings.showWeeklyWindow {
-            SectionBox("Current windows") {
-                HStack(alignment: .top, spacing: 20) {
-                    ForEach(showing) { id in
-                        VStack(alignment: .leading, spacing: 8) {
-                            ProviderLabel(providerID: id)
-
-                            if settings.showFiveHourWindow,
-                               let five = monitor.states[id]?.snapshot?.shortWindowUsage {
-                                WindowRow(title: "5-hour window", usage: five)
-                            }
-                            if settings.showWeeklyWindow,
-                               let weekly = monitor.states[id]?.snapshot?.weeklyWindowUsage {
-                                WindowRow(
-                                    title: weekly.boundary == .rolling ? "Last 7 days" : "Weekly window",
-                                    usage: weekly
-                                )
-                            }
-                        }
-                        .frame(maxWidth: .infinity, alignment: .leading)
-                    }
-                }
-
-                Text("These are token counts from local logs. Provider-reported quota percentages are displayed separately above.")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-                    .fixedSize(horizontal: false, vertical: true)
-            }
-        }
-    }
-
-    @ViewBuilder
-    private var comparisonChart: some View {
-        SectionBox("Claude vs Codex") {
-            let totals = providers.map { id in
-                (id, events(id).reduce(0) { $0 + $1.totalTokens })
-            }
-            if totals.allSatisfy({ $0.1 == 0 }) {
-                NoDataInline()
-            } else {
-                Chart(totals, id: \.0) { item in
-                    BarMark(
-                        x: .value("Tokens", item.1),
-                        y: .value("Provider", item.0.displayName)
-                    )
-                    .foregroundStyle(by: .value("Provider", item.0.displayName))
-                    .annotation(position: .trailing) {
-                        Text(item.1.abbreviatedTokens)
-                            .font(.caption).monospacedDigit()
-                            .foregroundStyle(.secondary)
-                    }
-                }
-                .chartXAxis { AxisMarks(format: compactCount) }
-                .frame(height: 120)
-                .accessibilityLabel("Total tokens by provider")
-            }
-        }
-    }
-
     @ViewBuilder
     private var dailyChart: some View {
-        SectionBox("Daily tokens") {
-            let rows: [DailyRow] = providers.flatMap { id in
-                aggregator.dailySeries(events(id), provider: id, days: range.rawValue)
-                    .map { DailyRow(day: $0.day, provider: id, tokens: $0.totalTokens) }
+        // A single day has one daily point per provider, which no line or bar can
+        // convey. Show the day's intraday shape by the hour instead.
+        if range == .today {
+            SectionBox("Today by hour") {
+                let rows: [HourlyRow] = providers.flatMap { id in
+                    aggregator.hourlySeries(events(id), provider: id)
+                        .map { HourlyRow(hour: $0.day, provider: id, tokens: $0.workingTokens) }
+                }
+                if rows.allSatisfy({ $0.tokens == 0 }) {
+                    NoDataInline()
+                } else {
+                    HourlyChart(rows: rows)
+                }
             }
-            if rows.allSatisfy({ $0.tokens == 0 }) {
-                NoDataInline()
-            } else {
-                DailyChart(rows: rows)
+        } else {
+            SectionBox("Daily tokens") {
+                let rows: [DailyRow] = providers.flatMap { id in
+                    aggregator.dailySeries(events(id), provider: id, days: range.rawValue)
+                        .map { DailyRow(day: $0.day, provider: id, tokens: $0.workingTokens) }
+                }
+                if rows.allSatisfy({ $0.tokens == 0 }) {
+                    NoDataInline()
+                } else {
+                    DailyChart(rows: rows)
+                }
             }
         }
     }
@@ -296,32 +255,56 @@ struct DashboardView: View {
     @ViewBuilder
     private var historySection: some View {
         SectionBox("Recent activity") {
-            let recent = providers
-                .flatMap { events($0) }
-                .sorted { $0.timestamp > $1.timestamp }
-                .prefix(20)
+            // Grouped by session, not per message: consecutive turns re-send the
+            // same cached context, so a raw event log is mostly repeated rows.
+            let sessions = aggregator.recentSessions(
+                providers.flatMap { events($0) },
+                limit: 20
+            )
 
-            if recent.isEmpty {
+            if sessions.isEmpty {
                 NoDataInline()
             } else {
-                Table(Array(recent)) {
-                    TableColumn("Time") { e in
-                        Text(e.timestamp, format: .dateTime.month().day().hour().minute())
+                Table(sessions) {
+                    TableColumn("Session") { s in
+                        Text(sessionInterval(s))
                             .monospacedDigit()
                     }
-                    TableColumn("Provider") { e in
-                        ProviderLabel(providerID: e.provider, font: .body, iconSize: 13)
+                    TableColumn("Provider") { s in
+                        ProviderLabel(providerID: s.provider, font: .body, iconSize: 13)
                     }
-                    TableColumn("Model") { e in
-                        Text(e.model ?? "—").font(.caption).monospaced()
+                    TableColumn("Model") { s in
+                        Text(s.model ?? "—").font(.caption).monospaced()
                     }
-                    TableColumn("Tokens") { e in
-                        Text(e.totalTokens.abbreviatedTokens).monospacedDigit()
+                    TableColumn("Turns") { s in
+                        Text(s.turns, format: .number).monospacedDigit()
+                    }
+                    TableColumn("Work") { s in
+                        // The real work this session did; total is shown as the
+                        // context it ran against, since most of it is cached reuse.
+                        VStack(alignment: .leading, spacing: 1) {
+                            Text(s.workingTokens.abbreviatedTokens)
+                                .monospacedDigit()
+                            Text("\(Text("of")) \(s.totalTokens.abbreviatedTokens)")
+                                .font(.caption2)
+                                .foregroundStyle(.secondary)
+                                .monospacedDigit()
+                        }
                     }
                 }
                 .frame(height: 260)
             }
         }
+    }
+
+    /// "Jul 15, 3:58–4:07 PM" — start with date, end as time only when same day.
+    private func sessionInterval(_ s: SessionSummary) -> String {
+        let cal = Calendar.current
+        let startText = s.start.formatted(.dateTime.month().day().hour().minute())
+        if cal.isDate(s.start, inSameDayAs: s.end) {
+            return "\(startText) – \(s.end.formatted(.dateTime.hour().minute()))"
+        }
+        return "\(startText) – \(s.end.formatted(.dateTime.month().day().hour().minute()))"
     }
 }
 
@@ -336,6 +319,38 @@ struct DailyRow: Identifiable {
     let provider: UsageProviderID
     let tokens: Int
     var id: String { "\(provider.rawValue)-\(day.timeIntervalSince1970)" }
+}
+
+struct HourlyRow: Identifiable {
+    let hour: Date
+    let provider: UsageProviderID
+    let tokens: Int
+    var id: String { "\(provider.rawValue)-\(hour.timeIntervalSince1970)" }
+}
+
+/// Today's usage split by hour. Bars, not a line: hourly counts are spiky and
+/// often zero, which a line would smear into a misleading slope.
+struct HourlyChart: View {
+    let rows: [HourlyRow]
+
+    var body: some View {
+        Chart(rows) { row in
+            BarMark(
+                x: .value("Hour", row.hour, unit: .hour),
+                y: .value("Tokens", row.tokens)
+            )
+            .foregroundStyle(by: .value("Provider", row.provider.displayName))
+        }
+        .chartYAxis { AxisMarks(format: compactCount) }
+        .chartXAxis {
+            AxisMarks(values: .stride(by: .hour, count: 3)) { _ in
+                AxisGridLine()
+                AxisValueLabel(format: Date.FormatStyle().hour())
+            }
+        }
+        .frame(height: 220)
+        .accessibilityLabel("Hourly token usage by provider today")
+    }
 }
 
 /// Split out of DashboardView: as one inline expression the type-checker gave up.
@@ -462,9 +477,11 @@ struct SectionBox<Content: View>: View {
 
 struct SummaryCard: View {
     let providerID: UsageProviderID
+    /// Working tokens (real processing) — the headline figure.
     let value: String?
+    /// Cache-inclusive total, shown small as context for `value`.
+    let total: String?
     let caption: String
-    let window: UsageWindow?
 
     var body: some View {
         VStack(alignment: .leading, spacing: 6) {
@@ -481,22 +498,116 @@ struct SummaryCard: View {
             }
             Text(LocalizedStringKey(caption)).font(.caption).foregroundStyle(.secondary)
 
-            if let window, let remaining = window.remainingRatio {
-                let level = window.statusLevel
-                HStack(spacing: 4) {
-                    Image(systemName: level.symbolName).foregroundStyle(level.tint)
-                    Text("\(Int((remaining * 100).rounded()))% quota left")
-                        .font(.caption).monospacedDigit()
-                }
-            } else {
-                Label("No quota info", systemImage: UsageStatusLevel.unknown.symbolName)
+            if let total, value != nil {
+                Text("\(Text("of")) \(total) \(Text("total"))")
                     .font(.caption)
                     .foregroundStyle(.secondary)
+                    .monospacedDigit()
             }
         }
         .padding(14)
         .frame(maxWidth: .infinity, alignment: .leading)
         .background(.quaternary.opacity(0.35), in: RoundedRectangle(cornerRadius: 10))
+    }
+}
+
+/// One window row that combines both facts about a limit: the provider-reported
+/// quota % (with a bar) and the locally-counted token total, plus a single reset
+/// line. Reported reset times win over locally-estimated ones.
+struct WindowSummaryRow: View {
+    let title: String
+    let usage: TokenWindowUsage?
+    let quota: UsageWindow?
+
+    private var level: UsageStatusLevel { quota?.statusLevel ?? .unknown }
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 3) {
+            HStack(alignment: .firstTextBaseline, spacing: 8) {
+                Text(LocalizedStringKey(title))
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                Spacer()
+                if let tokens = usage?.tokens {
+                    Text("\(tokens.abbreviatedTokens) \(Text("tokens"))")
+                        .font(.callout.weight(.medium))
+                        .monospacedDigit()
+                }
+                if let remaining = quota?.remainingRatio {
+                    Text("\(Int((remaining * 100).rounded()))% \(Text("left"))")
+                        .font(.callout.weight(.semibold))
+                        .monospacedDigit()
+                        .foregroundStyle(level.tint)
+                }
+            }
+
+            if let remaining = quota?.remainingRatio {
+                ProgressView(value: max(0, min(1, remaining)))
+                    .progressViewStyle(.linear)
+                    .tint(level.tint)
+            }
+
+            resetLine
+        }
+        .accessibilityElement(children: .combine)
+    }
+
+    @ViewBuilder
+    private var resetLine: some View {
+        if let resetsAt = quota?.resetsAt {
+            resetLabel(resetsAt, estimated: false)
+        } else if let resetsAt = usage?.resetsAt {
+            resetLabel(resetsAt, estimated: usage?.isBoundaryInferred == true)
+        }
+    }
+
+    private func resetLabel(_ resetsAt: Date, estimated: Bool) -> some View {
+        HStack(spacing: 3) {
+            Image(systemName: "clock.arrow.circlepath")
+            Text("Resets \(resetsAt, style: .relative)")
+            if estimated {
+                Text("· \(Text("estimated"))").italic()
+            }
+        }
+        .font(.caption2)
+        .foregroundStyle(.secondary)
+        .lineLimit(1)
+    }
+}
+
+/// The cached / last-updated / error notes for provider-reported quota. Shown
+/// only when the provider actually publishes quota data.
+struct QuotaProvenanceFootnote: View {
+    let snapshot: UsageSnapshot?
+
+    var body: some View {
+        if let snapshot, snapshot.hasQuotaInformation {
+            VStack(alignment: .leading, spacing: 4) {
+                if snapshot.quotaIsCached == true {
+                    Label(
+                        AppLocalization.string(
+                            snapshot.quotaError == nil ? "Showing cached value" : "Showing last successful value"
+                        ),
+                        systemImage: snapshot.quotaError == nil ? "clock" : "clock.badge.exclamationmark"
+                    )
+                    .font(.caption)
+                    .foregroundStyle(
+                        snapshot.quotaError == nil ? AnyShapeStyle(.secondary) : AnyShapeStyle(.orange)
+                    )
+                }
+                if let updated = snapshot.quotaUpdatedAt {
+                    Text("Last updated \(updated.formatted(date: .abbreviated, time: .shortened))")
+                        .font(.caption2)
+                        .foregroundStyle(.secondary)
+                }
+                if let error = snapshot.quotaError?.errorDescription {
+                    Label(error, systemImage: "exclamationmark.triangle")
+                        .font(.caption2)
+                        .foregroundStyle(.orange)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+            }
+        }
     }
 }
 

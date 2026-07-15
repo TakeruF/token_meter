@@ -119,6 +119,7 @@
 "These are token counts from local logs. Provider-reported quota percentages are displayed separately above." = "这些 Token 数来自本地日志。服务商报告的额度百分比会在上方单独显示。";
 "Claude vs Codex" = "Claude 与 Codex";
 "Daily tokens" = "每日 Token";
+"Today by hour" = "今日各小时";
 "Token breakdown" = "Token 明细";
 "Input" = "输入";
 "Cache read" = "缓存读取";
@@ -131,6 +132,15 @@
 "Provider" = "服务商";
 "Model" = "模型";
 "Tokens" = "Token";
+"Usage windows" = "用量窗口";
+"total" = "总计";
+"left" = "剩余";
+"tokens" = "Token";
+"Percentages are provider-reported; token counts come from local logs." = "百分比来自提供商，Token 数来自本地日志。";
+"Session" = "会话";
+"Turns" = "轮次";
+"Work" = "有效处理";
+"of" = "／";
 "No data" = "无数据";
 "%@%% quota left" = "额度剩余 %@%%";
 "No quota info" = "无额度信息";

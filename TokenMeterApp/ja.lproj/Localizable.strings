@@ -119,6 +119,7 @@
 "These are token counts from local logs. Provider-reported quota percentages are displayed separately above." = "これはローカルログから集計したトークン数です。プロバイダーが報告する利用枠の割合は上に別表示します。";
 "Claude vs Codex" = "ClaudeとCodex";
 "Daily tokens" = "日別トークン数";
+"Today by hour" = "今日の時間別推移";
 "Token breakdown" = "トークン内訳";
 "Input" = "入力";
 "Cache read" = "キャッシュ読込";
@@ -131,6 +132,15 @@
 "Provider" = "プロバイダー";
 "Model" = "モデル";
 "Tokens" = "トークン";
+"Usage windows" = "使用状況の枠";
+"total" = "合計";
+"left" = "残り";
+"tokens" = "トークン";
+"Percentages are provider-reported; token counts come from local logs." = "割合はプロバイダー提供、トークン数はローカルログ集計です。";
+"Session" = "セッション";
+"Turns" = "ターン";
+"Work" = "実処理";
+"of" = "／";
 "No data" = "データなし";
 "%@%% quota left" = "利用枠 %@%% 残り";
 "No quota info" = "利用枠情報なし";
