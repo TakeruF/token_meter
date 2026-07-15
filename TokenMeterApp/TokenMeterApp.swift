@@ -46,6 +46,16 @@ enum MainWindowTab: Hashable {
     case dashboard, setup, settings
 }
 
+enum AppLaunchOptions {
+    static var showOnboarding: Bool {
+        #if DEBUG
+        ProcessInfo.processInfo.arguments.contains("--show-onboarding")
+        #else
+        false
+        #endif
+    }
+}
+
 /// A single routing point for menu-bar buttons and the standard Settings command.
 /// Opening a SwiftUI window does not necessarily activate an accessory app, so the
 /// router explicitly activates it and raises the requested window as well.
@@ -59,6 +69,8 @@ final class MainWindowRouter {
 
     func show(_ tab: MainWindowTab, using openWindow: OpenWindowAction) {
         selection = tab
+        if bringMainWindowToFront() { return }
+
         openWindow(id: "dashboard")
         bringMainWindowToFront()
 
@@ -68,11 +80,13 @@ final class MainWindowRouter {
         }
     }
 
-    private func bringMainWindowToFront() {
+    @discardableResult
+    private func bringMainWindowToFront() -> Bool {
         NSApp.activate(ignoringOtherApps: true)
         let window = NSApp.windows.first { $0.identifier?.rawValue == "dashboard" }
             ?? NSApp.windows.first { $0.title == "Token Meter" && $0.canBecomeKey }
         window?.makeKeyAndOrderFront(nil)
+        return window != nil
     }
 }
 
@@ -92,16 +106,50 @@ struct MainWindowCommands: Commands {
 /// Opens the window on first launch (there is nothing else to show yet) and keeps
 /// the app alive when its last window closes.
 final class AppDelegate: NSObject, NSApplicationDelegate {
+    private var firstRunWindow: NSWindow?
+
     func applicationDidFinishLaunching(_ notification: Notification) {
         // Begin ingesting immediately: the app must work with no window ever opened.
         Task { @MainActor in
             await UsageMonitor.shared.start()
         }
 
-        if !AppSettings.shared.hasCompletedSetup {
+        if !AppSettings.shared.hasCompletedSetup || AppLaunchOptions.showOnboarding {
             NSApp.setActivationPolicy(.regular)
             NSApp.activate(ignoringOtherApps: true)
+
+            // LSUIElement apps do not reliably create their Window scene on first
+            // launch. If SwiftUI has not made it after startup settles, provide the
+            // same content in a normal NSWindow so onboarding is never invisible.
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { [weak self] in
+                if let window = NSApp.windows.first(where: { $0.identifier?.rawValue == "dashboard" }) {
+                    window.makeKeyAndOrderFront(nil)
+                    return
+                }
+                self?.showFirstRunWindow()
+            }
         }
+    }
+
+    @MainActor
+    private func showFirstRunWindow() {
+        let content = MainWindowView(monitor: UsageMonitor.shared)
+            .environment(UsageMonitor.shared)
+            .frame(minWidth: 760, minHeight: 540)
+
+        let window = NSWindow(
+            contentRect: NSRect(x: 0, y: 0, width: 940, height: 680),
+            styleMask: [.titled, .closable, .miniaturizable, .resizable],
+            backing: .buffered,
+            defer: false
+        )
+        window.identifier = NSUserInterfaceItemIdentifier("dashboard")
+        window.title = "Token Meter"
+        window.contentViewController = NSHostingController(rootView: content)
+        window.isReleasedWhenClosed = false
+        window.center()
+        window.makeKeyAndOrderFront(nil)
+        firstRunWindow = window
     }
 
     func applicationShouldTerminateAfterLastWindowClosed(_ sender: NSApplication) -> Bool {
@@ -117,21 +165,30 @@ struct MainWindowView: View {
     @State private var router = MainWindowRouter.shared
 
     var body: some View {
-        TabView(selection: $router.selection) {
-            DashboardView(monitor: monitor)
-                .tabItem { Label("Dashboard", systemImage: "chart.bar") }
-                .tag(MainWindowTab.dashboard)
+        Group {
+            if !shouldShowOnboarding {
+                TabView(selection: $router.selection) {
+                    DashboardView(monitor: monitor)
+                        .tabItem { Label("Dashboard", systemImage: "chart.bar") }
+                        .tag(MainWindowTab.dashboard)
 
-            SetupView(monitor: monitor)
-                .tabItem { Label("Setup", systemImage: "checklist") }
-                .tag(MainWindowTab.setup)
-                .badge(needsAttentionCount)
+                    SetupView(monitor: monitor)
+                        .tabItem { Label("Setup", systemImage: "checklist") }
+                        .tag(MainWindowTab.setup)
+                        .badge(needsAttentionCount)
 
-            SettingsView(monitor: monitor)
-                .tabItem { Label("Settings", systemImage: "gearshape") }
-                .tag(MainWindowTab.settings)
+                    SettingsView(monitor: monitor)
+                        .tabItem { Label("Settings", systemImage: "gearshape") }
+                        .tag(MainWindowTab.settings)
+                }
+            } else {
+                OnboardingView(monitor: monitor)
+            }
         }
-        .onAppear { settings.hasCompletedSetup = true }
+    }
+
+    private var shouldShowOnboarding: Bool {
+        AppLaunchOptions.showOnboarding || !settings.hasCompletedSetup
     }
 
     /// Providers the user has enabled but that are not actually connected.
