@@ -111,8 +111,12 @@ struct SetupView: View {
 
                 Divider()
 
-                Toggle("Show Claude", isOn: $settings.showClaudeCode)
-                Toggle("Show Codex", isOn: $settings.showCodex)
+                Toggle(isOn: $settings.showClaudeCode) {
+                    ProviderLabel(providerID: .claudeCode, font: .body, iconSize: 15)
+                }
+                Toggle(isOn: $settings.showCodex) {
+                    ProviderLabel(providerID: .codex, font: .body, iconSize: 15)
+                }
 
                 LabeledContent("Preview") {
                     Text(monitor.menuBarTitle.isEmpty ? "(icon only)" : monitor.menuBarTitle)
@@ -183,6 +187,7 @@ struct ConnectionCard: View {
 
     private var statusRow: some View {
         HStack(spacing: 6) {
+            ProviderIcon(providerID: providerID, size: 18)
             Image(systemName: availability?.symbolName ?? "questionmark.circle")
                 .foregroundStyle(availability?.isAvailable == true ? .green : .orange)
             Text(availability?.headline ?? "Checking…")

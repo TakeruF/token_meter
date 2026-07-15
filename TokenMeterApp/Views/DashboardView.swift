@@ -83,7 +83,7 @@ struct DashboardView: View {
             ForEach(providers) { id in
                 let total = events(id).reduce(0) { $0 + $1.totalTokens }
                 SummaryCard(
-                    title: id.displayName,
+                    providerID: id,
                     value: total > 0 ? total.abbreviatedTokens : nil,
                     caption: "tokens · \(range.label.lowercased())",
                     window: monitor.states[id]?.snapshot?.primaryWindow
@@ -104,8 +104,7 @@ struct DashboardView: View {
                     ForEach(showing) { id in
                         let snapshot = monitor.states[id]?.snapshot
                         VStack(alignment: .leading, spacing: 8) {
-                            Text(id.displayName)
-                                .font(.subheadline.weight(.semibold))
+                            ProviderLabel(providerID: id)
                             if let five = snapshot?.shortWindow {
                                 QuotaWindowRow(title: "5-hour", window: five)
                             }
@@ -166,8 +165,7 @@ struct DashboardView: View {
                 HStack(alignment: .top, spacing: 20) {
                     ForEach(showing) { id in
                         VStack(alignment: .leading, spacing: 8) {
-                            Text(id.displayName)
-                                .font(.subheadline.weight(.semibold))
+                            ProviderLabel(providerID: id)
 
                             if settings.showFiveHourWindow,
                                let five = monitor.states[id]?.snapshot?.shortWindowUsage {
@@ -252,7 +250,7 @@ struct DashboardView: View {
                         : all.compactMap(\.reasoningTokens).reduce(0, +)
 
                     VStack(alignment: .leading, spacing: 6) {
-                        Text(id.displayName).font(.subheadline.weight(.semibold))
+                        ProviderLabel(providerID: id)
                         if all.isEmpty {
                             NoDataInline()
                         } else {
@@ -309,7 +307,9 @@ struct DashboardView: View {
                         Text(e.timestamp, format: .dateTime.month().day().hour().minute())
                             .monospacedDigit()
                     }
-                    TableColumn("Provider") { e in Text(e.provider.displayName) }
+                    TableColumn("Provider") { e in
+                        ProviderLabel(providerID: e.provider, font: .body, iconSize: 13)
+                    }
                     TableColumn("Model") { e in
                         Text(e.model ?? "—").font(.caption).monospaced()
                     }
@@ -383,14 +383,14 @@ struct SectionBox<Content: View>: View {
 }
 
 struct SummaryCard: View {
-    let title: String
+    let providerID: UsageProviderID
     let value: String?
     let caption: String
     let window: UsageWindow?
 
     var body: some View {
         VStack(alignment: .leading, spacing: 6) {
-            Text(title).font(.subheadline.weight(.semibold))
+            ProviderLabel(providerID: providerID)
 
             if let value {
                 Text(value)

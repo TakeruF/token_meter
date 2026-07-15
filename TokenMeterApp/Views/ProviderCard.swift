@@ -50,8 +50,7 @@ struct ProviderCard: View {
 
     private var titleRow: some View {
         HStack(spacing: 6) {
-            Text(providerID.displayName)
-                .font(.headline)
+            ProviderLabel(providerID: providerID, font: .headline, iconSize: 18)
 
             if let plan = snapshot?.planType {
                 Text(plan.uppercased())

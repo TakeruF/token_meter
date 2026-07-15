@@ -11,8 +11,12 @@ struct SettingsView: View {
     var body: some View {
         Form {
             Section("Providers") {
-                Toggle("Show Claude", isOn: $settings.showClaudeCode)
-                Toggle("Show Codex", isOn: $settings.showCodex)
+                Toggle(isOn: $settings.showClaudeCode) {
+                    ProviderLabel(providerID: .claudeCode, font: .body, iconSize: 15)
+                }
+                Toggle(isOn: $settings.showCodex) {
+                    ProviderLabel(providerID: .codex, font: .body, iconSize: 15)
+                }
             }
 
             Section("Claude Pro / Max usage") {

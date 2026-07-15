@@ -38,10 +38,12 @@ struct Entry: TimelineEntry {
 /// one; otherwise it shows tokens, or says there is no data.
 struct ProviderRow: View {
     let provider: SharedSnapshot.Provider?
-    let name: String
+    let providerID: UsageProviderID
     var showProgress = true
     var showReset = false
     var showTokens = false
+
+    private var name: String { providerID.displayName }
 
     private var level: UsageStatusLevel {
         .from(remainingRatio: provider?.remainingRatio)
@@ -50,6 +52,7 @@ struct ProviderRow: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 3) {
             HStack(spacing: 4) {
+                WidgetProviderIcon(providerID: providerID, size: 12)
                 Text(name)
                     .font(.caption.weight(.semibold))
                     .lineLimit(1)
@@ -160,6 +163,21 @@ struct ProviderRow: View {
     }
 }
 
+struct WidgetProviderIcon: View {
+    let providerID: UsageProviderID
+    var size: CGFloat = 12
+
+    var body: some View {
+        Image(providerID == .claudeCode ? "ClaudeLogo" : "CodexLogo")
+            .renderingMode(providerID == .claudeCode ? .template : .original)
+            .resizable()
+            .scaledToFit()
+            .frame(width: size, height: size)
+            .foregroundStyle(.primary)
+            .accessibilityHidden(true)
+    }
+}
+
 struct UpdatedFooter: View {
     let updatedAt: Date?
 
@@ -209,8 +227,13 @@ struct SmallWidgetView: View {
             EmptyStateView()
         } else {
             VStack(alignment: .leading, spacing: 8) {
-                ProviderRow(provider: entry.snapshot?.claudeCode, name: "Claude", showProgress: false)
-                ProviderRow(provider: entry.snapshot?.codex, name: "Codex", showProgress: false)
+                ProviderRow(
+                    provider: entry.snapshot?.claudeCode,
+                    providerID: .claudeCode,
+                    showProgress: false,
+                    showReset: true
+                )
+                ProviderRow(provider: entry.snapshot?.codex, providerID: .codex, showProgress: false)
                 Spacer(minLength: 0)
                 UpdatedFooter(updatedAt: entry.snapshot?.updatedAt)
             }
@@ -226,18 +249,28 @@ struct MediumWidgetView: View {
         if entry.snapshot == nil {
             EmptyStateView()
         } else {
-            VStack(alignment: .leading, spacing: 10) {
-                ProviderRow(
-                    provider: entry.snapshot?.claudeCode, name: "Claude",
-                    showProgress: true, showReset: true, showTokens: true
-                )
-                if let claude = entry.snapshot?.claudeCode, claude.hasQuotaInformation {
-                    CompactQuotaStrip(provider: claude)
+            VStack(alignment: .leading, spacing: 6) {
+                HStack(alignment: .top, spacing: 12) {
+                    ProviderRow(
+                        provider: entry.snapshot?.claudeCode,
+                        providerID: .claudeCode,
+                        showProgress: true,
+                        showReset: true,
+                        showTokens: true
+                    )
+                    .frame(maxWidth: .infinity, alignment: .topLeading)
+
+                    Divider()
+
+                    ProviderRow(
+                        provider: entry.snapshot?.codex,
+                        providerID: .codex,
+                        showProgress: true,
+                        showReset: true,
+                        showTokens: true
+                    )
+                    .frame(maxWidth: .infinity, alignment: .topLeading)
                 }
-                ProviderRow(
-                    provider: entry.snapshot?.codex, name: "Codex",
-                    showProgress: true, showReset: true, showTokens: true
-                )
                 Spacer(minLength: 0)
                 UpdatedFooter(updatedAt: entry.snapshot?.updatedAt)
             }
@@ -254,27 +287,29 @@ struct LargeWidgetView: View {
             EmptyStateView()
         } else {
             VStack(alignment: .leading, spacing: 12) {
-                ForEach([entry.snapshot?.claudeCode, entry.snapshot?.codex].compactMap { $0 }, id: \.displayName) { provider in
-                    VStack(alignment: .leading, spacing: 5) {
-                        ProviderRow(
-                            provider: provider, name: provider.displayName,
-                            showProgress: true, showReset: true
-                        )
-                        if provider.hasQuotaInformation {
-                            CompactQuotaStrip(provider: provider, showReset: true)
-                        }
-                        HStack(spacing: 12) {
-                            Stat(label: "5h", tokens: provider.fiveHourWindow?.tokens)
-                            Stat(label: "Today", tokens: provider.todayTokens)
-                            // Codex's weekly figure is its real quota window; Claude
-                            // Code has no weekly anchor, so it is a 7-day lookback.
-                            Stat(
-                                label: provider.weeklyWindow?.boundary == .reported ? "Week" : "7 days",
-                                tokens: provider.weeklyWindow?.tokens ?? provider.last7DaysTokens
+                ForEach(UsageProviderID.allCases) { providerID in
+                    if let provider = entry.snapshot?.provider(providerID) {
+                        VStack(alignment: .leading, spacing: 5) {
+                            ProviderRow(
+                                provider: provider, providerID: providerID,
+                                showProgress: true, showReset: true
                             )
+                            if provider.hasQuotaInformation {
+                                CompactQuotaStrip(provider: provider, showReset: true)
+                            }
+                            HStack(spacing: 12) {
+                                Stat(label: "5h", tokens: provider.fiveHourWindow?.tokens)
+                                Stat(label: "Today", tokens: provider.todayTokens)
+                                // Codex's weekly figure is its real quota window; Claude
+                                // Code has no weekly anchor, so it is a 7-day lookback.
+                                Stat(
+                                    label: provider.weeklyWindow?.boundary == .reported ? "Week" : "7 days",
+                                    tokens: provider.weeklyWindow?.tokens ?? provider.last7DaysTokens
+                                )
+                            }
+                            Sparkline(points: provider.dailyTotals ?? [])
+                                .frame(height: 26)
                         }
-                        Sparkline(points: provider.dailyTotals ?? [])
-                            .frame(height: 26)
                     }
                 }
                 Spacer(minLength: 0)
