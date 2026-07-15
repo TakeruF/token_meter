@@ -223,7 +223,7 @@ struct MenuBarLabel: View {
             if settings.menuBarStyle == .compact {
                 ForEach(Array(values.enumerated()), id: \.element.id) { index, item in
                     if index > 0 { Text("·") }
-                    ProviderIcon(providerID: item.providerID, size: 12)
+                    MenuBarProviderIcon(providerID: item.providerID)
                     Text(item.value)
                         .monospacedDigit()
                 }

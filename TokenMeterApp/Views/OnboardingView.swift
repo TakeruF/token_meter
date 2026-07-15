@@ -442,7 +442,7 @@ private struct MenuBarPreview: View {
     private var compactPreview: some View {
         HStack(spacing: 5) {
             if settings.showClaudeCode {
-                ProviderIcon(providerID: .claudeCode, size: 12)
+                MenuBarProviderIcon(providerID: .claudeCode)
                 Text("68%")
                     .monospacedDigit()
             }
@@ -450,7 +450,7 @@ private struct MenuBarPreview: View {
                 Text("·")
             }
             if settings.showCodex {
-                ProviderIcon(providerID: .codex, size: 12)
+                MenuBarProviderIcon(providerID: .codex)
                 Text("42%")
                     .monospacedDigit()
             }
