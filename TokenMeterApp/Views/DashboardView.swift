@@ -329,18 +329,58 @@ struct HourlyRow: Identifiable {
     var id: String { "\(provider.rawValue)-\(hour.timeIntervalSince1970)" }
 }
 
-/// Today's usage split by hour. Bars, not a line: hourly counts are spiky and
-/// often zero, which a line would smear into a misleading slope.
+/// Today's usage split by hour, drawn as a line so the shape of the day reads at a
+/// glance. The series is zero-filled from midnight to the current hour, so the line
+/// is continuous and a genuinely idle hour shows as a real 0 rather than a gap.
 struct HourlyChart: View {
     let rows: [HourlyRow]
 
+    /// The hour the cursor is currently hovering over, if any.
+    @State private var selectedHour: Date?
+
+    /// Rows for the hovered hour, ordered by provider.
+    private var selectedRows: [HourlyRow] {
+        guard let selectedHour else { return [] }
+        return rows
+            .filter { Calendar.current.isDate($0.hour, equalTo: selectedHour, toGranularity: .hour) }
+            .sorted { $0.provider.rawValue < $1.provider.rawValue }
+    }
+
     var body: some View {
         Chart(rows) { row in
-            BarMark(
-                x: .value("Hour", row.hour, unit: .hour),
+            LineMark(
+                x: .value("Hour", row.hour),
                 y: .value("Tokens", row.tokens)
             )
             .foregroundStyle(by: .value("Provider", row.provider.displayName))
+            .symbol(by: .value("Provider", row.provider.displayName))
+            .interpolationMethod(.linear)
+
+            if let selectedHour, Calendar.current.isDate(row.hour, equalTo: selectedHour, toGranularity: .hour) {
+                PointMark(
+                    x: .value("Hour", row.hour),
+                    y: .value("Tokens", row.tokens)
+                )
+                .foregroundStyle(by: .value("Provider", row.provider.displayName))
+                .symbolSize(90)
+            }
+        }
+        .chartXSelection(value: $selectedHour)
+        .chartOverlay { proxy in
+            // `chartXSelection` covers clicks/drags; add hover for the pointer.
+            GeometryReader { geo in
+                Rectangle().fill(.clear).contentShape(Rectangle())
+                    .onContinuousHover { phase in
+                        switch phase {
+                        case .active(let location):
+                            let origin = geo[proxy.plotFrame!].origin
+                            let x = location.x - origin.x
+                            selectedHour = proxy.value(atX: x, as: Date.self)
+                        case .ended:
+                            selectedHour = nil
+                        }
+                    }
+            }
         }
         .chartYAxis { AxisMarks(format: compactCount) }
         .chartXAxis {
@@ -350,7 +390,44 @@ struct HourlyChart: View {
             }
         }
         .frame(height: 220)
+        .overlay(alignment: .topLeading) {
+            if !selectedRows.isEmpty {
+                selectionLabel
+            }
+        }
         .accessibilityLabel("Hourly token usage by provider today")
+    }
+
+    /// A floating tooltip listing each provider's usage in the hovered hour.
+    private var selectionLabel: some View {
+        Grid(alignment: .leading, horizontalSpacing: 12, verticalSpacing: 2) {
+            GridRow {
+                Text(selectedHour ?? .now, format: Date.FormatStyle().hour())
+                    .font(.caption2.bold())
+                    .gridCellColumns(2)
+            }
+            ForEach(selectedRows) { row in
+                GridRow {
+                    Text(row.provider.displayName)
+                        .foregroundStyle(.secondary)
+                    Text(row.tokens, format: compactCount)
+                        .monospacedDigit()
+                        .gridColumnAlignment(.trailing)
+                }
+                .font(.caption2)
+            }
+        }
+        .fixedSize()
+        .padding(.horizontal, 8)
+        .padding(.vertical, 6)
+        .background(
+            RoundedRectangle(cornerRadius: 6)
+                .fill(Color(nsColor: .windowBackgroundColor))
+                .stroke(.quaternary, lineWidth: 1)
+        )
+        .shadow(color: .black.opacity(0.15), radius: 3, y: 1)
+        .padding(8)
+        .allowsHitTesting(false)
     }
 }
 
@@ -378,8 +455,12 @@ struct DailyChart: View {
 
     var body: some View {
         Chart(rows) { row in
+            // No `unit: .day`: that plots each point at the day-band's centre while the
+            // gridline/label sit at the band's start, so labels drift left of the
+            // points. `row.day` is already midnight, so a plain value puts the point
+            // exactly on its gridline — label centred directly under it.
             LineMark(
-                x: .value("Day", row.day, unit: .day),
+                x: .value("Day", row.day),
                 y: .value("Tokens", row.tokens)
             )
             .foregroundStyle(by: .value("Provider", row.provider.displayName))
@@ -388,7 +469,7 @@ struct DailyChart: View {
 
             if let selectedDay, Calendar.current.isDate(row.day, inSameDayAs: selectedDay) {
                 PointMark(
-                    x: .value("Day", row.day, unit: .day),
+                    x: .value("Day", row.day),
                     y: .value("Tokens", row.tokens)
                 )
                 .foregroundStyle(by: .value("Provider", row.provider.displayName))

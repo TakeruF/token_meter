@@ -13,6 +13,7 @@ struct OnboardingView: View {
     private enum Step: Int, CaseIterable, Identifiable {
         case welcome
         case providers
+        case install
         case display
         case ready
 
@@ -21,7 +22,7 @@ struct OnboardingView: View {
         var buttonTitle: LocalizedStringKey {
             switch self {
             case .welcome: return "Get Started"
-            case .providers, .display: return "Continue"
+            case .providers, .install, .display: return "Continue"
             case .ready: return "Open Dashboard"
             }
         }
@@ -48,6 +49,7 @@ struct OnboardingView: View {
                     switch step {
                     case .welcome: welcome
                     case .providers: providers
+                    case .install: install
                     case .display: display
                     case .ready: ready
                     }
@@ -74,7 +76,7 @@ struct OnboardingView: View {
 
     private var progress: some View {
         HStack(spacing: 8) {
-            ForEach(Step.allCases) { item in
+            ForEach(visibleSteps) { item in
                 Capsule()
                     .fill(item.rawValue <= step.rawValue ? Color.accentColor : Color.secondary.opacity(0.18))
                     .frame(width: item == step ? 34 : 16, height: 5)
@@ -85,8 +87,8 @@ struct OnboardingView: View {
         .accessibilityLabel(
             Text(AppLocalization.format(
                 "Onboarding step %d of %d",
-                step.rawValue + 1,
-                Step.allCases.count
+                stepNumber,
+                visibleSteps.count
             ))
         )
     }
@@ -181,6 +183,38 @@ struct OnboardingView: View {
         }
     }
 
+    private var install: some View {
+        VStack(spacing: 22) {
+            Spacer()
+
+            OnboardingHeading(
+                title: "Install the command-line tools",
+                subtitle: "Token Meter reads the local logs these tools write. Install the ones you picked, then continue — you can also finish setup now and install later."
+            )
+
+            VStack(spacing: 14) {
+                ForEach(providersNeedingInstall) { id in
+                    InstallInstructionCard(providerID: id, availability: monitor.states[id]?.availability)
+                }
+            }
+            .frame(maxWidth: 620)
+
+            Button {
+                recheck()
+            } label: {
+                Label("Re-check", systemImage: "arrow.clockwise")
+            }
+            .controlSize(.large)
+
+            Text("Already installed? Re-check to detect it. Token Meter also keeps looking in the background.")
+                .font(.callout)
+                .foregroundStyle(.secondary)
+                .multilineTextAlignment(.center)
+
+            Spacer()
+        }
+    }
+
     private var display: some View {
         VStack(spacing: 24) {
             Spacer()
@@ -269,8 +303,8 @@ struct OnboardingView: View {
 
             Text(AppLocalization.format(
                 "Step %d of %d",
-                step.rawValue + 1,
-                Step.allCases.count
+                stepNumber,
+                visibleSteps.count
             ))
                 .font(.caption)
                 .foregroundStyle(.secondary)
@@ -303,9 +337,38 @@ struct OnboardingView: View {
         return settings.showClaudeCode ? "Claude" : "Codex"
     }
 
+    /// The install step only appears when a selected provider is missing its CLI, so
+    /// people who already have the tools installed never see an empty screen.
+    private var visibleSteps: [Step] {
+        Step.allCases.filter { $0 != .install || !providersNeedingInstall.isEmpty }
+    }
+
+    private var stepNumber: Int {
+        (visibleSteps.firstIndex(of: step) ?? step.rawValue) + 1
+    }
+
+    /// Selected providers whose CLI was not found on this machine.
+    private var providersNeedingInstall: [UsageProviderID] {
+        UsageProviderID.allCases.filter { id in
+            guard settings.enabledProviders().contains(id) else { return false }
+            if case .notInstalled = monitor.states[id]?.availability { return true }
+            return false
+        }
+    }
+
     private func move(by offset: Int) {
-        guard let next = Step(rawValue: step.rawValue + offset) else { return }
-        withAnimation(.easeInOut(duration: 0.2)) { step = next }
+        let steps = visibleSteps
+        guard let index = steps.firstIndex(of: step) else { return }
+        let target = index + offset
+        guard steps.indices.contains(target) else { return }
+        withAnimation(.easeInOut(duration: 0.2)) { step = steps[target] }
+    }
+
+    private func recheck() {
+        Task {
+            await monitor.detectDataSources()
+            await monitor.refresh(reason: .manual)
+        }
     }
 
     private func finish() {
@@ -421,6 +484,101 @@ private struct ProviderChoiceCard: View {
                 providerID.displayName
             ))
         )
+    }
+}
+
+/// Install guidance for one provider whose CLI was not found. Mirrors the verified
+/// steps in Setup: Codex installs via Homebrew, Claude Code needs no CLI on PATH
+/// because Token Meter only reads its logs.
+private struct InstallInstructionCard: View {
+    let providerID: UsageProviderID
+    let availability: ProviderAvailability?
+
+    @State private var copied = false
+
+    private var isInstalled: Bool {
+        guard let availability else { return false }
+        if case .notInstalled = availability { return false }
+        return true
+    }
+
+    private var instruction: LocalizedStringKey {
+        switch providerID {
+        case .codex:
+            return "Install Codex with Homebrew, then sign in with `codex login` and run it once."
+        case .claudeCode:
+            return "Install Claude Code and run it once. Token Meter does not need the CLI on your PATH — it only reads the session logs."
+        }
+    }
+
+    private var command: String? {
+        providerID == .codex ? "brew install --cask codex" : nil
+    }
+
+    private var url: URL? {
+        switch providerID {
+        case .codex: return URL(string: "https://github.com/openai/codex")
+        case .claudeCode: return URL(string: "https://claude.com/claude-code")
+        }
+    }
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            HStack(spacing: 8) {
+                ProviderIcon(providerID: providerID, size: 22)
+                Text(providerID.displayName)
+                    .font(.headline)
+                Spacer()
+                Image(systemName: isInstalled ? "checkmark.circle.fill" : "arrow.down.circle")
+                    .foregroundStyle(isInstalled ? AnyShapeStyle(.green) : AnyShapeStyle(.orange))
+                Text(LocalizedStringKey(isInstalled ? "Installed" : "Not installed"))
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
+
+            if isInstalled {
+                Label("Detected on this Mac.", systemImage: "checkmark.seal")
+                    .font(.callout)
+                    .foregroundStyle(.green)
+            } else {
+                Text(instruction)
+                    .font(.callout)
+                    .fixedSize(horizontal: false, vertical: true)
+
+                HStack(spacing: 8) {
+                    if let command {
+                        Text(command)
+                            .font(.caption.monospaced())
+                            .padding(.horizontal, 8).padding(.vertical, 4)
+                            .background(.quaternary, in: RoundedRectangle(cornerRadius: 5))
+                            .textSelection(.enabled)
+
+                        Button(AppLocalization.string(copied ? "Copied" : "Copy")) {
+                            NSPasteboard.general.clearContents()
+                            NSPasteboard.general.setString(command, forType: .string)
+                            copied = true
+                            Task {
+                                try? await Task.sleep(for: .seconds(2))
+                                copied = false
+                            }
+                        }
+                        .controlSize(.small)
+                    }
+
+                    if let url {
+                        Link("Learn more", destination: url)
+                            .font(.caption)
+                    }
+                }
+            }
+        }
+        .padding(16)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 14))
+        .overlay {
+            RoundedRectangle(cornerRadius: 14)
+                .stroke(Color.secondary.opacity(0.14))
+        }
     }
 }
 

@@ -294,3 +294,14 @@
 "%@: %d tokens" = "%@：%dトークン";
 "reset time estimated from local activity" = "リセット時刻はローカル利用履歴から推定";
 "tokens · %@" = "トークン · %@";
+
+// Onboarding — CLI install step
+"Install the command-line tools" = "コマンドラインツールをインストール";
+"Token Meter reads the local logs these tools write. Install the ones you picked, then continue — you can also finish setup now and install later." = "Token Meter はこれらのツールが書き出すローカルログを読み取ります。選択したツールをインストールして続行してください。今は設定を終えて後からインストールしても構いません。";
+"Install Codex with Homebrew, then sign in with `codex login` and run it once." = "Homebrew で Codex をインストールし、`codex login` でサインインして一度実行してください。";
+"Install Claude Code and run it once. Token Meter does not need the CLI on your PATH — it only reads the session logs." = "Claude Code をインストールして一度実行してください。Token Meter は CLI が PATH 上にある必要はなく、セッションログを読み取るだけです。";
+"Installed" = "インストール済み";
+"Detected on this Mac." = "この Mac で検出されました。";
+"Already installed? Re-check to detect it. Token Meter also keeps looking in the background." = "すでにインストール済みですか？「再確認」で検出できます。Token Meter はバックグラウンドでも探し続けます。";
+"Run the setup guide again" = "セットアップガイドをもう一度実行";
+"Reopens the welcome flow, including command-line tool installation steps for any provider that isn't set up yet." = "ようこそ画面を再表示します。未設定のプロバイダーがあれば、コマンドラインツールのインストール手順も含まれます。";

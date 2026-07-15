@@ -294,3 +294,14 @@
 "%@: %d tokens" = "%@：%d Token";
 "reset time estimated from local activity" = "重置时间根据本地活动估算";
 "tokens · %@" = "Token · %@";
+
+// Onboarding — CLI install step
+"Install the command-line tools" = "安装命令行工具";
+"Token Meter reads the local logs these tools write. Install the ones you picked, then continue — you can also finish setup now and install later." = "Token Meter 读取这些工具写入的本地日志。请安装你所选择的工具后继续——你也可以现在完成设置，稍后再安装。";
+"Install Codex with Homebrew, then sign in with `codex login` and run it once." = "使用 Homebrew 安装 Codex，然后用 `codex login` 登录并运行一次。";
+"Install Claude Code and run it once. Token Meter does not need the CLI on your PATH — it only reads the session logs." = "安装 Claude Code 并运行一次。Token Meter 无需将 CLI 放入 PATH——它只读取会话日志。";
+"Installed" = "已安装";
+"Detected on this Mac." = "已在此 Mac 上检测到。";
+"Already installed? Re-check to detect it. Token Meter also keeps looking in the background." = "已经安装了？点击“重新检查”即可检测。Token Meter 也会在后台持续查找。";
+"Run the setup guide again" = "重新运行设置向导";
+"Reopens the welcome flow, including command-line tool installation steps for any provider that isn't set up yet." = "重新打开欢迎流程，若有尚未设置的提供方，也会包含命令行工具的安装步骤。";

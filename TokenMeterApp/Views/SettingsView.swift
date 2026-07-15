@@ -23,6 +23,17 @@ struct SettingsView: View {
                 }
             }
 
+            Section("Setup") {
+                Button("Run the setup guide again") {
+                    settings.hasCompletedSetup = false
+                    MainWindowRouter.shared.selection = .dashboard
+                }
+                Text("Reopens the welcome flow, including command-line tool installation steps for any provider that isn't set up yet.")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+
             Section("Claude Pro / Max usage") {
                 Toggle("Use Claude Code sign-in for usage checks", isOn: $settings.claudeOAuthUsageEnabled)
                     .onChange(of: settings.claudeOAuthUsageEnabled) { _, _ in
