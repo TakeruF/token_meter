@@ -6,6 +6,20 @@
         <description>Token Meter release updates</description>
         <language>en</language>
         <item>
+            <title>1.1.1</title>
+            <pubDate>Wed, 15 Jul 2026 10:08:30 +0900</pubDate>
+            <link>https://github.com/TakeruF/token_meter/releases/tag/v1.1.1</link>
+            <sparkle:version>4</sparkle:version>
+            <sparkle:shortVersionString>1.1.1</sparkle:shortVersionString>
+            <sparkle:minimumSystemVersion>14.0</sparkle:minimumSystemVersion>
+            <enclosure url="https://github.com/TakeruF/token_meter/releases/download/v1.1.1/TokenMeter-1.1.1.zip" length="5851251" type="application/octet-stream" sparkle:edSignature="7a/6PShzpG45PM1PkhvvcuYmfTL4UO+iDCYU9vt6PLLd4iKS/OliRtI1un2XV+uWEE6D8wCDdivfOCQlo/bUCg=="/>
+            <sparkle:deltas>
+                <enclosure url="https://github.com/TakeruF/token_meter/releases/download/v1.1.1/TokenMeter4-3.delta" sparkle:deltaFrom="3" length="152130" type="application/octet-stream" sparkle:deltaFromSparkleExecutableSize="975840" sparkle:deltaFromSparkleLocales="de,he,ar,el,ja,fa,uk" sparkle:edSignature="QG0qN8ig9k92pQTwPJ9exVfNNxXYWPHfa8C+cLVKEVVf4JNuhtOv3g8ONESfUqH01OWIcSOz1a27saR9M/APBA=="/>
+                <enclosure url="https://github.com/TakeruF/token_meter/releases/download/v1.1.1/TokenMeter4-2.delta" sparkle:deltaFrom="2" length="316422" type="application/octet-stream" sparkle:deltaFromSparkleExecutableSize="975840" sparkle:deltaFromSparkleLocales="de,he,ar,el,ja,fa,uk" sparkle:edSignature="XFg+R2vGUog0lXF3IJEcB7RTs4qXUpBk5/w56E34U8SRjLqSd/lRFEVebm/iKQmfSLo6QNTULGtQJL5FW3CQCA=="/>
+                <enclosure url="https://github.com/TakeruF/token_meter/releases/download/v1.1.1/TokenMeter4-1.delta" sparkle:deltaFrom="1" length="472654" type="application/octet-stream" sparkle:deltaFromSparkleExecutableSize="975840" sparkle:deltaFromSparkleLocales="de,he,ar,el,ja,fa,uk" sparkle:edSignature="RwSmcTojkTE/rVYDyVtkRpJTGUj/xcG0rmTKF+ghDUpt0yNnYAXV98/Cei/sKqMJ7FqL37/q7LEVOkbbVWsRCw=="/>
+            </sparkle:deltas>
+        </item>
+        <item>
             <title>1.1.0</title>
             <pubDate>Wed, 15 Jul 2026 09:54:41 +0900</pubDate>
             <link>https://github.com/TakeruF/token_meter/releases/tag/v1.1.0</link>
