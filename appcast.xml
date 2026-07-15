@@ -6,6 +6,18 @@
         <description>Token Meter release updates</description>
         <language>en</language>
         <item>
+            <title>1.0.1</title>
+            <pubDate>Wed, 15 Jul 2026 09:27:37 +0900</pubDate>
+            <link>https://github.com/TakeruF/token_meter/releases/tag/v1.0.1</link>
+            <sparkle:version>2</sparkle:version>
+            <sparkle:shortVersionString>1.0.1</sparkle:shortVersionString>
+            <sparkle:minimumSystemVersion>14.0</sparkle:minimumSystemVersion>
+            <enclosure url="https://github.com/TakeruF/token_meter/releases/download/v1.0.1/TokenMeter-1.0.1.zip" length="5758950" type="application/octet-stream" sparkle:edSignature="QI19TlkqdCK9fp7oZsl3RhcWxuqfAr88+6SjJtpQiTKNqSlcXAjbc47BWyEGjEt4k1HBWTG4mET18CxubEnDCw=="/>
+            <sparkle:deltas>
+                <enclosure url="https://github.com/TakeruF/token_meter/releases/download/v1.0.1/TokenMeter2-1.delta" sparkle:deltaFrom="1" length="340330" type="application/octet-stream" sparkle:deltaFromSparkleExecutableSize="975840" sparkle:deltaFromSparkleLocales="de,he,ar,el,ja,fa,uk" sparkle:edSignature="RD93zL1Tj+OafnUhE7xglN7KVyTkOIOLUcuvjxc2GGdSGBGIg090+gBmiI2cyyUZqWPH8iiijROtQ7q9BLSQCA=="/>
+            </sparkle:deltas>
+        </item>
+        <item>
             <title>1.0.0</title>
             <pubDate>Wed, 15 Jul 2026 08:24:01 +0900</pubDate>
             <link>https://github.com/TakeruF/token_meter/releases/tag/v1.0.0</link>
