@@ -10,6 +10,10 @@ struct SettingsView: View {
 
     var body: some View {
         Form {
+            Section("Language") {
+                AppLanguagePicker()
+            }
+
             Section("Providers") {
                 Toggle(isOn: $settings.showClaudeCode) {
                     ProviderLabel(providerID: .claudeCode, font: .body, iconSize: 15)
@@ -98,7 +102,7 @@ struct SettingsView: View {
             Section("Data") {
                 Picker("Keep history for", selection: $settings.retentionDays) {
                     ForEach(AppSettings.retentionOptions, id: \.self) { days in
-                        Text("\(days) days").tag(days)
+                        Text(AppLocalization.format("%d days", days)).tag(days)
                     }
                 }
                 LabeledContent("Stored events", value: "\(monitor.storedEventCount)")
@@ -140,8 +144,8 @@ struct SettingsView: View {
 
     private func intervalLabel(_ seconds: TimeInterval) -> String {
         seconds < 3600
-            ? "\(Int(seconds / 60)) minutes"
-            : "\(Int(seconds / 3600)) hour"
+            ? AppLocalization.format("%d minutes", Int(seconds / 60))
+            : AppLocalization.format("%d hour", Int(seconds / 3600))
     }
 
     private var appVersion: String {
@@ -165,24 +169,24 @@ struct DiagnosticsContent: View {
                 row(
                     "App Group",
                     monitor.usingAppGroup
-                        ? "Active (\(TokenMeterPaths.appGroupID))"
-                        : "Unavailable — using a local fallback; the widget cannot read this"
+                        ? AppLocalization.format("Active (%@)", TokenMeterPaths.appGroupID)
+                        : AppLocalization.string("Unavailable — using a local fallback; the widget cannot read this")
                 )
             }
 
             ForEach(UsageProviderID.allCases) { id in
                 if let state = monitor.states[id] {
                     group(id.displayName) {
-                        row("Status", state.availability.headline)
-                        row("Detail", state.availability.detail)
-                        row("Source", state.snapshot?.source.displayName ?? "—")
-                        row("Publishes quota", state.snapshot?.hasQuotaInformation == true ? "Yes" : "No")
+                        row("Status", AppLocalization.string(state.availability.headline))
+                        row("Detail", AppLocalization.providerDetail(state.availability.detail))
+                        row("Source", state.snapshot.map { AppLocalization.string($0.source.displayName) } ?? "—")
+                        row("Publishes quota", AppLocalization.string(state.snapshot?.hasQuotaInformation == true ? "Yes" : "No"))
                         if id == .claudeCode {
-                            row("OAuth usage", state.snapshot?.quotaIntegrationEnabled == true ? "Enabled" : "Disabled")
-                            row("OAuth cache", state.snapshot?.quotaIsCached == true ? "Cached" : "Current / unavailable")
+                            row("OAuth usage", AppLocalization.string(state.snapshot?.quotaIntegrationEnabled == true ? "Enabled" : "Disabled"))
+                            row("OAuth cache", AppLocalization.string(state.snapshot?.quotaIsCached == true ? "Cached" : "Current / unavailable"))
                             row(
                                 "Quota updated",
-                                state.snapshot?.quotaUpdatedAt?.formatted(date: .abbreviated, time: .standard) ?? "Never"
+                                state.snapshot?.quotaUpdatedAt?.formatted(date: .abbreviated, time: .standard) ?? AppLocalization.string("Never")
                             )
                         }
                         row("5-hour window", describe(state.snapshot?.shortWindowUsage))
@@ -190,7 +194,7 @@ struct DiagnosticsContent: View {
                         row("Model", state.snapshot?.modelName ?? "—")
                         row(
                             "Last update",
-                            state.lastSuccessfulUpdate.map { $0.formatted(date: .abbreviated, time: .standard) } ?? "Never"
+                            state.lastSuccessfulUpdate.map { $0.formatted(date: .abbreviated, time: .standard) } ?? AppLocalization.string("Never")
                         )
                         if let error = state.lastError {
                             row("Last error", error)
@@ -210,19 +214,27 @@ struct DiagnosticsContent: View {
     /// estimated one can never be mistaken for each other while debugging.
     private func describe(_ usage: TokenWindowUsage?) -> String {
         guard let usage else { return "—" }
-        var text = "\(usage.tokens) tokens since \(usage.start.formatted(date: .abbreviated, time: .standard))"
+        var text = AppLocalization.format(
+            "%d tokens since %@",
+            usage.tokens,
+            usage.start.formatted(date: .abbreviated, time: .standard)
+        )
         if let resetsAt = usage.resetsAt {
-            let origin = usage.boundary == .reported ? "reported" : "estimated"
-            text += ", resets \(resetsAt.formatted(date: .abbreviated, time: .standard)) (\(origin))"
+            let origin = AppLocalization.string(usage.boundary == .reported ? "reported" : "estimated")
+            text += AppLocalization.format(
+                ", resets %@ (%@)",
+                resetsAt.formatted(date: .abbreviated, time: .standard),
+                origin
+            )
         } else {
-            text += ", rolling (no reset)"
+            text += AppLocalization.string(", rolling (no reset)")
         }
         return text
     }
 
     private func group(_ title: String, @ViewBuilder content: () -> some View) -> some View {
         VStack(alignment: .leading, spacing: 5) {
-            Text(title).font(.subheadline.weight(.semibold))
+            Text(LocalizedStringKey(title)).font(.subheadline.weight(.semibold))
             content()
         }
         .frame(maxWidth: .infinity, alignment: .leading)
@@ -230,7 +242,7 @@ struct DiagnosticsContent: View {
 
     private func row(_ label: String, _ value: String) -> some View {
         HStack(alignment: .top) {
-            Text(label)
+            Text(LocalizedStringKey(label))
                 .font(.caption)
                 .foregroundStyle(.secondary)
                 .frame(width: 110, alignment: .leading)

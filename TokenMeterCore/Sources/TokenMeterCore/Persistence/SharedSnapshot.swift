@@ -89,11 +89,20 @@ public struct SharedSnapshot: Codable, Sendable, Equatable {
     }
 
     public var updatedAt: Date
+    /// The language selected in the main app. Optional for compatibility with
+    /// snapshots written by older releases.
+    public var languageCode: String?
     public var claudeCode: Provider?
     public var codex: Provider?
 
-    public init(updatedAt: Date, claudeCode: Provider? = nil, codex: Provider? = nil) {
+    public init(
+        updatedAt: Date,
+        languageCode: String? = nil,
+        claudeCode: Provider? = nil,
+        codex: Provider? = nil
+    ) {
         self.updatedAt = updatedAt
+        self.languageCode = languageCode
         self.claudeCode = claudeCode
         self.codex = codex
     }

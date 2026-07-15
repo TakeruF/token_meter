@@ -1,0 +1,16 @@
+"today" = "오늘";
+"No usage today" = "오늘 사용량 없음";
+"5h limit" = "5시간 한도";
+"est." = "추정";
+"Open the app to load data" = "앱을 열어 데이터를 불러오세요";
+"No data yet" = "아직 데이터 없음";
+"Open Token Meter" = "Token Meter 열기";
+"Today" = "오늘";
+"Week" = "주간";
+"7 days" = "7일";
+"No data" = "데이터 없음";
+"Cached" = "캐시됨";
+"Cached usage" = "캐시된 사용량";
+"No usage in the last 7 days" = "최근 7일 사용량 없음";
+"Token usage for the last 7 days" = "최근 7일 토큰 사용량";
+"Claude and Codex usage at a glance." = "Claude와 Codex 사용량을 한눈에 확인하세요.";

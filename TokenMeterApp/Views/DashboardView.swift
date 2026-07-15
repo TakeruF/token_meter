@@ -15,9 +15,9 @@ struct DashboardView: View {
         var id: Int { rawValue }
         var label: String {
             switch self {
-            case .today: return "Today"
-            case .week: return "7 days"
-            case .month: return "30 days"
+            case .today: return AppLocalization.string("Today")
+            case .week: return AppLocalization.string("7 days")
+            case .month: return AppLocalization.string("30 days")
             }
         }
     }
@@ -85,7 +85,7 @@ struct DashboardView: View {
                 SummaryCard(
                     providerID: id,
                     value: total > 0 ? total.abbreviatedTokens : nil,
-                    caption: "tokens · \(range.label.lowercased())",
+                    caption: AppLocalization.format("tokens · %@", range.label),
                     window: monitor.states[id]?.snapshot?.primaryWindow
                 )
             }
@@ -116,7 +116,9 @@ struct DashboardView: View {
                             }
                             if snapshot?.quotaIsCached == true {
                                 Label(
-                                    snapshot?.quotaError == nil ? "Showing cached value" : "Showing last successful value",
+                                    AppLocalization.string(
+                                        snapshot?.quotaError == nil ? "Showing cached value" : "Showing last successful value"
+                                    ),
                                     systemImage: snapshot?.quotaError == nil ? "clock" : "clock.badge.exclamationmark"
                                 )
                                     .font(.caption)
@@ -373,7 +375,7 @@ struct SectionBox<Content: View>: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
-            Text(title).font(.headline)
+            Text(LocalizedStringKey(title)).font(.headline)
             content
         }
         .padding(14)
@@ -401,7 +403,7 @@ struct SummaryCard: View {
                     .font(.title3)
                     .foregroundStyle(.secondary)
             }
-            Text(caption).font(.caption).foregroundStyle(.secondary)
+            Text(LocalizedStringKey(caption)).font(.caption).foregroundStyle(.secondary)
 
             if let window, let remaining = window.remainingRatio {
                 let level = window.statusLevel
@@ -428,7 +430,7 @@ struct BreakdownStat: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 2) {
-            Text(label).font(.caption).foregroundStyle(.secondary)
+            Text(LocalizedStringKey(label)).font(.caption).foregroundStyle(.secondary)
             if let value {
                 Text(value.abbreviatedTokens)
                     .font(.callout.weight(.medium))
@@ -456,7 +458,7 @@ struct NoDataInline: View {
 struct NoDataCard: View {
     let message: String
     var body: some View {
-        Label(message, systemImage: "tray")
+        Label(AppLocalization.string(message), systemImage: "tray")
             .foregroundStyle(.secondary)
             .padding(14)
             .frame(maxWidth: .infinity, alignment: .leading)

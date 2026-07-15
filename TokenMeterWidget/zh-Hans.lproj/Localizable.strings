@@ -1,0 +1,16 @@
+"today" = "今天";
+"No usage today" = "今天无用量";
+"5h limit" = "5小时限额";
+"est." = "估算";
+"Open the app to load data" = "打开应用以加载数据";
+"No data yet" = "暂无数据";
+"Open Token Meter" = "打开 Token Meter";
+"Today" = "今天";
+"Week" = "每周";
+"7 days" = "7天";
+"No data" = "无数据";
+"Cached" = "缓存";
+"Cached usage" = "缓存用量";
+"No usage in the last 7 days" = "过去7天无用量";
+"Token usage for the last 7 days" = "过去7天的 Token 用量";
+"Claude and Codex usage at a glance." = "一览 Claude 与 Codex 用量。";

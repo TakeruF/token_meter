@@ -16,8 +16,10 @@ struct TokenMeterApp: App {
         MenuBarExtra(isInserted: $settings.showMenuBarExtra) {
             MenuBarContentView(monitor: monitor)
                 .environment(monitor)
+                .environment(\.locale, settings.appLanguage.locale)
         } label: {
             MenuBarLabel(monitor: monitor)
+                .environment(\.locale, settings.appLanguage.locale)
         }
         .menuBarExtraStyle(.window)
 
@@ -54,6 +56,60 @@ enum AppLaunchOptions {
         false
         #endif
     }
+
+    static var showSettings: Bool {
+        #if DEBUG
+        ProcessInfo.processInfo.arguments.contains("--show-settings")
+        #else
+        false
+        #endif
+    }
+
+    static var showSetup: Bool {
+        #if DEBUG
+        ProcessInfo.processInfo.arguments.contains("--show-setup")
+        #else
+        false
+        #endif
+    }
+
+    static var showDashboard: Bool {
+        #if DEBUG
+        ProcessInfo.processInfo.arguments.contains("--show-dashboard")
+        #else
+        false
+        #endif
+    }
+
+    static var onboardingStep: Int? {
+        #if DEBUG
+        value(after: "--onboarding-step=").flatMap(Int.init)
+        #else
+        nil
+        #endif
+    }
+
+    static var captureUIPath: String? {
+        #if DEBUG
+        value(after: "--capture-ui=")
+        #else
+        nil
+        #endif
+    }
+
+    static var scrollSetupToMenuBar: Bool {
+        #if DEBUG
+        ProcessInfo.processInfo.arguments.contains("--scroll-setup-to-menu-bar")
+        #else
+        false
+        #endif
+    }
+
+    private static func value(after prefix: String) -> String? {
+        ProcessInfo.processInfo.arguments
+            .first { $0.hasPrefix(prefix) }
+            .map { String($0.dropFirst(prefix.count)) }
+    }
 }
 
 /// A single routing point for menu-bar buttons and the standard Settings command.
@@ -63,7 +119,12 @@ enum AppLaunchOptions {
 final class MainWindowRouter {
     static let shared = MainWindowRouter()
 
-    var selection: MainWindowTab = AppSettings.shared.hasCompletedSetup ? .dashboard : .setup
+    var selection: MainWindowTab = {
+        if AppLaunchOptions.showSettings { return .settings }
+        if AppLaunchOptions.showSetup { return .setup }
+        if AppLaunchOptions.showDashboard { return .dashboard }
+        return AppSettings.shared.hasCompletedSetup ? .dashboard : .setup
+    }()
 
     private init() {}
 
@@ -95,7 +156,7 @@ struct MainWindowCommands: Commands {
 
     var body: some Commands {
         CommandGroup(replacing: .appSettings) {
-            Button("Settings…") {
+            Button(AppLocalization.string("Settings…")) {
                 MainWindowRouter.shared.show(.settings, using: openWindow)
             }
             .keyboardShortcut(",", modifiers: .command)
@@ -114,7 +175,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             await UsageMonitor.shared.start()
         }
 
-        if !AppSettings.shared.hasCompletedSetup || AppLaunchOptions.showOnboarding {
+        if !AppSettings.shared.hasCompletedSetup
+            || AppLaunchOptions.showOnboarding
+            || AppLaunchOptions.showSettings
+            || AppLaunchOptions.showSetup
+            || AppLaunchOptions.showDashboard {
             NSApp.setActivationPolicy(.regular)
             NSApp.activate(ignoringOtherApps: true)
 
@@ -124,6 +189,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { [weak self] in
                 if let window = NSApp.windows.first(where: { $0.identifier?.rawValue == "dashboard" }) {
                     window.makeKeyAndOrderFront(nil)
+                    self?.scheduleUICapture(for: window)
                     return
                 }
                 self?.showFirstRunWindow()
@@ -150,6 +216,27 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         window.center()
         window.makeKeyAndOrderFront(nil)
         firstRunWindow = window
+        scheduleUICapture(for: window)
+    }
+
+    @MainActor
+    private func scheduleUICapture(for window: NSWindow) {
+        guard let path = AppLaunchOptions.captureUIPath else { return }
+        window.setContentSize(NSSize(width: 760, height: 540))
+
+        let captureDelay = AppLaunchOptions.scrollSetupToMenuBar ? 5.0 : 1.0
+        DispatchQueue.main.asyncAfter(deadline: .now() + captureDelay) {
+            guard let view = window.contentView,
+                  let bitmap = view.bitmapImageRepForCachingDisplay(in: view.bounds) else { return }
+            view.cacheDisplay(in: view.bounds, to: bitmap)
+            guard let data = bitmap.representation(using: .png, properties: [:]) else { return }
+            do {
+                try data.write(to: URL(fileURLWithPath: path), options: .atomic)
+                NSApp.terminate(nil)
+            } catch {
+                NSLog("TokenMeter: UI capture failed: %@", error.localizedDescription)
+            }
+        }
     }
 
     func applicationShouldTerminateAfterLastWindowClosed(_ sender: NSApplication) -> Bool {
@@ -184,6 +271,10 @@ struct MainWindowView: View {
             } else {
                 OnboardingView(monitor: monitor)
             }
+        }
+        .environment(\.locale, settings.appLanguage.locale)
+        .onChange(of: settings.appLanguage) { _, _ in
+            monitor.publishSnapshot()
         }
     }
 
@@ -243,6 +334,8 @@ struct MenuBarLabel: View {
                 }
             }
         }
-        .accessibilityLabel(title.isEmpty ? "Token Meter" : "Token Meter: \(title)")
+        .accessibilityLabel(
+            title.isEmpty ? "Token Meter" : AppLocalization.format("Token Meter: %@", title)
+        )
     }
 }

@@ -57,7 +57,7 @@ struct CheckForUpdatesView: View {
     }
 
     var body: some View {
-        Button("Check for Updates…", action: updater.checkForUpdates)
+        Button(AppLocalization.string("Check for Updates…"), action: updater.checkForUpdates)
             .disabled(!viewModel.canCheckForUpdates)
     }
 }
@@ -76,12 +76,12 @@ struct UpdaterSettingsView: View {
     }
 
     var body: some View {
-        Toggle("Automatically check for updates", isOn: $automaticallyChecksForUpdates)
+        Toggle(AppLocalization.string("Automatically check for updates"), isOn: $automaticallyChecksForUpdates)
             .onChange(of: automaticallyChecksForUpdates) { _, enabled in
                 updater.automaticallyChecksForUpdates = enabled
             }
 
-        Toggle("Automatically download updates", isOn: $automaticallyDownloadsUpdates)
+        Toggle(AppLocalization.string("Automatically download updates"), isOn: $automaticallyDownloadsUpdates)
             .disabled(!automaticallyChecksForUpdates)
             .onChange(of: automaticallyDownloadsUpdates) { _, enabled in
                 updater.automaticallyDownloadsUpdates = enabled

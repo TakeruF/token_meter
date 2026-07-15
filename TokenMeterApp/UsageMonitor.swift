@@ -59,6 +59,9 @@ final class UsageMonitor {
     private var wakeObserver: NSObjectProtocol?
     /// Guards against overlapping refreshes (a burst of file events plus a timer tick).
     private var refreshTask: Task<Void, Never>?
+    /// Snapshot writes are small but asynchronous. Chaining them prevents an older
+    /// write from finishing after a newer one and restoring a stale widget value.
+    private var snapshotWriteTask: Task<Void, Never>?
 
     /// Generous, because the very first scan legitimately reads every existing log
     /// (hundreds of MB here). Later refreshes only read what was appended.
@@ -80,7 +83,10 @@ final class UsageMonitor {
                 .codex: CodexUsageProvider(store: store),
             ]
         } catch {
-            fatalError = "Could not open the history database: \(error.localizedDescription)"
+            fatalError = AppLocalization.format(
+                "Could not open the history database: %@",
+                error.localizedDescription
+            )
         }
     }
 
@@ -222,8 +228,11 @@ final class UsageMonitor {
 
     /// Writes the App Group JSON and nudges WidgetKit. Only values we actually have
     /// are written; a provider with no quota gets nulls, not zeros.
-    private func publishSnapshot() {
-        var snapshot = SharedSnapshot(updatedAt: Date())
+    func publishSnapshot() {
+        var snapshot = SharedSnapshot(
+            updatedAt: Date(),
+            languageCode: settings.appLanguage.rawValue
+        )
 
         for id in UsageProviderID.allCases {
             guard settings.enabledProviders().contains(id), let state = states[id] else { continue }
@@ -242,7 +251,7 @@ final class UsageMonitor {
                 lastUpdated: state.lastSuccessfulUpdate,
                 statusHeadline: state.availability.isAvailable || state.snapshot?.hasQuotaInformation == true
                     ? nil
-                    : state.availability.headline,
+                    : AppLocalization.string(state.availability.headline),
                 hasQuotaInformation: state.snapshot?.hasQuotaInformation ?? false,
                 dailyTotals: state.weekSeries.map { .init(day: $0.day, totalTokens: $0.totalTokens) },
                 fiveHourWindow: settings.showFiveHourWindow ? state.snapshot?.shortWindowUsage : nil,
@@ -262,8 +271,12 @@ final class UsageMonitor {
         }
 
         // Off the main actor: this is disk I/O, and the UI must never wait on it.
+        // Awaiting the previous write preserves the same order in which snapshots
+        // were produced on the main actor.
         let store = snapshotStore
-        Task.detached(priority: .utility) {
+        let previousWrite = snapshotWriteTask
+        snapshotWriteTask = Task.detached(priority: .utility) {
+            await previousWrite?.value
             do {
                 try store.write(snapshot)
                 await MainActor.run {
@@ -350,11 +363,12 @@ final class UsageMonitor {
                 return MenuBarProviderValue(providerID: id, value: "—", compactValue: "—")
             }
 
-            if settings.menuBarShowPercentage, let remaining = state.snapshot?.primaryWindow?.remainingRatio {
+            if settings.menuBarShowPercentage,
+               let remaining = menuBarWindow(for: state.snapshot)?.remainingRatio {
                 let percentage = "\(Int((remaining * 100).rounded()))%"
                 return MenuBarProviderValue(
                     providerID: id,
-                    value: "\(percentage) left",
+                    value: AppLocalization.format("%@ left", percentage),
                     compactValue: percentage
                 )
             }
@@ -387,14 +401,14 @@ final class UsageMonitor {
         return title
     }
 
-    /// "↻1h20m" for the soonest 5-hour reset across the visible providers. Menu bar
-    /// width is scarce, so this is the countdown only — the popover names the window.
+    /// "↻1h20m" for the soonest selected-limit reset across the visible providers.
+    /// Menu bar width is scarce, so this is the countdown only.
     private func nextResetCountdown(now: Date = Date()) -> String? {
         let resets = UsageProviderID.allCases
             .filter { settings.enabledProviders().contains($0) }
             .compactMap {
-                states[$0]?.snapshot?.shortWindow?.resetsAt
-                    ?? states[$0]?.snapshot?.shortWindowUsage?.resetsAt
+                guard let snapshot = states[$0]?.snapshot else { return nil }
+                return menuBarWindow(for: snapshot)?.resetsAt
             }
             .filter { $0 > now }
 
@@ -403,6 +417,19 @@ final class UsageMonitor {
         let hours = interval / 3600
         let minutes = (interval % 3600) / 60
         return hours > 0 ? "↻\(hours)h\(minutes)m" : "↻\(minutes)m"
+    }
+
+    /// The preferred window wins when present. A provider that temporarily omits
+    /// it falls back to the other reported quota instead of showing a false 100% or
+    /// dropping to token counts. This currently covers Codex's missing 5-hour limit.
+    private func menuBarWindow(for snapshot: UsageSnapshot?) -> UsageWindow? {
+        guard let snapshot else { return nil }
+        switch settings.menuBarLimitWindow {
+        case .fiveHour:
+            return snapshot.shortWindow ?? snapshot.weeklyWindow
+        case .weekly:
+            return snapshot.weeklyWindow ?? snapshot.shortWindow
+        }
     }
 }
 

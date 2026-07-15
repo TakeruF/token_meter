@@ -83,7 +83,7 @@ struct ProviderRow: View {
 
             if showTokens {
                 if let tokens = provider?.todayTokens, tokens > 0 {
-                    Text("\(tokens.abbreviatedTokens) today")
+                    Text("\(tokens.abbreviatedTokens) \(Text("today"))")
                         .font(.caption2)
                         .foregroundStyle(.secondary)
                         .monospacedDigit()
@@ -106,7 +106,7 @@ struct ProviderRow: View {
         if let resetsAt = provider?.fiveHourQuota?.resetsAt {
             HStack(spacing: 3) {
                 Image(systemName: "clock.arrow.circlepath")
-                Text("5h limit \(resetsAt, style: .relative)")
+                Text("\(Text("5h limit")) \(resetsAt, style: .relative)")
             }
             .font(.caption2)
             .foregroundStyle(.secondary)
@@ -114,7 +114,7 @@ struct ProviderRow: View {
         } else if let five = provider?.fiveHourWindow, let resetsAt = five.resetsAt {
             HStack(spacing: 3) {
                 Image(systemName: "clock.arrow.circlepath")
-                Text("5h limit \(resetsAt, style: .relative)")
+                Text("\(Text("5h limit")) \(resetsAt, style: .relative)")
                 if five.boundary == .inferred {
                     Text("est.").italic()
                 }
@@ -460,6 +460,10 @@ struct TokenMeterWidgetEntryView: View {
             default: MediumWidgetView(entry: entry)
             }
         }
+        .environment(
+            \.locale,
+            Locale(identifier: entry.snapshot?.languageCode ?? Locale.preferredLanguages.first ?? "en")
+        )
         // Tapping anywhere opens the dashboard.
         .widgetURL(URL(string: "tokenmeter://dashboard"))
         .containerBackground(.fill.tertiary, for: .widget)

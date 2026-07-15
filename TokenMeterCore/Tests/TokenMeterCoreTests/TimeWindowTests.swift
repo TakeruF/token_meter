@@ -200,9 +200,11 @@ final class TimeWindowTests: XCTestCase {
         """
         try legacy.write(to: url, atomically: true, encoding: .utf8)
 
-        let read = try XCTUnwrap(SharedSnapshotStore(containerURL: dir).readIfPresent()?.claudeCode)
+        let decoded = try XCTUnwrap(SharedSnapshotStore(containerURL: dir).readIfPresent())
+        let read = try XCTUnwrap(decoded.claudeCode)
         XCTAssertEqual(read.todayTokens, 1234)
         XCTAssertNil(read.fiveHourWindow)
         XCTAssertNil(read.weeklyWindow)
+        XCTAssertNil(decoded.languageCode)
     }
 }

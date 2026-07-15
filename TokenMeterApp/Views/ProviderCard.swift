@@ -81,7 +81,7 @@ struct ProviderCard: View {
                 Text("\(Int((remaining * 100).rounded()))% left")
                     .font(.system(.title3, design: .rounded).weight(.semibold))
                     .monospacedDigit()
-                Text(level.label)
+                Text(AppLocalization.string(level.label))
                     .font(.caption)
                     .foregroundStyle(.secondary)
                 Spacer()
@@ -101,7 +101,8 @@ struct ProviderCard: View {
 
             // The window rows below repeat this countdown when they cover the same
             // window, so only show it here when nothing else will.
-            if !resetIsShownBelow, let reset = window.resetDescription() {
+            if !resetIsShownBelow,
+               let reset = AppLocalization.resetDescription(resetsAt: window.resetsAt) {
                 Label(reset, systemImage: "clock.arrow.circlepath")
                     .font(.caption)
                     .foregroundStyle(.secondary)
@@ -138,7 +139,7 @@ struct ProviderCard: View {
                 HStack(spacing: 4) {
                     if snapshot?.quotaIsCached == true {
                         Label(
-                            snapshot?.quotaError == nil ? "Cached" : "Last successful value",
+                            AppLocalization.string(snapshot?.quotaError == nil ? "Cached" : "Last successful value"),
                             systemImage: snapshot?.quotaError == nil ? "clock" : "clock.badge.exclamationmark"
                         )
                     } else {
@@ -160,7 +161,9 @@ struct ProviderCard: View {
             Label {
                 VStack(alignment: .leading, spacing: 1) {
                     Text("Unavailable").font(.callout.weight(.medium))
-                    Text(snapshot?.quotaError?.errorDescription ?? "Claude usage has not been loaded yet.")
+                    Text(AppLocalization.string(
+                        snapshot?.quotaError?.errorDescription ?? "Claude usage has not been loaded yet."
+                    ))
                         .font(.caption2)
                         .foregroundStyle(.secondary)
                         .fixedSize(horizontal: false, vertical: true)
@@ -228,8 +231,8 @@ struct ProviderCard: View {
             Image(systemName: availability.symbolName)
                 .foregroundStyle(.orange)
             VStack(alignment: .leading, spacing: 1) {
-                Text(availability.headline).font(.callout.weight(.medium))
-                Text(availability.detail)
+                Text(AppLocalization.string(availability.headline)).font(.callout.weight(.medium))
+                Text(AppLocalization.string(availability.detail))
                     .font(.caption2)
                     .foregroundStyle(.secondary)
                     .fixedSize(horizontal: false, vertical: true)
@@ -251,7 +254,9 @@ struct ProviderCard: View {
                     .monospacedDigit()
             } else {
                 // No usage recorded today is different from "we don't know".
-                Text(state?.availability.isAvailable == true ? "No usage today" : "No data")
+                Text(AppLocalization.string(
+                    state?.availability.isAvailable == true ? "No usage today" : "No data"
+                ))
                     .font(.callout)
                     .foregroundStyle(.secondary)
             }
@@ -284,7 +289,7 @@ struct ProviderCard: View {
     private var metadataRow: some View {
         HStack(spacing: 4) {
             if let source = snapshot?.source {
-                Text(source.displayName)
+                Text(AppLocalization.string(source.displayName))
                     .font(.caption2)
                     .foregroundStyle(.tertiary)
             }
@@ -310,7 +315,7 @@ struct QuotaWindowRow: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 3) {
             HStack(alignment: .firstTextBaseline) {
-                Text(title)
+                Text(LocalizedStringKey(title))
                     .font(.caption)
                     .foregroundStyle(.secondary)
                 Spacer()
@@ -355,16 +360,18 @@ struct WindowRow: View {
     let usage: TokenWindowUsage
 
     private var accessibilityText: String {
-        var parts = ["\(title): \(usage.tokens) tokens"]
-        if let reset = usage.resetDescription() { parts.append(reset) }
-        if usage.isBoundaryInferred { parts.append("reset time estimated from local activity") }
+        var parts = [AppLocalization.format("%@: %d tokens", AppLocalization.string(title), usage.tokens)]
+        if let reset = AppLocalization.resetDescription(resetsAt: usage.resetsAt) { parts.append(reset) }
+        if usage.isBoundaryInferred {
+            parts.append(AppLocalization.string("reset time estimated from local activity"))
+        }
         return parts.joined(separator: ", ")
     }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 1) {
             HStack(alignment: .firstTextBaseline) {
-                Text(title)
+                Text(LocalizedStringKey(title))
                     .font(.caption)
                     .foregroundStyle(.secondary)
                 Spacer()
@@ -373,7 +380,7 @@ struct WindowRow: View {
                     .monospacedDigit()
             }
 
-            if let reset = usage.resetDescription() {
+            if let reset = AppLocalization.resetDescription(resetsAt: usage.resetsAt) {
                 HStack(spacing: 4) {
                     Image(systemName: "clock.arrow.circlepath")
                     Text(reset)

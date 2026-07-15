@@ -7,6 +7,7 @@ final class SharedSnapshotTests: XCTestCase {
         let store = SharedSnapshotStore(containerURL: makeTempDirectory())
         let snapshot = SharedSnapshot(
             updatedAt: Date(timeIntervalSince1970: 1_784_000_000),
+            languageCode: "ja",
             claudeCode: .init(
                 displayName: "Claude Code",
                 // Claude publishes no quota: these must survive as nil, not 0.
@@ -37,6 +38,7 @@ final class SharedSnapshotTests: XCTestCase {
         XCTAssertNil(decoded.claudeCode?.remainingRatio, "a missing ratio must not decode as 0")
         XCTAssertFalse(try XCTUnwrap(decoded.claudeCode).hasQuotaInformation)
         XCTAssertEqual(decoded.codex?.remainingRatio, 0.42)
+        XCTAssertEqual(decoded.languageCode, "ja")
     }
 
     /// The widget must be able to tell "nothing written yet" from "unreadable".

@@ -3,6 +3,35 @@ import Observation
 import ServiceManagement
 import TokenMeterCore
 
+enum AppLanguage: String, CaseIterable, Identifiable {
+    case english = "en"
+    case japanese = "ja"
+    case simplifiedChinese = "zh-Hans"
+    case korean = "ko"
+
+    var id: String { rawValue }
+    var locale: Locale { Locale(identifier: rawValue) }
+
+    /// Language names stay in their own language so the picker remains usable
+    /// even when the currently selected language is unfamiliar.
+    var displayName: String {
+        switch self {
+        case .english: return "English"
+        case .japanese: return "日本語"
+        case .simplifiedChinese: return "简体中文"
+        case .korean: return "한국어"
+        }
+    }
+
+    static var preferred: AppLanguage {
+        let preferred = Locale.preferredLanguages.first?.lowercased() ?? "en"
+        if preferred.hasPrefix("ja") { return .japanese }
+        if preferred.hasPrefix("zh") { return .simplifiedChinese }
+        if preferred.hasPrefix("ko") { return .korean }
+        return .english
+    }
+}
+
 enum MenuBarStyle: String, CaseIterable, Identifiable {
     case full          // "Claude 68% · Codex 42%"
     case compact       // Brand marks followed by values
@@ -12,9 +41,23 @@ enum MenuBarStyle: String, CaseIterable, Identifiable {
 
     var displayName: String {
         switch self {
-        case .full: return "Full (Claude 68% · Codex 42%)"
-        case .compact: return "Compact (brand icons + values)"
-        case .iconOnly: return "Icon only"
+        case .full: return AppLocalization.string("Full (Claude 68% · Codex 42%)")
+        case .compact: return AppLocalization.string("Compact (brand icons + values)")
+        case .iconOnly: return AppLocalization.string("Icon only")
+        }
+    }
+}
+
+enum MenuBarLimitWindow: String, CaseIterable, Identifiable {
+    case fiveHour
+    case weekly
+
+    var id: String { rawValue }
+
+    var displayName: String {
+        switch self {
+        case .fiveHour: return AppLocalization.string("5-hour limit")
+        case .weekly: return AppLocalization.string("Weekly limit")
         }
     }
 }
@@ -28,6 +71,7 @@ final class AppSettings {
     private let defaults = UserDefaults.standard
 
     private enum Key {
+        static let appLanguage = "appLanguage"
         static let showClaude = "showClaudeCode"
         static let claudeOAuthUsage = "claudeOAuthUsageEnabled"
         static let showCodex = "showCodex"
@@ -38,6 +82,7 @@ final class AppSettings {
         static let menuBarShowPercentage = "menuBarShowPercentage"
         static let menuBarShowTokens = "menuBarShowTokens"
         static let menuBarShowReset = "menuBarShowReset"
+        static let menuBarLimitWindow = "menuBarLimitWindow"
         static let showFiveHourWindow = "showFiveHourWindow"
         static let showWeeklyWindow = "showWeeklyWindow"
         static let hasCompletedSetup = "hasCompletedSetup"
@@ -52,6 +97,7 @@ final class AppSettings {
         static let launchAtLogin = "launchAtLogin"
     }
 
+    var appLanguage: AppLanguage { didSet { defaults.set(appLanguage.rawValue, forKey: Key.appLanguage) } }
     var showClaudeCode: Bool { didSet { defaults.set(showClaudeCode, forKey: Key.showClaude) } }
     /// Explicit opt-in: enabling this permits reading Claude Code's Keychain item
     /// solely to request usage data from Anthropic.
@@ -78,8 +124,11 @@ final class AppSettings {
     /// Which values the menu bar item is allowed to show.
     var menuBarShowPercentage: Bool { didSet { defaults.set(menuBarShowPercentage, forKey: Key.menuBarShowPercentage) } }
     var menuBarShowTokens: Bool { didSet { defaults.set(menuBarShowTokens, forKey: Key.menuBarShowTokens) } }
-    /// Countdown to the next 5-hour reset, appended to the menu bar title.
+    /// Countdown to the selected (or fallback) quota reset, appended to the menu bar title.
     var menuBarShowReset: Bool { didSet { defaults.set(menuBarShowReset, forKey: Key.menuBarShowReset) } }
+    var menuBarLimitWindow: MenuBarLimitWindow {
+        didSet { defaults.set(menuBarLimitWindow.rawValue, forKey: Key.menuBarLimitWindow) }
+    }
 
     /// The two time-window rows (5-hour and weekly). They are token *measurements*,
     /// not quota percentages, so some people will not want them — hence the toggles.
@@ -110,6 +159,7 @@ final class AppSettings {
 
     private init() {
         defaults.register(defaults: [
+            Key.appLanguage: AppLanguage.preferred.rawValue,
             Key.showClaude: true,
             Key.claudeOAuthUsage: false,
             Key.showCodex: true,
@@ -120,6 +170,7 @@ final class AppSettings {
             Key.menuBarShowPercentage: true,
             Key.menuBarShowTokens: true,
             Key.menuBarShowReset: false,
+            Key.menuBarLimitWindow: MenuBarLimitWindow.fiveHour.rawValue,
             Key.showFiveHourWindow: true,
             Key.showWeeklyWindow: true,
             Key.hasCompletedSetup: false,
@@ -134,6 +185,7 @@ final class AppSettings {
             Key.launchAtLogin: false,
         ])
 
+        appLanguage = AppLanguage(rawValue: defaults.string(forKey: Key.appLanguage) ?? "") ?? .preferred
         showClaudeCode = defaults.bool(forKey: Key.showClaude)
         claudeOAuthUsageEnabled = defaults.bool(forKey: Key.claudeOAuthUsage)
         showCodex = defaults.bool(forKey: Key.showCodex)
@@ -144,6 +196,9 @@ final class AppSettings {
         menuBarShowPercentage = defaults.bool(forKey: Key.menuBarShowPercentage)
         menuBarShowTokens = defaults.bool(forKey: Key.menuBarShowTokens)
         menuBarShowReset = defaults.bool(forKey: Key.menuBarShowReset)
+        menuBarLimitWindow = MenuBarLimitWindow(
+            rawValue: defaults.string(forKey: Key.menuBarLimitWindow) ?? ""
+        ) ?? .fiveHour
         showFiveHourWindow = defaults.bool(forKey: Key.showFiveHourWindow)
         showWeeklyWindow = defaults.bool(forKey: Key.showWeeklyWindow)
         hasCompletedSetup = defaults.bool(forKey: Key.hasCompletedSetup)

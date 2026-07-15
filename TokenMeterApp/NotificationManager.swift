@@ -47,8 +47,11 @@ actor NotificationManager {
                 if announcedResetAt[provider] != resetsAt {
                     announcedResetAt[provider] = resetsAt
                     await send(
-                        title: "\(provider.displayName) quota reset",
-                        body: "\(Int((remaining * 100).rounded()))% available again."
+                        title: AppLocalization.format("%@ quota reset", provider.displayName),
+                        body: AppLocalization.format(
+                            "%d%% available again.",
+                            Int((remaining * 100).rounded())
+                        )
                     )
                 }
             }
@@ -65,17 +68,32 @@ actor NotificationManager {
 
         announcedThreshold[provider] = crossed
         let level = UsageStatusLevel.from(remainingRatio: remaining)
-        var body = "\(Int((remaining * 100).rounded()))% remaining."
-        if let reset = window.resetDescription() { body += " \(reset)." }
+        var body = AppLocalization.format(
+            "%d%% remaining.",
+            Int((remaining * 100).rounded())
+        )
+        if let reset = AppLocalization.resetDescription(resetsAt: window.resetsAt) {
+            body += " \(reset)."
+        }
 
-        await send(title: "\(provider.displayName): \(level.label)", body: body)
+        await send(
+            title: AppLocalization.format(
+                "%@: %@",
+                provider.displayName,
+                AppLocalization.string(level.label)
+            ),
+            body: body
+        )
     }
 
     func notifyError(provider: UsageProviderID, message: String) async {
         // Repeating the same error every refresh would be noise.
         guard lastErrorMessage[provider] != message else { return }
         lastErrorMessage[provider] = message
-        await send(title: "\(provider.displayName): data error", body: message)
+        await send(
+            title: AppLocalization.format("%@: data error", provider.displayName),
+            body: message
+        )
     }
 
     private func send(title: String, body: String) async {

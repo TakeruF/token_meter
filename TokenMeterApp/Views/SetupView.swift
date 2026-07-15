@@ -12,28 +12,36 @@ struct SetupView: View {
     @State private var settings = AppSettings.shared
 
     var body: some View {
-        ScrollView {
-            VStack(alignment: .leading, spacing: 18) {
-                intro
+        ScrollViewReader { proxy in
+            ScrollView {
+                VStack(alignment: .leading, spacing: 18) {
+                    intro
 
-                ForEach(UsageProviderID.allCases) { id in
-                    ConnectionCard(
-                        providerID: id,
-                        state: monitor.states[id],
-                        onRecheck: {
-                            Task {
-                                await monitor.detectDataSources()
-                                await monitor.refresh(reason: .manual)
+                    ForEach(UsageProviderID.allCases) { id in
+                        ConnectionCard(
+                            providerID: id,
+                            state: monitor.states[id],
+                            onRecheck: {
+                                Task {
+                                    await monitor.detectDataSources()
+                                    await monitor.refresh(reason: .manual)
+                                }
                             }
-                        }
-                    )
-                }
+                        )
+                    }
 
-                claudeUsageSection
-                menuBarSection
-                privacyNote
+                    claudeUsageSection
+                    menuBarSection
+                        .id("menu-bar")
+                    privacyNote
+                }
+                .padding(20)
             }
-            .padding(20)
+            .task {
+                guard AppLaunchOptions.scrollSetupToMenuBar else { return }
+                await Task.yield()
+                proxy.scrollTo("menu-bar", anchor: .top)
+            }
         }
         .background(.background)
     }
@@ -104,9 +112,35 @@ struct SetupView: View {
 
                 Toggle("Remaining usage percentage", isOn: $settings.menuBarShowPercentage)
                     .disabled(!settings.showMenuBarExtra || settings.menuBarStyle == .iconOnly)
+
+                if settings.menuBarShowPercentage {
+                    Picker("Percentage window", selection: $settings.menuBarLimitWindow) {
+                        ForEach(MenuBarLimitWindow.allCases) { window in
+                            Text(window.displayName).tag(window)
+                        }
+                    }
+                    .pickerStyle(.segmented)
+                    .disabled(!settings.showMenuBarExtra || settings.menuBarStyle == .iconOnly)
+
+                    if settings.showCodex {
+                        Toggle("Codex 5-hour limit", isOn: codexFiveHourSelection)
+                            .disabled(!codexHasFiveHourLimit)
+
+                        if !codexHasFiveHourLimit {
+                            Label(
+                                "Codex is not currently reporting a 5-hour limit. The menu bar falls back to the weekly limit automatically. This option will become available if Codex reports it again.",
+                                systemImage: "info.circle"
+                            )
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                            .fixedSize(horizontal: false, vertical: true)
+                        }
+                    }
+                }
+
                 Toggle("Today's token count", isOn: $settings.menuBarShowTokens)
                     .disabled(!settings.showMenuBarExtra || settings.menuBarStyle == .iconOnly)
-                Toggle("Countdown to the next 5-hour reset", isOn: $settings.menuBarShowReset)
+                Toggle("Countdown to the selected limit reset", isOn: $settings.menuBarShowReset)
                     .disabled(!settings.showMenuBarExtra || settings.menuBarStyle == .iconOnly)
 
                 Divider()
@@ -127,6 +161,17 @@ struct SetupView: View {
                 .padding(.top, 2)
             }
         }
+    }
+
+    private var codexHasFiveHourLimit: Bool {
+        monitor.states[.codex]?.snapshot?.shortWindow != nil
+    }
+
+    private var codexFiveHourSelection: Binding<Bool> {
+        Binding(
+            get: { codexHasFiveHourLimit && settings.menuBarLimitWindow == .fiveHour },
+            set: { settings.menuBarLimitWindow = $0 ? .fiveHour : .weekly }
+        )
     }
 
     private var privacyNote: some View {
@@ -160,7 +205,7 @@ struct ConnectionCard: View {
                 statusRow
 
                 if let availability {
-                    Text(availability.detail)
+                    Text(AppLocalization.providerDetail(availability.detail))
                         .font(.caption)
                         .foregroundStyle(.secondary)
                         .fixedSize(horizontal: false, vertical: true)
@@ -190,7 +235,7 @@ struct ConnectionCard: View {
             ProviderIcon(providerID: providerID, size: 18)
             Image(systemName: availability?.symbolName ?? "questionmark.circle")
                 .foregroundStyle(availability?.isAvailable == true ? .green : .orange)
-            Text(availability?.headline ?? "Checking…")
+            Text(AppLocalization.string(availability?.headline ?? "Checking…"))
                 .font(.headline)
             Spacer()
             if let updated = state?.lastSuccessfulUpdate {
@@ -297,7 +342,7 @@ struct ConnectionCard: View {
     @ViewBuilder
     private func stepView(_ step: Step) -> some View {
         VStack(alignment: .leading, spacing: 6) {
-            Text(step.text)
+            Text(AppLocalization.string(step.text))
                 .font(.callout)
                 .fixedSize(horizontal: false, vertical: true)
 
@@ -309,7 +354,7 @@ struct ConnectionCard: View {
                         .background(.quaternary, in: RoundedRectangle(cornerRadius: 5))
                         .textSelection(.enabled)
 
-                    Button(copied ? "Copied" : "Copy") {
+                    Button(AppLocalization.string(copied ? "Copied" : "Copy")) {
                         NSPasteboard.general.clearContents()
                         NSPasteboard.general.setString(command, forType: .string)
                         copied = true

@@ -8,7 +8,7 @@ struct OnboardingView: View {
     let monitor: UsageMonitor
 
     @State private var settings = AppSettings.shared
-    @State private var step: Step = .welcome
+    @State private var step: Step
 
     private enum Step: Int, CaseIterable, Identifiable {
         case welcome
@@ -18,13 +18,18 @@ struct OnboardingView: View {
 
         var id: Int { rawValue }
 
-        var buttonTitle: String {
+        var buttonTitle: LocalizedStringKey {
             switch self {
             case .welcome: return "Get Started"
             case .providers, .display: return "Continue"
             case .ready: return "Open Dashboard"
             }
         }
+    }
+
+    init(monitor: UsageMonitor) {
+        self.monitor = monitor
+        _step = State(initialValue: Step(rawValue: AppLaunchOptions.onboardingStep ?? 0) ?? .welcome)
     }
 
     var body: some View {
@@ -37,7 +42,7 @@ struct OnboardingView: View {
             .ignoresSafeArea()
 
             VStack(spacing: 0) {
-                progress
+                onboardingHeader
 
                 Group {
                     switch step {
@@ -56,6 +61,17 @@ struct OnboardingView: View {
         .frame(minWidth: 760, minHeight: 540)
     }
 
+    private var onboardingHeader: some View {
+        ZStack {
+            progress
+            HStack {
+                Spacer()
+                AppLanguagePicker()
+            }
+        }
+        .frame(minHeight: 30)
+    }
+
     private var progress: some View {
         HStack(spacing: 8) {
             ForEach(Step.allCases) { item in
@@ -67,7 +83,11 @@ struct OnboardingView: View {
         }
         .accessibilityElement(children: .ignore)
         .accessibilityLabel(
-            "Onboarding step " + String(step.rawValue + 1) + " of " + String(Step.allCases.count)
+            Text(AppLocalization.format(
+                "Onboarding step %d of %d",
+                step.rawValue + 1,
+                Step.allCases.count
+            ))
         )
     }
 
@@ -247,7 +267,11 @@ struct OnboardingView: View {
 
             Spacer()
 
-            Text("Step " + String(step.rawValue + 1) + " of " + String(Step.allCases.count))
+            Text(AppLocalization.format(
+                "Step %d of %d",
+                step.rawValue + 1,
+                Step.allCases.count
+            ))
                 .font(.caption)
                 .foregroundStyle(.secondary)
 
@@ -273,10 +297,10 @@ struct OnboardingView: View {
     }
 
     private var selectedProviderNames: String {
-        var names: [String] = []
-        if settings.showClaudeCode { names.append("Claude") }
-        if settings.showCodex { names.append("Codex") }
-        return names.joined(separator: " and ")
+        if settings.showClaudeCode && settings.showCodex {
+            return AppLocalization.format("%@ and %@", "Claude", "Codex")
+        }
+        return settings.showClaudeCode ? "Claude" : "Codex"
     }
 
     private func move(by offset: Int) {
@@ -300,10 +324,10 @@ struct OnboardingView: View {
             Image(systemName: systemImage)
                 .frame(width: 22)
                 .foregroundStyle(.tint)
-            Text(label)
+            Text(LocalizedStringKey(label))
                 .foregroundStyle(.secondary)
                 .frame(width: 82, alignment: .leading)
-            Text(value)
+            Text(LocalizedStringKey(value))
                 .fontWeight(.medium)
             Spacer()
         }
@@ -311,8 +335,8 @@ struct OnboardingView: View {
 }
 
 private struct OnboardingHeading: View {
-    let title: String
-    let subtitle: String
+    let title: LocalizedStringKey
+    let subtitle: LocalizedStringKey
 
     var body: some View {
         VStack(spacing: 8) {
@@ -330,7 +354,7 @@ private struct OnboardingHeading: View {
 private struct OnboardingUsageCard: View {
     let providerID: UsageProviderID
     let remaining: String
-    let reset: String
+    let reset: LocalizedStringKey
 
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
@@ -338,7 +362,7 @@ private struct OnboardingUsageCard: View {
             Text(remaining)
                 .font(.system(size: 32, weight: .bold, design: .rounded))
                 .monospacedDigit()
-            Text("remaining · \(reset)")
+            Text("remaining · \(Text(reset))")
                 .font(.caption)
                 .foregroundStyle(.secondary)
         }
@@ -354,7 +378,7 @@ private struct OnboardingUsageCard: View {
 
 private struct ProviderChoiceCard: View {
     let providerID: UsageProviderID
-    let subtitle: String
+    let subtitle: LocalizedStringKey
     @Binding var isSelected: Bool
 
     var body: some View {
@@ -390,8 +414,13 @@ private struct ProviderChoiceCard: View {
         }
         .buttonStyle(.plain)
         .accessibilityLabel(providerID.displayName)
-        .accessibilityValue(isSelected ? "Selected" : "Not selected")
-        .accessibilityHint("Toggle whether \(providerID.displayName) is displayed")
+        .accessibilityValue(Text(LocalizedStringKey(isSelected ? "Selected" : "Not selected")))
+        .accessibilityHint(
+            Text(AppLocalization.format(
+                "Toggle whether %@ is displayed",
+                providerID.displayName
+            ))
+        )
     }
 }
 
