@@ -12,6 +12,8 @@ public actor CodexUsageProvider: UsageProvider {
     private let store: UsageStore
     private let parser = CodexLogParser()
     private var watcher: DirectoryWatcher?
+    /// Recently modified files checked on every refresh. Older files with no
+    /// persisted cursor are added once so existing history is fully backfilled.
     private let maxFilesPerRefresh: Int
 
     /// Windows persist between refreshes: a pass that appends no new events must
@@ -72,8 +74,16 @@ public actor CodexUsageProvider: UsageProvider {
         case .available: break
         }
 
-        // Newest first, so the freshest rate_limits block wins.
-        let files = TokenMeterPaths.jsonlFiles(under: sessionsRoot, limit: maxFilesPerRefresh)
+        // Newest first, so the freshest rate_limits block wins. The recent subset
+        // is checked on every refresh. Any older file without a cursor was never
+        // imported (including files skipped by older Token Meter versions), so add
+        // it for a one-time historical backfill.
+        let allFiles = TokenMeterPaths.jsonlFiles(under: sessionsRoot)
+        let recentFiles = Array(allFiles.prefix(maxFilesPerRefresh))
+        let historicalBackfill = allFiles.dropFirst(recentFiles.count).filter {
+            store.cursor(forPath: $0.path) == 0
+        }
+        let files = recentFiles + historicalBackfill
         var newestParsed: Date?
 
         // Older Token Meter builds treated model-specific buckets such as

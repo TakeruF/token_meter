@@ -17,10 +17,12 @@
 
 html {
   scroll-behavior: smooth;
+  overflow-x: hidden;
 }
 
 body {
   margin: 0;
+  overflow-x: hidden;
   color: var(--ink);
   background: var(--paper);
   font-family: -apple-system, BlinkMacSystemFont, "Helvetica Neue", "Hiragino Sans", sans-serif;
@@ -43,8 +45,7 @@ img {
   z-index: 40;
   top: 0;
   display: flex;
-  width: 100vw;
-  max-width: 100%;
+  width: 100%;
   align-items: center;
   justify-content: space-between;
   min-height: 57px;
@@ -63,6 +64,7 @@ img {
   font-size: 14px;
   font-weight: 650;
   line-height: 1;
+  min-width: 0;
   transition: color 160ms ease;
 }
 
@@ -88,6 +90,7 @@ img {
   font-size: 12px;
   font-weight: 650;
   line-height: 1;
+  flex: 0 0 auto;
   transition: background-color 160ms ease, transform 160ms ease;
 }
 
@@ -414,151 +417,24 @@ figure {
   color: #66716b;
 }
 
-.widget-stage {
-  display: grid;
-  grid-template-columns: minmax(390px, 1fr) 190px;
-  gap: 18px;
-  align-items: end;
+.widget-shot {
+  width: min(100%, 560px);
+  justify-self: center;
 }
 
-.desktop-widget {
-  color: #222528;
-  background: rgba(255, 255, 255, 0.86);
-  border: 1px solid rgba(54, 67, 60, 0.13);
-  border-radius: 8px;
-  box-shadow: 0 22px 55px rgba(44, 61, 52, 0.14);
-  backdrop-filter: blur(18px);
-}
-
-.widget-medium {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) 1px minmax(0, 1fr);
-  grid-template-rows: 1fr auto;
-  gap: 18px;
-  min-height: 224px;
-  padding: 24px;
-}
-
-.widget-provider-column {
-  min-width: 0;
-}
-
-.widget-divider {
-  width: 1px;
-  background: rgba(35, 42, 38, 0.12);
-}
-
-.widget-provider-heading {
-  display: flex;
-  min-height: 20px;
-  align-items: center;
-  gap: 7px;
-  font-size: 13px;
-}
-
-.widget-provider-heading strong {
-  overflow: hidden;
-  font-weight: 680;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.widget-provider-heading > span {
-  display: inline-flex;
-  margin-left: auto;
-  align-items: center;
-  gap: 4px;
-  font-size: 12px;
-  font-weight: 680;
-  font-variant-numeric: tabular-nums;
-}
-
-.widget-provider-icon {
-  width: 14px;
-  height: 14px;
-  flex: 0 0 14px;
-  object-fit: contain;
-}
-
-.widget-provider-icon.claude {
-  filter: brightness(0);
-}
-
-.status-dot {
+.widget-shot img {
   display: block;
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
+  width: 100%;
+  height: auto;
+  filter: drop-shadow(0 24px 34px rgba(44, 61, 52, 0.16));
 }
 
-.status-steady {
-  background: #e4a11b;
-}
-
-.status-good {
-  background: #258b58;
-}
-
-.widget-progress {
-  height: 5px;
-  margin-top: 12px;
-  overflow: hidden;
-  background: #d9deda;
-  border-radius: 3px;
-}
-
-.widget-progress span {
-  display: block;
-  height: 100%;
-  background: #e4a11b;
-}
-
-.widget-progress.progress-good span {
-  background: #258b58;
-}
-
-.widget-reset,
-.widget-tokens,
-.widget-updated {
-  color: #747b77;
+.widget-shot figcaption {
+  margin-top: 16px;
+  color: #66716b;
   font-size: 10px;
-  font-variant-numeric: tabular-nums;
-  line-height: 1.4;
-}
-
-.widget-reset {
-  margin: 12px 0 0;
-  white-space: nowrap;
-}
-
-.widget-tokens {
-  margin: 5px 0 0;
-}
-
-.widget-updated {
-  grid-column: 1 / -1;
-  margin: 0;
-}
-
-.widget-small {
-  display: flex;
-  min-height: 224px;
-  padding: 20px;
-  flex-direction: column;
-  gap: 18px;
-}
-
-.widget-compact-row + .widget-compact-row {
-  padding-top: 18px;
-  border-top: 1px solid rgba(35, 42, 38, 0.1);
-}
-
-.widget-small .widget-reset {
-  margin-top: 7px;
-}
-
-.widget-small .widget-updated {
-  margin-top: auto;
+  text-align: right;
+  text-transform: uppercase;
 }
 
 .privacy-band {
@@ -820,10 +696,6 @@ figure {
     font-size: 36px;
   }
 
-  .widget-stage {
-    grid-template-columns: minmax(360px, 1fr) 180px;
-  }
-
   .privacy-band {
     grid-template-columns: 1fr;
     gap: 42px;
@@ -856,20 +728,19 @@ figure {
 }
 
 @media (max-width: 580px) {
-  .widget-stage {
-    grid-template-columns: 1fr;
+  .site-nav {
+    gap: 12px;
+    padding-right: 16px;
+    padding-left: 16px;
   }
 
-  .widget-medium {
-    min-height: 218px;
-    padding: 20px;
-    gap: 13px;
+  .header-download {
+    padding-right: 12px;
+    padding-left: 12px;
   }
 
-  .widget-small {
-    width: min(210px, 68%);
-    min-height: 210px;
-    justify-self: end;
+  .widget-shot {
+    width: min(100%, 430px);
   }
 }
 

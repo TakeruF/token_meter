@@ -4,18 +4,36 @@ import SwiftUI
 
 /// Owns Sparkle for the lifetime of the process. Sparkle performs scheduled checks,
 /// presents the update notification, verifies the download, and replaces the app.
-final class AppUpdater {
+@MainActor
+final class AppUpdater: NSObject, @MainActor SPUStandardUserDriverDelegate {
     static let shared = AppUpdater()
 
-    let controller: SPUStandardUpdaterController
+    private(set) var controller: SPUStandardUpdaterController!
     var updater: SPUUpdater { controller.updater }
 
-    private init() {
+    private override init() {
+        super.init()
         controller = SPUStandardUpdaterController(
             startingUpdater: true,
             updaterDelegate: nil,
-            userDriverDelegate: nil
+            userDriverDelegate: self
         )
+    }
+
+    func standardUserDriverWillHandleShowingUpdate(
+        _ handleShowingUpdate: Bool,
+        forUpdate update: SUAppcastItem,
+        state: SPUUserUpdateState
+    ) {
+        guard handleShowingUpdate else { return }
+
+        // Scheduled checks run while this menu bar app is in the background. Bring
+        // Sparkle's update alert forward so a newly available version is visible.
+        NSApp.activate(ignoringOtherApps: true)
+        DispatchQueue.main.async { [weak self] in
+            NSApp.activate(ignoringOtherApps: true)
+            self?.controller.userDriver.showUpdateInFocus()
+        }
     }
 }
 

@@ -62,9 +62,15 @@ struct ProviderRow: View {
 
             if showProgress {
                 if let remaining = provider?.remainingRatio {
-                    ProgressView(value: max(0, min(1, remaining)))
-                        .progressViewStyle(.linear)
-                        .tint(level.tint)
+                    GeometryReader { geo in
+                        ZStack(alignment: .leading) {
+                            Capsule().fill(.quaternary)
+                            Capsule()
+                                .fill(level.tint)
+                                .frame(width: geo.size.width * max(0, min(1, remaining)))
+                        }
+                    }
+                    .frame(height: 4)
                 } else {
                     // No quota to draw. A full or empty bar would both be a lie.
                     Capsule()
@@ -389,7 +395,7 @@ struct CompactQuotaStrip: View {
     }
 }
 
-/// Bars for the last 7 days. Drawn only when there is real usage to draw.
+/// Line chart for the last 7 days. Drawn only when there is real usage to draw.
 struct Sparkline: View {
     let points: [SharedSnapshot.DayPoint]
 
@@ -402,19 +408,38 @@ struct Sparkline: View {
                 .frame(maxWidth: .infinity, alignment: .leading)
         } else {
             GeometryReader { geo in
-                let spacing: CGFloat = 3
-                let width = (geo.size.width - spacing * CGFloat(points.count - 1)) / CGFloat(points.count)
-                HStack(alignment: .bottom, spacing: spacing) {
-                    ForEach(points) { point in
-                        RoundedRectangle(cornerRadius: 1.5)
+                let inset: CGFloat = 2
+                let plotWidth = max(0, geo.size.width - inset * 2)
+                let plotHeight = max(0, geo.size.height - inset * 2)
+                let coordinates = points.enumerated().map { index, point in
+                    let progress = points.count == 1
+                        ? 0.5
+                        : CGFloat(index) / CGFloat(points.count - 1)
+                    let ratio = CGFloat(point.totalTokens) / CGFloat(maxValue)
+                    return CGPoint(
+                        x: inset + plotWidth * progress,
+                        y: inset + plotHeight * (1 - ratio)
+                    )
+                }
+
+                ZStack {
+                    Path { path in
+                        guard let first = coordinates.first else { return }
+                        path.move(to: first)
+                        coordinates.dropFirst().forEach { path.addLine(to: $0) }
+                    }
+                    .stroke(
+                        .tint,
+                        style: StrokeStyle(lineWidth: 2, lineCap: .round, lineJoin: .round)
+                    )
+
+                    ForEach(Array(coordinates.enumerated()), id: \.offset) { _, point in
+                        Circle()
                             .fill(.tint)
-                            .frame(
-                                width: max(2, width),
-                                height: max(2, geo.size.height * CGFloat(point.totalTokens) / CGFloat(maxValue))
-                            )
+                            .frame(width: 4, height: 4)
+                            .position(point)
                     }
                 }
-                .frame(maxHeight: .infinity, alignment: .bottom)
             }
             .accessibilityLabel("Token usage for the last 7 days")
         }

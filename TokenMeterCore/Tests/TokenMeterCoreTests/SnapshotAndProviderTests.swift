@@ -242,6 +242,40 @@ final class ProviderAvailabilityTests: XCTestCase {
 
 final class QuotaRecoveryTests: XCTestCase {
 
+    func testCodexBackfillsUnseenSessionsBeyondTheRefreshLimit() async throws {
+        let store = try makeTempStore()
+        let root = makeTempDirectory()
+        let dayDir = root.appendingPathComponent("2026/07/15", isDirectory: true)
+        try FileManager.default.createDirectory(at: dayDir, withIntermediateDirectories: true)
+        let timestamp = ISO8601DateFormatter().string(from: Date())
+
+        for index in 0..<21 {
+            let sessionID = String(format: "00000000-0000-0000-0000-%012d", index)
+            let line = """
+            {"timestamp":"\(timestamp)","type":"event_msg","payload":{"type":"token_count","info":{"total_token_usage":{"input_tokens":10,"cached_input_tokens":0,"output_tokens":0,"reasoning_output_tokens":0,"total_tokens":10}},"rate_limits":null}}
+            """
+            let file = dayDir.appendingPathComponent("rollout-2026-07-15T10-00-00-\(sessionID).jsonl")
+            try Data((line + "\n").utf8).write(to: file)
+        }
+
+        let provider = CodexUsageProvider(
+            sessionsRoot: root,
+            store: store,
+            maxFilesPerRefresh: 20
+        )
+
+        let first = try await provider.fetchCurrentUsage()
+        XCTAssertEqual(first.totalTokens, 210)
+        XCTAssertEqual(try store.events(provider: .codex, since: .distantPast).count, 21)
+
+        _ = try await provider.fetchCurrentUsage()
+        XCTAssertEqual(
+            try store.events(provider: .codex, since: .distantPast).count,
+            21,
+            "backfilled sessions must remain idempotent"
+        )
+    }
+
     func testCanonicalQuotaRepairsPersistedModelSpecificLimitAfterUpgrade() async throws {
         let store = try makeTempStore()
         let root = makeTempDirectory()

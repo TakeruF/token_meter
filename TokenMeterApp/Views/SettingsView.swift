@@ -52,31 +52,6 @@ struct SettingsView: View {
                 .fixedSize(horizontal: false, vertical: true)
             }
 
-            Section("Menu bar") {
-                Toggle("Show Token Meter in the menu bar", isOn: $settings.showMenuBarExtra)
-                Picker("Format", selection: $settings.menuBarStyle) {
-                    ForEach(MenuBarStyle.allCases) { style in
-                        Text(style.displayName).tag(style)
-                    }
-                }
-                .disabled(!settings.showMenuBarExtra)
-
-                Toggle("Show Meter icon", isOn: $settings.showMenuBarIcon)
-                    .disabled(!settings.showMenuBarExtra || settings.menuBarStyle == .iconOnly)
-
-                Toggle("Show usage percentage", isOn: $settings.menuBarShowPercentage)
-                    .disabled(!settings.showMenuBarExtra || settings.menuBarStyle == .iconOnly)
-                Toggle("Show today's token count", isOn: $settings.menuBarShowTokens)
-                    .disabled(!settings.showMenuBarExtra || settings.menuBarStyle == .iconOnly)
-                Toggle("Show the next 5-hour reset", isOn: $settings.menuBarShowReset)
-                    .disabled(!settings.showMenuBarExtra || settings.menuBarStyle == .iconOnly)
-
-                LabeledContent("Preview") {
-                    MenuBarLabel(monitor: monitor)
-                        .font(.callout)
-                }
-            }
-
             Section("Refresh") {
                 Picker("Interval", selection: $settings.refreshInterval) {
                     ForEach(AppSettings.refreshIntervalOptions, id: \.self) { seconds in

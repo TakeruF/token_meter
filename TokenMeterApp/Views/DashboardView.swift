@@ -237,7 +237,7 @@ struct DashboardView: View {
     @ViewBuilder
     private var breakdownSection: some View {
         SectionBox("Token breakdown") {
-            VStack(spacing: 14) {
+            VStack(alignment: .leading, spacing: 14) {
                 ForEach(providers) { id in
                     let all = events(id)
                     let input = all.reduce(0) { $0 + $1.inputTokens }
@@ -352,7 +352,7 @@ struct DailyChart: View {
         .chartXAxis {
             AxisMarks(values: .stride(by: .day)) { _ in
                 AxisGridLine()
-                AxisValueLabel(format: Date.FormatStyle().month(.abbreviated).day())
+                AxisValueLabel(format: Date.FormatStyle().day())
             }
         }
         .frame(height: 220)
