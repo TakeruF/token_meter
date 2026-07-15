@@ -28,11 +28,11 @@ struct ProviderIcon: View {
 struct MenuBarProviderIcon: View {
     let providerID: UsageProviderID
 
-    private static let logicalSize = NSSize(width: 12, height: 12)
+    static let logicalSize = NSSize(width: 12, height: 12)
 
     var body: some View {
         Group {
-            if let image = statusBarImage {
+            if let image = Self.statusBarImage(for: providerID) {
                 Image(nsImage: image)
                     .renderingMode(.template)
                     .foregroundStyle(.primary)
@@ -44,7 +44,7 @@ struct MenuBarProviderIcon: View {
         .accessibilityHidden(true)
     }
 
-    private var statusBarImage: NSImage? {
+    static func statusBarImage(for providerID: UsageProviderID) -> NSImage? {
         let name = providerID == .claudeCode ? "ClaudeLogo" : "CodexLogo"
         guard let source = NSImage(named: name),
               let image = source.copy() as? NSImage else { return nil }
@@ -52,6 +52,123 @@ struct MenuBarProviderIcon: View {
         image.size = Self.logicalSize
         image.isTemplate = true
         return image
+    }
+}
+
+/// `MenuBarExtra` bridges its label to a single AppKit status-bar button. When
+/// several image/text pairs are supplied, AppKit keeps only the first pair. Draw
+/// compact mode into one template image so every enabled provider survives that
+/// bridge and remains appearance-aware.
+@MainActor
+enum MenuBarCompactImage {
+    private static let height: CGFloat = 16
+    private static let pairSpacing: CGFloat = 5
+    private static let iconValueSpacing: CGFloat = 2
+    private static let resetSpacing: CGFloat = 4
+
+    static func make(
+        values: [(UsageProviderID, String)],
+        reset: String?,
+        includeMeterIcon: Bool
+    ) -> NSImage? {
+        let font = NSFont.monospacedDigitSystemFont(
+            ofSize: NSFont.systemFontSize,
+            weight: .regular
+        )
+        let attributes: [NSAttributedString.Key: Any] = [
+            .font: font,
+            .foregroundColor: NSColor.black,
+        ]
+
+        var parts: [Part] = []
+        if includeMeterIcon, let meter = meterImage() {
+            parts.append(.image(meter, size: NSSize(width: 14, height: 14)))
+        }
+
+        for (index, value) in values.enumerated() {
+            if !parts.isEmpty {
+                parts.append(.space(index == 0 ? resetSpacing : pairSpacing))
+            }
+            let icon = MenuBarProviderIcon.statusBarImage(for: value.0)
+                ?? NSImage(systemSymbolName: "questionmark", accessibilityDescription: nil)
+            if let icon {
+                parts.append(.image(icon, size: MenuBarProviderIcon.logicalSize))
+                parts.append(.space(iconValueSpacing))
+            }
+            parts.append(.text(value.1, attributes: attributes))
+        }
+
+        if let reset {
+            if !parts.isEmpty {
+                parts.append(.space(resetSpacing))
+                parts.append(.text("·", attributes: attributes))
+                parts.append(.space(resetSpacing))
+            }
+            parts.append(.text(reset, attributes: attributes))
+        }
+
+        guard !parts.isEmpty else { return nil }
+        let width = ceil(parts.reduce(0) { $0 + $1.width })
+        let image = NSImage(size: NSSize(width: width, height: height), flipped: false) { _ in
+            var x: CGFloat = 0
+            for part in parts {
+                part.draw(at: &x, canvasHeight: height)
+            }
+            return true
+        }
+        image.isTemplate = true
+        return image
+    }
+
+    private static func meterImage() -> NSImage? {
+        let image = NSImage(
+            systemSymbolName: "gauge.with.dots.needle.33percent",
+            accessibilityDescription: nil
+        )
+        return image?.withSymbolConfiguration(
+            NSImage.SymbolConfiguration(pointSize: 13, weight: .regular)
+        )
+    }
+
+    private enum Part {
+        case image(NSImage, size: NSSize)
+        case text(String, attributes: [NSAttributedString.Key: Any])
+        case space(CGFloat)
+
+        var width: CGFloat {
+            switch self {
+            case .image(_, let size): size.width
+            case .text(let text, let attributes):
+                ceil((text as NSString).size(withAttributes: attributes).width)
+            case .space(let width): width
+            }
+        }
+
+        func draw(at x: inout CGFloat, canvasHeight: CGFloat) {
+            switch self {
+            case .image(let image, let size):
+                image.draw(
+                    in: NSRect(
+                        x: x,
+                        y: (canvasHeight - size.height) / 2,
+                        width: size.width,
+                        height: size.height
+                    ),
+                    from: .zero,
+                    operation: .sourceOver,
+                    fraction: 1
+                )
+            case .text(let text, let attributes):
+                let size = (text as NSString).size(withAttributes: attributes)
+                (text as NSString).draw(
+                    at: NSPoint(x: x, y: (canvasHeight - size.height) / 2),
+                    withAttributes: attributes
+                )
+            case .space:
+                break
+            }
+            x += width
+        }
     }
 }
 

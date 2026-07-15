@@ -47,6 +47,7 @@ public struct CodexLogParser: Sendable {
         public var weeklyWindow: UsageWindow?
         public var planType: String?
         public var latestTimestamp: Date?
+        var latestRateLimitTimestamp: Date?
         /// Lines that looked like usage records but would not decode.
         public var malformedLineCount: Int = 0
         /// Lines that passed the cheap pre-filter and were actually parsed.
@@ -116,8 +117,10 @@ public struct CodexLogParser: Sendable {
             guard let timestamp = LogDate.parse(root["timestamp"] as? String) else { continue }
 
             // rate_limits and info are independently nullable.
-            if let limits = payload["rate_limits"] as? [String: Any] {
-                applyRateLimits(limits, into: &result)
+            if let limits = payload["rate_limits"] as? [String: Any],
+               let reading = rateLimitReading(from: limits) {
+                apply(reading, into: &result)
+                result.latestRateLimitTimestamp = timestamp
             }
 
             guard let info = payload["info"] as? [String: Any] else { continue }
@@ -185,8 +188,56 @@ public struct CodexLogParser: Sendable {
         return result
     }
 
-    private func applyRateLimits(_ limits: [String: Any], into result: inout Result) {
-        if let plan = limits["plan_type"] as? String { result.planType = plan }
+    /// Reads quota data without producing token events. The provider uses this once
+    /// at launch to repair samples written by older builds that did not distinguish
+    /// the general `codex` limit from model-specific limit buckets.
+    func parseLatestRateLimits(lines: [String]) -> RateLimitResult {
+        var result = RateLimitResult()
+
+        for line in lines {
+            guard line.contains("token_count"), line.contains("rate_limits"),
+                  let data = line.data(using: .utf8),
+                  let root = (try? JSONSerialization.jsonObject(with: data)) as? [String: Any],
+                  root["type"] as? String == "event_msg",
+                  let payload = root["payload"] as? [String: Any],
+                  payload["type"] as? String == "token_count",
+                  let timestamp = LogDate.parse(root["timestamp"] as? String),
+                  let limits = payload["rate_limits"] as? [String: Any],
+                  let reading = rateLimitReading(from: limits) else { continue }
+
+            result.shortWindow = reading.shortWindow
+            result.weeklyWindow = reading.weeklyWindow
+            result.planType = reading.planType
+            result.timestamp = timestamp
+        }
+
+        return result
+    }
+
+    struct RateLimitResult: Sendable {
+        var shortWindow: UsageWindow? = nil
+        var weeklyWindow: UsageWindow? = nil
+        var planType: String? = nil
+        var timestamp: Date? = nil
+
+        var hasQuota: Bool { shortWindow != nil || weeklyWindow != nil }
+    }
+
+    private struct RateLimitReading {
+        var shortWindow: UsageWindow? = nil
+        var weeklyWindow: UsageWindow? = nil
+        var planType: String? = nil
+    }
+
+    private func rateLimitReading(from limits: [String: Any]) -> RateLimitReading? {
+        // Codex can emit additional model-specific buckets (for example
+        // `codex_bengalfox`) alongside the account's general `codex` limit. Those
+        // percentages are not the value shown by Codex's usage UI.
+        if let limitID = limits["limit_id"] as? String, limitID != "codex" {
+            return nil
+        }
+
+        var reading = RateLimitReading(planType: limits["plan_type"] as? String)
 
         for slot in ["primary", "secondary"] {
             guard let entry = limits[slot] as? [String: Any] else { continue }
@@ -210,9 +261,18 @@ public struct CodexLogParser: Sendable {
                 continue
             }
             switch kind {
-            case .short: result.shortWindow = window
-            case .weekly: result.weeklyWindow = window
+            case .short: reading.shortWindow = window
+            case .weekly: reading.weeklyWindow = window
             }
         }
+
+        guard reading.shortWindow != nil || reading.weeklyWindow != nil else { return nil }
+        return reading
+    }
+
+    private func apply(_ reading: RateLimitReading, into result: inout Result) {
+        if let short = reading.shortWindow { result.shortWindow = short }
+        if let weekly = reading.weeklyWindow { result.weeklyWindow = weekly }
+        if let plan = reading.planType { result.planType = plan }
     }
 }

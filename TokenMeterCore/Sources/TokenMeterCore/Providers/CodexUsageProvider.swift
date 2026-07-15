@@ -23,6 +23,7 @@ public actor CodexUsageProvider: UsageProvider {
     private var lastModel: String?
     private var lastContextTokens: Int?
     private var lastWindowUpdate: Date?
+    private var didRecoverCanonicalRateLimits = false
 
     public init(sessionsRoot: URL = TokenMeterPaths.codexSessions, store: UsageStore, maxFilesPerRefresh: Int = 20) {
         self.sessionsRoot = sessionsRoot
@@ -75,6 +76,15 @@ public actor CodexUsageProvider: UsageProvider {
         let files = TokenMeterPaths.jsonlFiles(under: sessionsRoot, limit: maxFilesPerRefresh)
         var newestParsed: Date?
 
+        // Older Token Meter builds treated model-specific buckets such as
+        // `codex_bengalfox` as the general account limit. Re-read quota lines from
+        // the newest applicable file once per launch so an already-persisted bad
+        // sample is repaired even when every incremental cursor is at EOF.
+        if !didRecoverCanonicalRateLimits {
+            didRecoverCanonicalRateLimits = true
+            recoverCanonicalRateLimits(from: files)
+        }
+
         for file in files.reversed() {   // oldest -> newest, so later files overwrite windows
             // Safe cancellation point: cursors and session totals are committed per
             // file, so stopping here resumes cleanly on the next refresh.
@@ -121,7 +131,7 @@ public actor CodexUsageProvider: UsageProvider {
                 if let s = result.shortWindow { lastShortWindow = s }
                 if let w = result.weeklyWindow { lastWeeklyWindow = w }
                 if let p = result.planType { lastPlanType = p }
-                lastWindowUpdate = result.latestTimestamp ?? Date()
+                lastWindowUpdate = result.latestRateLimitTimestamp ?? result.latestTimestamp ?? Date()
             }
         }
 
@@ -135,10 +145,10 @@ public actor CodexUsageProvider: UsageProvider {
 
         // Persist the quota reading for history.
         if let s = lastShortWindow {
-            try? store.insertLimitSample(provider: .codex, timestamp: lastWindowUpdate ?? Date(), kind: "short", window: s, source: .localLog)
+            try store.insertLimitSample(provider: .codex, timestamp: lastWindowUpdate ?? Date(), kind: "short", window: s, source: .localLog)
         }
         if let w = lastWeeklyWindow {
-            try? store.insertLimitSample(provider: .codex, timestamp: lastWindowUpdate ?? Date(), kind: "weekly", window: w, source: .localLog)
+            try store.insertLimitSample(provider: .codex, timestamp: lastWindowUpdate ?? Date(), kind: "weekly", window: w, source: .localLog)
         }
 
         // Rate limits only appear on lines the log appends. After a restart, an
@@ -194,6 +204,24 @@ public actor CodexUsageProvider: UsageProvider {
         guard let window else { return nil }
         guard let resetsAt = window.resetsAt else { return window }
         return resetsAt > now ? window : nil
+    }
+
+    private func recoverCanonicalRateLimits(from files: [URL]) {
+        for file in files {
+            guard let read = try? JSONLReader.readNewLines(at: file.path, from: 0),
+                  !read.lines.isEmpty else { continue }
+
+            let recovered = parser.parseLatestRateLimits(lines: read.lines)
+            guard recovered.hasQuota else { continue }
+
+            lastShortWindow = recovered.shortWindow
+            lastWeeklyWindow = recovered.weeklyWindow
+            lastPlanType = recovered.planType
+            // Timestamp the repair now so it supersedes a bad sample persisted by
+            // a previous app version. The window's reset time remains provider data.
+            lastWindowUpdate = Date()
+            return
+        }
     }
 
     public func startMonitoring(onUpdate: @escaping @Sendable (UsageSnapshot) -> Void) async throws {

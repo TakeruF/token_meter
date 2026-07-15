@@ -128,6 +128,33 @@ final class CodexParserTests: XCTestCase {
         XCTAssertEqual(try XCTUnwrap(weekly.usedRatio), 0.07, accuracy: 0.0001)
     }
 
+    func testModelSpecificLimitDoesNotReplaceGeneralCodexLimit() throws {
+        let lines = [
+            """
+            {"timestamp":"2026-07-15T01:45:00.000Z","type":"event_msg","payload":{"type":"token_count","info":null,"rate_limits":{"limit_id":"codex","primary":{"used_percent":8.0,"window_minutes":10080,"resets_at":1784668980},"secondary":null,"plan_type":"pro"}}}
+            """,
+            """
+            {"timestamp":"2026-07-15T02:00:00.000Z","type":"event_msg","payload":{"type":"token_count","info":null,"rate_limits":{"limit_id":"codex_bengalfox","primary":{"used_percent":0.0,"window_minutes":10080,"resets_at":1784685660},"secondary":null,"plan_type":"pro"}}}
+            """,
+        ]
+
+        let result = CodexLogParser().parse(lines: lines, sessionID: "s")
+
+        XCTAssertEqual(try XCTUnwrap(result.weeklyWindow?.usedRatio), 0.08, accuracy: 0.001)
+        XCTAssertEqual(try XCTUnwrap(result.weeklyWindow?.remainingRatio), 0.92, accuracy: 0.001)
+    }
+
+    func testModelSpecificLimitAloneIsNotAccountQuota() {
+        let line = """
+        {"timestamp":"2026-07-15T02:00:00.000Z","type":"event_msg","payload":{"type":"token_count","info":null,"rate_limits":{"limit_id":"codex_bengalfox","primary":{"used_percent":0.0,"window_minutes":10080,"resets_at":1784685660},"secondary":null,"plan_type":"pro"}}}
+        """
+
+        let result = CodexLogParser().parse(lines: [line], sessionID: "s")
+
+        XCTAssertNil(result.shortWindow)
+        XCTAssertNil(result.weeklyWindow)
+    }
+
     func testResetsAtIsDecodedAsUnixEpochSeconds() throws {
         let result = CodexLogParser().parse(lines: try lines("codex-two-windows"), sessionID: "sess-1")
         let resetsAt = try XCTUnwrap(result.shortWindow?.resetsAt)

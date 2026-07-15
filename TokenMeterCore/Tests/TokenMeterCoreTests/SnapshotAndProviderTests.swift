@@ -242,6 +242,49 @@ final class ProviderAvailabilityTests: XCTestCase {
 
 final class QuotaRecoveryTests: XCTestCase {
 
+    func testCanonicalQuotaRepairsPersistedModelSpecificLimitAfterUpgrade() async throws {
+        let store = try makeTempStore()
+        let root = makeTempDirectory()
+        let dayDir = root.appendingPathComponent("2026/07/15", isDirectory: true)
+        try FileManager.default.createDirectory(at: dayDir, withIntermediateDirectories: true)
+        let reset = Int(Date().addingTimeInterval(6 * 86_400).timeIntervalSince1970)
+        let lines = [
+            """
+            {"timestamp":"2026-07-15T01:45:00.000Z","type":"event_msg","payload":{"type":"token_count","info":null,"rate_limits":{"limit_id":"codex","primary":{"used_percent":8.0,"window_minutes":10080,"resets_at":\(reset)},"secondary":null,"plan_type":"pro"}}}
+            """,
+            """
+            {"timestamp":"2026-07-15T02:00:00.000Z","type":"event_msg","payload":{"type":"token_count","info":null,"rate_limits":{"limit_id":"codex_bengalfox","primary":{"used_percent":0.0,"window_minutes":10080,"resets_at":\(reset)},"secondary":null,"plan_type":"pro"}}}
+            """,
+        ]
+        let file = dayDir.appendingPathComponent("rollout-2026-07-15T01-00-00-019f5f87-eeb1-7493-96fc-7dbf947babbb.jsonl")
+        let data = Data((lines.joined(separator: "\n") + "\n").utf8)
+        try data.write(to: file)
+
+        // Simulate an older build: it consumed the whole file and persisted the
+        // model-specific 100%-remaining bucket as the account quota.
+        let enumeratedPath = try XCTUnwrap(TokenMeterPaths.jsonlFiles(under: root).first?.path)
+        try store.setCursor(path: enumeratedPath, offset: UInt64(data.count))
+        try store.insertLimitSample(
+            provider: .codex,
+            timestamp: Date().addingTimeInterval(-60),
+            kind: "weekly",
+            window: UsageWindow(
+                usedRatio: 0,
+                remainingRatio: 1,
+                resetsAt: Date(timeIntervalSince1970: Double(reset)),
+                windowMinutes: 10080
+            ),
+            source: .localLog
+        )
+
+        let provider = CodexUsageProvider(sessionsRoot: root, store: store)
+        let snapshot = try await provider.fetchCurrentUsage()
+
+        XCTAssertEqual(try XCTUnwrap(snapshot.weeklyWindow?.usedRatio), 0.08, accuracy: 0.001)
+        XCTAssertEqual(try XCTUnwrap(snapshot.weeklyWindow?.remainingRatio), 0.92, accuracy: 0.001)
+        XCTAssertEqual(try XCTUnwrap(store.latestLimitSample(provider: .codex, kind: "weekly")?.window.usedRatio), 0.08, accuracy: 0.001)
+    }
+
     /// Regression: rate limits arrive only on newly appended log lines. On the second
     /// launch the incremental parser reads nothing, and the provider used to report
     /// "no quota info" for a quota it had already recorded. It must recover the last

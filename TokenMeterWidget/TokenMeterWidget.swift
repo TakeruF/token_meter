@@ -100,7 +100,7 @@ struct ProviderRow: View {
         if let resetsAt = provider?.fiveHourQuota?.resetsAt {
             HStack(spacing: 3) {
                 Image(systemName: "clock.arrow.circlepath")
-                Text("5h \(resetsAt, style: .relative)")
+                Text("5h limit \(resetsAt, style: .relative)")
             }
             .font(.caption2)
             .foregroundStyle(.secondary)
@@ -108,7 +108,7 @@ struct ProviderRow: View {
         } else if let five = provider?.fiveHourWindow, let resetsAt = five.resetsAt {
             HStack(spacing: 3) {
                 Image(systemName: "clock.arrow.circlepath")
-                Text("5h \(resetsAt, style: .relative)")
+                Text("5h limit \(resetsAt, style: .relative)")
                 if five.boundary == .inferred {
                     Text("est.").italic()
                 }

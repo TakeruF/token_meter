@@ -6,6 +6,22 @@
         <description>Token Meter release updates</description>
         <language>en</language>
         <item>
+            <title>1.1.3</title>
+            <pubDate>Wed, 15 Jul 2026 12:00:23 +0900</pubDate>
+            <link>https://github.com/TakeruF/token_meter/releases/tag/v1.1.3</link>
+            <sparkle:version>6</sparkle:version>
+            <sparkle:shortVersionString>1.1.3</sparkle:shortVersionString>
+            <sparkle:minimumSystemVersion>14.0</sparkle:minimumSystemVersion>
+            <enclosure url="https://github.com/TakeruF/token_meter/releases/download/v1.1.3/TokenMeter-1.1.3.zip" length="5884978" type="application/octet-stream" sparkle:edSignature="jmynLBCmFWROC/cU7WlLuyj3KKFhEKEXd581OMQlCRc8o23SlplXkRd6iWEFoX/rDTyWd77mEr9dQJe97ka4Aw=="/>
+            <sparkle:deltas>
+                <enclosure url="https://github.com/TakeruF/token_meter/releases/download/v1.1.3/TokenMeter6-5.delta" sparkle:deltaFrom="5" length="315542" type="application/octet-stream" sparkle:deltaFromSparkleExecutableSize="975840" sparkle:deltaFromSparkleLocales="de,he,ar,el,ja,fa,uk" sparkle:edSignature="juHJ2RcXOf9sIIWpfXvPbWQ5HuIgM6dy/vGcToi8tENFwlfofMcYobi/3NLxsoG/wSZAzXXXyESiU+aphIvSDg=="/>
+                <enclosure url="https://github.com/TakeruF/token_meter/releases/download/v1.1.3/TokenMeter6-4.delta" sparkle:deltaFrom="4" length="320650" type="application/octet-stream" sparkle:deltaFromSparkleExecutableSize="975840" sparkle:deltaFromSparkleLocales="de,he,ar,el,ja,fa,uk" sparkle:edSignature="ZAezQEtjBRxqQMR2l4LcH00aUXPWT/Ulc6hAmWGZQs3jIDe3Z4yX+NfHXSfCQW8203779Xf8ECJVCcNoYqjdBg=="/>
+                <enclosure url="https://github.com/TakeruF/token_meter/releases/download/v1.1.3/TokenMeter6-3.delta" sparkle:deltaFrom="3" length="317746" type="application/octet-stream" sparkle:deltaFromSparkleExecutableSize="975840" sparkle:deltaFromSparkleLocales="de,he,ar,el,ja,fa,uk" sparkle:edSignature="DCRjhbhKb7JvNjK+3x31QEKa0Zt74jOXAOcew7QeFiOf7+QAWMDVeABZYFXyZKrOTA5QDkSEvH4JFDEAcjWNBw=="/>
+                <enclosure url="https://github.com/TakeruF/token_meter/releases/download/v1.1.3/TokenMeter6-2.delta" sparkle:deltaFrom="2" length="414770" type="application/octet-stream" sparkle:deltaFromSparkleExecutableSize="975840" sparkle:deltaFromSparkleLocales="de,he,ar,el,ja,fa,uk" sparkle:edSignature="/CroAPDETAnDYkEIcGJ3+/rfoptuaNtpmY2eYV9gGD5wTEgSLUG2YfJ+0f256UN17sdyIRFunhBtZ/ftp/k4CA=="/>
+                <enclosure url="https://github.com/TakeruF/token_meter/releases/download/v1.1.3/TokenMeter6-1.delta" sparkle:deltaFrom="1" length="549802" type="application/octet-stream" sparkle:deltaFromSparkleExecutableSize="975840" sparkle:deltaFromSparkleLocales="de,he,ar,el,ja,fa,uk" sparkle:edSignature="4tA9xaDrF9tD6oeHPnUOf93spmnrdCtO/4ZJSmNXhV6HXRy7kJHo7LQtf/WcYeeATORxb5JVDhHnDrLYx8tGAA=="/>
+            </sparkle:deltas>
+        </item>
+        <item>
             <title>1.1.2</title>
             <pubDate>Wed, 15 Jul 2026 10:18:03 +0900</pubDate>
             <link>https://github.com/TakeruF/token_meter/releases/tag/v1.1.2</link>
@@ -58,15 +74,6 @@
             <sparkle:deltas>
                 <enclosure url="https://github.com/TakeruF/token_meter/releases/download/v1.0.1/TokenMeter2-1.delta" sparkle:deltaFrom="1" length="340330" type="application/octet-stream" sparkle:deltaFromSparkleExecutableSize="975840" sparkle:deltaFromSparkleLocales="de,he,ar,el,ja,fa,uk" sparkle:edSignature="RD93zL1Tj+OafnUhE7xglN7KVyTkOIOLUcuvjxc2GGdSGBGIg090+gBmiI2cyyUZqWPH8iiijROtQ7q9BLSQCA=="/>
             </sparkle:deltas>
-        </item>
-        <item>
-            <title>1.0.0</title>
-            <pubDate>Wed, 15 Jul 2026 08:24:01 +0900</pubDate>
-            <link>https://github.com/TakeruF/token_meter/releases/tag/v1.0.0</link>
-            <sparkle:version>1</sparkle:version>
-            <sparkle:shortVersionString>1.0.0</sparkle:shortVersionString>
-            <sparkle:minimumSystemVersion>14.0</sparkle:minimumSystemVersion>
-            <enclosure url="https://github.com/TakeruF/token_meter/releases/download/v1.0.0/TokenMeter-1.0.0.zip" length="5682577" type="application/octet-stream" sparkle:edSignature="7qmPR3tkNS2ioeOCujJ5y2n2T7rIEAuX0n6XC/qOY8JWD+l5J/U1E5f7PMK2vBvy2MXJqVTsYO4J7QSmJ3UdDw=="/>
         </item>
     </channel>
 </rss>

@@ -2,6 +2,8 @@
 
 Claude Code と Codex の利用状況を macOS のメニューバーとデスクトップウィジェットから確認するネイティブアプリ。
 
+[公式ページ・ダウンロード](https://takeruf.github.io/token_meter/) · [GitHub Releases](https://github.com/TakeruF/token_meter/releases/latest)
+
 Swift / SwiftUI / WidgetKit / Swift Charts。WebView も Electron も使っていない。
 トークン履歴はローカルで集計する。ユーザーが明示的に有効化した場合だけ、Claude Pro / Maxの
 使用量確認のためAnthropicのOAuth使用量エンドポイントへ通信する。

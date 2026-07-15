@@ -212,30 +212,35 @@ struct MenuBarLabel: View {
         let reset = monitor.menuBarResetTitle
         let hasCompactContent = !values.isEmpty || reset != nil
 
-        HStack(spacing: 4) {
-            if settings.showMenuBarIcon
-                || settings.menuBarStyle == .iconOnly
-                || (settings.menuBarStyle == .compact && !hasCompactContent)
-                || (settings.menuBarStyle == .full && title.isEmpty) {
-                Image(systemName: "gauge.with.dots.needle.33percent")
-            }
-
+        Group {
             if settings.menuBarStyle == .compact {
-                ForEach(values) { item in
-                    HStack(spacing: 2) {
-                        MenuBarProviderIcon(providerID: item.providerID)
-                        Text(item.compactValue)
-                            .monospacedDigit()
+                let includeMeterIcon = settings.showMenuBarIcon || !hasCompactContent
+                if let image = MenuBarCompactImage.make(
+                    values: values.map { ($0.providerID, $0.compactValue) },
+                    reset: reset,
+                    includeMeterIcon: includeMeterIcon
+                ) {
+                    // MenuBarExtra's AppKit bridge only preserves the first
+                    // image/text pair. A single composed image keeps every pair.
+                    Image(nsImage: image)
+                        .renderingMode(.template)
+                } else if !title.isEmpty {
+                    Text(title)
+                } else {
+                    Image(systemName: "gauge.with.dots.needle.33percent")
+                }
+            } else {
+                HStack(spacing: 4) {
+                    if settings.showMenuBarIcon
+                        || settings.menuBarStyle == .iconOnly
+                        || title.isEmpty {
+                        Image(systemName: "gauge.with.dots.needle.33percent")
                     }
-                    .fixedSize()
+
+                    if !title.isEmpty {
+                        Text(title)
+                    }
                 }
-                if let reset {
-                    if !values.isEmpty { Text("·") }
-                    Text(reset)
-                        .monospacedDigit()
-                }
-            } else if !title.isEmpty {
-                Text(title)
             }
         }
         .accessibilityLabel(title.isEmpty ? "Token Meter" : "Token Meter: \(title)")
