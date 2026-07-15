@@ -46,13 +46,17 @@ actor NotificationManager {
                 // Guard against announcing the same reset twice.
                 if announcedResetAt[provider] != resetsAt {
                     announcedResetAt[provider] = resetsAt
-                    await send(
-                        title: AppLocalization.format("%@ quota reset", provider.displayName),
-                        body: AppLocalization.format(
-                            "%d%% available again.",
-                            Int((remaining * 100).rounded())
+                    // Name which window rolled over ("5-hour" / "Weekly"), so the one
+                    // sentence says everything — no separate "N% available again" line.
+                    let title: String
+                    if let label = resetWindowLabel(window, in: snapshot) {
+                        title = AppLocalization.format(
+                            "%@ %@ quota reset", provider.displayName, label
                         )
-                    )
+                    } else {
+                        title = AppLocalization.format("%@ quota reset", provider.displayName)
+                    }
+                    await send(title: title, body: "")
                 }
             }
         }
@@ -72,8 +76,8 @@ actor NotificationManager {
             "%d%% remaining.",
             Int((remaining * 100).rounded())
         )
-        if let reset = AppLocalization.resetDescription(resetsAt: window.resetsAt) {
-            body += " \(reset)."
+        if let reset = AppLocalization.resetSentence(resetsAt: window.resetsAt) {
+            body += " \(reset)"
         }
 
         await send(
@@ -94,6 +98,15 @@ actor NotificationManager {
             title: AppLocalization.format("%@: data error", provider.displayName),
             body: message
         )
+    }
+
+    /// The localized name of whichever reported window this is, so a reset notice can
+    /// say "5-hour" / "Weekly" instead of a bare "quota". Nil if it matches none.
+    private func resetWindowLabel(_ window: UsageWindow, in snapshot: UsageSnapshot) -> String? {
+        if window == snapshot.shortWindow { return AppLocalization.string("5-hour") }
+        if window == snapshot.weeklyWindow { return AppLocalization.string("Weekly") }
+        if window == snapshot.sonnetWeeklyWindow { return AppLocalization.string("Sonnet weekly") }
+        return nil
     }
 
     private func send(title: String, body: String) async {

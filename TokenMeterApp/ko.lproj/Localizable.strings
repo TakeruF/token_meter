@@ -57,7 +57,7 @@
 "Providers" = "제공자";
 "Claude Pro / Max usage" = "Claude Pro / Max 사용량";
 "Use Claude Code sign-in for usage checks" = "사용량 확인에 Claude Code 로그인 사용";
-"When enabled, Token Meter reads Claude Code-credentials from macOS Keychain and sends the access token only to api.anthropic.com/api/oauth/usage. The token is never stored, logged, or included in the widget snapshot." = "활성화하면 Token Meter가 macOS 키체인에서 Claude Code-credentials를 읽고 액세스 토큰을 api.anthropic.com/api/oauth/usage에만 전송합니다. 토큰은 저장, 기록 또는 위젯 데이터에 포함되지 않습니다.";
+"When enabled, Token Meter reads Claude Code-credentials from macOS Keychain and sends the access token only to api.anthropic.com/api/oauth/usage. The token is never stored, logged, or included in the widget snapshot." = "활성화하면 Token Meter가 macOS 키체인에서 Claude Code-credentials를 읽고 액세스 토큰을 [api.anthropic.com/api/oauth/usage](https://api.anthropic.com/api/oauth/usage)에만 전송합니다. 토큰은 저장, 기록 또는 위젯 데이터에 포함되지 않습니다.";
 "This integration uses an OAuth endpoint that Anthropic may change without notice. Turn it off here at any time to stop Keychain and network access." = "이 연동은 Anthropic이 예고 없이 변경할 수 있는 OAuth 엔드포인트를 사용합니다. 언제든 여기서 끄면 키체인 및 네트워크 접근을 중지할 수 있습니다.";
 "Time windows" = "시간 창";
 "Show the 5-hour window" = "5시간 창 표시";
@@ -149,7 +149,7 @@
 "Daily token usage by provider" = "제공자별 일일 토큰 사용량";
 
 "Enable Claude usage checks" = "Claude 사용량 확인 활성화";
-"If enabled, Token Meter reads the Claude Code-credentials Generic Password from macOS Keychain and uses its OAuth access token only for GET https://api.anthropic.com/api/oauth/usage. It does not save or log the token." = "활성화하면 Token Meter가 macOS 키체인의 Claude Code-credentials를 읽고 OAuth 액세스 토큰을 GET https://api.anthropic.com/api/oauth/usage에만 사용합니다. 토큰은 저장하거나 기록하지 않습니다.";
+"If enabled, Token Meter reads the Claude Code-credentials Generic Password from macOS Keychain and uses its OAuth access token only for GET https://api.anthropic.com/api/oauth/usage. It does not save or log the token." = "활성화하면 Token Meter가 macOS 키체인의 Claude Code-credentials를 읽고 OAuth 액세스 토큰을 GET [https://api.anthropic.com/api/oauth/usage](https://api.anthropic.com/api/oauth/usage)에만 사용합니다. 토큰은 저장하거나 기록하지 않습니다.";
 "You can disable this integration at any time. Local token history continues to work without it." = "이 연동은 언제든 끌 수 있습니다. 꺼도 로컬 토큰 기록은 계속 작동합니다.";
 "With the menu bar item hidden, Token Meter keeps a Dock icon so you can still open this window." = "메뉴 막대 항목을 숨기면 이 창을 다시 열 수 있도록 Token Meter가 Dock 아이콘을 유지합니다.";
 "Show in the menu bar" = "메뉴 막대에 표시";
@@ -161,6 +161,7 @@
 "Reveal log folder in Finder" = "Finder에서 로그 폴더 보기";
 "Checking…" = "확인 중…";
 "Updated %@" = "업데이트 %@";
+"Just now" = "방금";
 "Token counts, models, and history" = "토큰 수, 모델 및 기록";
 "Usage percentage and reset time" = "사용량 비율 및 재설정 시간";
 "Copy" = "복사";
@@ -264,8 +265,12 @@
 "Resets in %dd %dh" = "%d일 %d시간 후 재설정";
 "Resets in %dh %dm" = "%d시간 %d분 후 재설정";
 "Resets in %dm" = "%d분 후 재설정";
+"Resets in %dd %dh." = "%d일 %d시간 후 재설정됩니다.";
+"Resets in %dh %dm." = "%d시간 %d분 후 재설정됩니다.";
+"Resets in %dm." = "%d분 후 재설정됩니다.";
 "Could not open the history database: %@" = "기록 데이터베이스를 열 수 없습니다: %@";
 "%@ quota reset" = "%@ 한도 재설정";
+"%@ %@ quota reset" = "%@ %@ 한도가 재설정되었습니다";
 "%d%% available again." = "다시 %d%% 사용 가능합니다.";
 "%d%% remaining." = "%d%% 남았습니다.";
 "%@: %@" = "%@: %@";
@@ -278,3 +283,14 @@
 "Codex 5-hour limit" = "Codex 5시간 한도";
 "Codex is not currently reporting a 5-hour limit. The menu bar falls back to the weekly limit automatically. This option will become available if Codex reports it again." = "현재 Codex에서 5시간 한도를 제공하지 않아 메뉴 막대에는 주간 한도가 자동으로 표시됩니다. Codex에서 5시간 한도를 다시 제공하면 이 항목을 선택할 수 있습니다.";
 "Countdown to the selected limit reset" = "선택한 한도 초기화까지";
+
+/* Widget / accessibility strings that previously fell back to English */
+"today" = "오늘";
+"5h limit" = "5시간 한도";
+"est." = "추정";
+"No usage in the last 7 days" = "지난 7일간 사용 없음";
+"Open Token Meter" = "Token Meter 열기";
+"Open the app to load data" = "앱을 열어 데이터를 불러오세요";
+"%@: %d tokens" = "%@: %d 토큰";
+"reset time estimated from local activity" = "재설정 시간은 로컬 활동으로 추정됨";
+"tokens · %@" = "토큰 · %@";

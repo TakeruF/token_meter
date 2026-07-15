@@ -239,7 +239,7 @@ struct ConnectionCard: View {
                 .font(.headline)
             Spacer()
             if let updated = state?.lastSuccessfulUpdate {
-                Text("Updated \(updated, format: .relative(presentation: .named))")
+                Text(AppLocalization.format("Updated %@", AppLocalization.relativeTime(updated)))
                     .font(.caption2)
                     .foregroundStyle(.tertiary)
             }

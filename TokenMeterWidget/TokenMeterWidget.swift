@@ -385,7 +385,9 @@ struct CompactQuotaStrip: View {
     private func quota(_ label: String, _ window: UsageWindow?) -> some View {
         if let window, let remaining = window.remainingRatio {
             VStack(alignment: .leading, spacing: 0) {
-                Text("\(label) \(Int((remaining * 100).rounded()))% left")
+                // Percent as a String so the key stays "%@%% left" (localized, order-aware)
+                // rather than a bare "%lld%% left" that ships only in English.
+                Text(verbatim: "\(label) ") + Text("\("\(Int((remaining * 100).rounded()))")% left")
                     .monospacedDigit()
                 if showReset, let reset = window.resetsAt {
                     Text(reset, style: .relative)
@@ -401,6 +403,10 @@ struct CompactQuotaStrip: View {
 /// Points are joined with straight lines and sit above their weekday labels.
 struct UsageLineChart: View {
     let points: [SharedSnapshot.DayPoint]
+
+    // Set at the widget root from the snapshot's language; `.formatted` otherwise
+    // uses the system locale, so weekday letters would ignore the app language.
+    @Environment(\.locale) private var locale
 
     /// Height of the plot area (the line). The axis labels live outside this.
     private let plotHeight: CGFloat = 30
@@ -467,7 +473,7 @@ struct UsageLineChart: View {
 
                     HStack(spacing: 3) {
                         ForEach(points) { point in
-                            Text(point.day.formatted(.dateTime.weekday(.narrow)))
+                            Text(point.day.formatted(.dateTime.weekday(.narrow).locale(locale)))
                                 .frame(maxWidth: .infinity)
                         }
                     }

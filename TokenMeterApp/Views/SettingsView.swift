@@ -186,7 +186,7 @@ struct DiagnosticsContent: View {
                             row("OAuth cache", AppLocalization.string(state.snapshot?.quotaIsCached == true ? "Cached" : "Current / unavailable"))
                             row(
                                 "Quota updated",
-                                state.snapshot?.quotaUpdatedAt?.formatted(date: .abbreviated, time: .standard) ?? AppLocalization.string("Never")
+                                state.snapshot?.quotaUpdatedAt?.formatted(Date.FormatStyle(date: .abbreviated, time: .standard).locale(AppLocalization.dateTimeLocale)) ?? AppLocalization.string("Never")
                             )
                         }
                         row("5-hour window", describe(state.snapshot?.shortWindowUsage))
@@ -194,7 +194,7 @@ struct DiagnosticsContent: View {
                         row("Model", state.snapshot?.modelName ?? "—")
                         row(
                             "Last update",
-                            state.lastSuccessfulUpdate.map { $0.formatted(date: .abbreviated, time: .standard) } ?? AppLocalization.string("Never")
+                            state.lastSuccessfulUpdate.map { $0.formatted(Date.FormatStyle(date: .abbreviated, time: .standard).locale(AppLocalization.dateTimeLocale)) } ?? AppLocalization.string("Never")
                         )
                         if let error = state.lastError {
                             row("Last error", error)
@@ -217,13 +217,13 @@ struct DiagnosticsContent: View {
         var text = AppLocalization.format(
             "%d tokens since %@",
             usage.tokens,
-            usage.start.formatted(date: .abbreviated, time: .standard)
+            usage.start.formatted(Date.FormatStyle(date: .abbreviated, time: .standard).locale(AppLocalization.dateTimeLocale))
         )
         if let resetsAt = usage.resetsAt {
             let origin = AppLocalization.string(usage.boundary == .reported ? "reported" : "estimated")
             text += AppLocalization.format(
                 ", resets %@ (%@)",
-                resetsAt.formatted(date: .abbreviated, time: .standard),
+                resetsAt.formatted(Date.FormatStyle(date: .abbreviated, time: .standard).locale(AppLocalization.dateTimeLocale)),
                 origin
             )
         } else {

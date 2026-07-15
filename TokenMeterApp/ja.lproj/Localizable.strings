@@ -57,7 +57,7 @@
 "Providers" = "プロバイダー";
 "Claude Pro / Max usage" = "Claude Pro / Max利用状況";
 "Use Claude Code sign-in for usage checks" = "利用状況の確認にClaude Codeのサインインを使用";
-"When enabled, Token Meter reads Claude Code-credentials from macOS Keychain and sends the access token only to api.anthropic.com/api/oauth/usage. The token is never stored, logged, or included in the widget snapshot." = "有効にすると、Token MeterはmacOSキーチェーンからClaude Code-credentialsを読み取り、アクセストークンをapi.anthropic.com/api/oauth/usageだけに送信します。トークンは保存・記録されず、ウィジェットのデータにも含まれません。";
+"When enabled, Token Meter reads Claude Code-credentials from macOS Keychain and sends the access token only to api.anthropic.com/api/oauth/usage. The token is never stored, logged, or included in the widget snapshot." = "有効にすると、Token MeterはmacOSキーチェーンからClaude Code-credentialsを読み取り、アクセストークンを[api.anthropic.com/api/oauth/usage](https://api.anthropic.com/api/oauth/usage)だけに送信します。トークンは保存・記録されず、ウィジェットのデータにも含まれません。";
 "This integration uses an OAuth endpoint that Anthropic may change without notice. Turn it off here at any time to stop Keychain and network access." = "この連携はAnthropicが予告なく変更する可能性のあるOAuthエンドポイントを使用します。ここで無効にすると、キーチェーンとネットワークへのアクセスを停止できます。";
 "Time windows" = "時間枠";
 "Show the 5-hour window" = "5時間枠を表示";
@@ -149,7 +149,7 @@
 "Daily token usage by provider" = "プロバイダー別の日次トークン利用量";
 
 "Enable Claude usage checks" = "Claude利用状況の確認を有効化";
-"If enabled, Token Meter reads the Claude Code-credentials Generic Password from macOS Keychain and uses its OAuth access token only for GET https://api.anthropic.com/api/oauth/usage. It does not save or log the token." = "有効にすると、Token MeterはmacOSキーチェーンのClaude Code-credentialsを読み取り、そのOAuthアクセストークンをGET https://api.anthropic.com/api/oauth/usageだけに使用します。トークンは保存も記録もしません。";
+"If enabled, Token Meter reads the Claude Code-credentials Generic Password from macOS Keychain and uses its OAuth access token only for GET https://api.anthropic.com/api/oauth/usage. It does not save or log the token." = "有効にすると、Token MeterはmacOSキーチェーンのClaude Code-credentialsを読み取り、そのOAuthアクセストークンをGET [https://api.anthropic.com/api/oauth/usage](https://api.anthropic.com/api/oauth/usage)だけに使用します。トークンは保存も記録もしません。";
 "You can disable this integration at any time. Local token history continues to work without it." = "この連携はいつでも無効にできます。無効にしてもローカルのトークン履歴は引き続き利用できます。";
 "With the menu bar item hidden, Token Meter keeps a Dock icon so you can still open this window." = "メニューバー項目を非表示にすると、この画面を開けるようToken MeterはDockアイコンを表示します。";
 "Show in the menu bar" = "メニューバーに表示";
@@ -161,6 +161,7 @@
 "Reveal log folder in Finder" = "ログフォルダをFinderで表示";
 "Checking…" = "確認中…";
 "Updated %@" = "更新 %@";
+"Just now" = "たった今";
 "Token counts, models, and history" = "トークン数、モデル、履歴";
 "Usage percentage and reset time" = "利用率とリセット時刻";
 "Copy" = "コピー";
@@ -180,7 +181,7 @@
 "No usage today" = "今日の利用なし";
 "Context" = "コンテキスト";
 "Counted from this Mac's %@ logs only." = "このMac上の%@ログだけから集計しています。";
-"Resets %@" = "%@にリセット";
+"Resets %@" = "%@後にリセット";
 "· estimated" = "· 推定";
 "Data may be outdated" = "データが古い可能性があります";
 "Never updated" = "未更新";
@@ -206,11 +207,11 @@
 "Never" = "なし";
 
 "Token Meter reads local Claude Code and Codex session logs. With your explicit permission, it can also use Claude Code's Keychain sign-in to request Pro / Max usage directly from Anthropic." = "Token MeterはClaude CodeとCodexのローカルセッションログを読み取ります。明示的に許可した場合のみ、Claude CodeのKeychainログイン情報を使ってAnthropicからPro / Max使用量を取得します。";
-"~/.claude/projects — Claude Code session logs (token counts only)" = "~/.claude/projects — Claude Codeセッションログ（Token数のみ）";
-"~/.codex/sessions — Codex rollout logs (token counts, usage %, reset time)" = "~/.codex/sessions — Codex rolloutログ（Token数、使用率、リセット時刻）";
+"~/.claude/projects — Claude Code session logs (token counts only)" = "~/.claude/projects — Claude Codeセッションログ（トークン数のみ）";
+"~/.codex/sessions — Codex rollout logs (token counts, usage %, reset time)" = "~/.codex/sessions — Codex rolloutログ（トークン数、使用率、リセット時刻）";
 "macOS Keychain item Claude Code-credentials — only when Claude usage checks are enabled" = "macOS KeychainのClaude Code-credentials — Claude使用量チェックが有効な場合のみ";
-"OAuth tokens are sent only to Anthropic and are never stored by Token Meter." = "OAuth TokenはAnthropicにだけ送信され、Token Meterには保存されません。";
-"Prompts and replies are never parsed or stored — only counts, times, and model names." = "プロンプトや応答は解析・保存されません。保存するのはToken数、時刻、モデル名だけです。";
+"OAuth tokens are sent only to Anthropic and are never stored by Token Meter." = "OAuthトークンはAnthropicにだけ送信され、Token Meterには保存されません。";
+"Prompts and replies are never parsed or stored — only counts, times, and model names." = "プロンプトや応答は解析・保存されません。保存するのはトークン数、時刻、モデル名だけです。";
 "Pro / Max remaining percentages and reset times when OAuth usage checks are enabled" = "OAuth使用量チェック有効時のPro / Max残量とリセット時刻";
 "5-hour reset time is estimated from activity on this Mac, not reported by Claude Code" = "5時間リセットはClaude Codeの報告値ではなく、このMac上の利用履歴から推定します";
 "Learn more" = "詳しく見る";
@@ -222,9 +223,9 @@
 "No .jsonl transcripts yet" = "まだ.jsonlトランスクリプトがありません";
 "No rollout logs yet" = "まだrolloutログがありません";
 "Run `codex login`" = "`codex login`を実行してください";
-"Rollout logs — tokens, usage %, and reset time" = "Rolloutログ — Token数、使用率、リセット時刻";
-"Session logs — token counts only, no quota published locally" = "セッションログ — Token数のみ。ローカルでは利用枠は提供されません";
-"Claude usage via OAuth; local logs add token history when available" = "OAuth経由のClaude使用量。利用可能な場合はローカルログからToken履歴を追加します";
+"Rollout logs — tokens, usage %, and reset time" = "Rolloutログ — トークン数、使用率、リセット時刻";
+"Session logs — token counts only, no quota published locally" = "セッションログ — トークン数のみ。ローカルでは利用枠は提供されません";
+"Claude usage via OAuth; local logs add token history when available" = "OAuth経由のClaude使用量。利用可能な場合はローカルログからトークン履歴を追加します";
 "Sign in again with Claude Code to load plan usage" = "プラン使用量を取得するにはClaude Codeで再ログインしてください";
 "No session logs in %@" = "%@にセッションログがありません";
 "%@ not found" = "%@が見つかりません";
@@ -253,19 +254,23 @@
 "%d minutes" = "%d分";
 "%d hour" = "%d時間";
 "%d days" = "%d日";
-"%d tokens since %@" = "%2$@以降 %1$d Token";
+"%d tokens since %@" = "%2$@以降 %1$d トークン";
 ", resets %@ (%@)" = "、%@にリセット（%@）";
 ", rolling (no reset)" = "、ローリング（リセットなし）";
 "reported" = "報告値";
 "estimated" = "推定";
-"%@ left" = "%@残り";
+"%@ left" = "残り%@";
 "Token Meter: %@" = "Token Meter：%@";
 "Resetting now" = "リセット中";
 "Resets in %dd %dh" = "%d日%d時間後にリセット";
 "Resets in %dh %dm" = "%d時間%d分後にリセット";
 "Resets in %dm" = "%d分後にリセット";
+"Resets in %dd %dh." = "%d日%d時間後にリセットされます。";
+"Resets in %dh %dm." = "%d時間%d分後にリセットされます。";
+"Resets in %dm." = "%d分後にリセットされます。";
 "Could not open the history database: %@" = "履歴データベースを開けませんでした：%@";
 "%@ quota reset" = "%@の利用枠がリセットされました";
+"%@ %@ quota reset" = "%@の%@利用枠がリセットされました";
 "%d%% available again." = "再び%d%%利用できます。";
 "%d%% remaining." = "残り%d%%です。";
 "%@: %@" = "%@：%@";
@@ -278,3 +283,14 @@
 "Codex 5-hour limit" = "Codexの5時間枠";
 "Codex is not currently reporting a 5-hour limit. The menu bar falls back to the weekly limit automatically. This option will become available if Codex reports it again." = "現在、Codexから5時間枠が提供されていないため、メニューバーでは週次枠を自動的に表示します。Codexが5時間枠の提供を再開すると、この項目を選択できるようになります。";
 "Countdown to the selected limit reset" = "選択した利用枠のリセットまで";
+
+/* Widget / accessibility strings that previously fell back to English */
+"today" = "今日";
+"5h limit" = "5時間枠";
+"est." = "推定";
+"No usage in the last 7 days" = "過去7日間の利用なし";
+"Open Token Meter" = "Token Meterを開く";
+"Open the app to load data" = "アプリを開いてデータを読み込んでください";
+"%@: %d tokens" = "%@：%dトークン";
+"reset time estimated from local activity" = "リセット時刻はローカル利用履歴から推定";
+"tokens · %@" = "トークン · %@";

@@ -57,7 +57,7 @@
 "Providers" = "服务商";
 "Claude Pro / Max usage" = "Claude Pro / Max 用量";
 "Use Claude Code sign-in for usage checks" = "使用 Claude Code 登录信息检查用量";
-"When enabled, Token Meter reads Claude Code-credentials from macOS Keychain and sends the access token only to api.anthropic.com/api/oauth/usage. The token is never stored, logged, or included in the widget snapshot." = "启用后，Token Meter 会从 macOS 钥匙串读取 Claude Code-credentials，并仅将访问令牌发送到 api.anthropic.com/api/oauth/usage。令牌不会被存储、记录或写入小组件数据。";
+"When enabled, Token Meter reads Claude Code-credentials from macOS Keychain and sends the access token only to api.anthropic.com/api/oauth/usage. The token is never stored, logged, or included in the widget snapshot." = "启用后，Token Meter 会从 macOS 钥匙串读取 Claude Code-credentials，并仅将访问令牌发送到 [api.anthropic.com/api/oauth/usage](https://api.anthropic.com/api/oauth/usage)。令牌不会被存储、记录或写入小组件数据。";
 "This integration uses an OAuth endpoint that Anthropic may change without notice. Turn it off here at any time to stop Keychain and network access." = "此集成使用 Anthropic 可能随时更改的 OAuth 端点。可随时在此关闭，以停止访问钥匙串和网络。";
 "Time windows" = "时间窗口";
 "Show the 5-hour window" = "显示5小时窗口";
@@ -149,7 +149,7 @@
 "Daily token usage by provider" = "各服务商每日 Token 用量";
 
 "Enable Claude usage checks" = "启用 Claude 用量检查";
-"If enabled, Token Meter reads the Claude Code-credentials Generic Password from macOS Keychain and uses its OAuth access token only for GET https://api.anthropic.com/api/oauth/usage. It does not save or log the token." = "启用后，Token Meter 会读取 macOS 钥匙串中的 Claude Code-credentials，并仅将 OAuth 访问令牌用于 GET https://api.anthropic.com/api/oauth/usage。不会保存或记录令牌。";
+"If enabled, Token Meter reads the Claude Code-credentials Generic Password from macOS Keychain and uses its OAuth access token only for GET https://api.anthropic.com/api/oauth/usage. It does not save or log the token." = "启用后，Token Meter 会读取 macOS 钥匙串中的 Claude Code-credentials，并仅将 OAuth 访问令牌用于 GET [https://api.anthropic.com/api/oauth/usage](https://api.anthropic.com/api/oauth/usage)。不会保存或记录令牌。";
 "You can disable this integration at any time. Local token history continues to work without it." = "可随时关闭此集成。关闭后，本地 Token 历史记录仍可继续使用。";
 "With the menu bar item hidden, Token Meter keeps a Dock icon so you can still open this window." = "隐藏菜单栏项目时，Token Meter 会保留 Dock 图标，确保你仍可打开此窗口。";
 "Show in the menu bar" = "在菜单栏中显示";
@@ -161,6 +161,7 @@
 "Reveal log folder in Finder" = "在 Finder 中显示日志文件夹";
 "Checking…" = "正在检查…";
 "Updated %@" = "更新于 %@";
+"Just now" = "刚刚";
 "Token counts, models, and history" = "Token 数、模型和历史记录";
 "Usage percentage and reset time" = "用量百分比和重置时间";
 "Copy" = "复制";
@@ -264,8 +265,12 @@
 "Resets in %dd %dh" = "%d天%d小时后重置";
 "Resets in %dh %dm" = "%d小时%d分钟后重置";
 "Resets in %dm" = "%d分钟后重置";
+"Resets in %dd %dh." = "%d天%d小时后重置。";
+"Resets in %dh %dm." = "%d小时%d分钟后重置。";
+"Resets in %dm." = "%d分钟后重置。";
 "Could not open the history database: %@" = "无法打开历史数据库：%@";
 "%@ quota reset" = "%@ 额度已重置";
+"%@ %@ quota reset" = "%@ %@额度已重置";
 "%d%% available again." = "现已恢复至%d%%可用。";
 "%d%% remaining." = "剩余%d%%。";
 "%@: %@" = "%@：%@";
@@ -278,3 +283,14 @@
 "Codex 5-hour limit" = "Codex 5 小时限额";
 "Codex is not currently reporting a 5-hour limit. The menu bar falls back to the weekly limit automatically. This option will become available if Codex reports it again." = "Codex 当前未提供 5 小时限额，菜单栏会自动改用每周限额。Codex 恢复提供 5 小时限额后，即可选择此项。";
 "Countdown to the selected limit reset" = "所选限额的重置倒计时";
+
+/* Widget / accessibility strings that previously fell back to English */
+"today" = "今天";
+"5h limit" = "5小时额度";
+"est." = "估算";
+"No usage in the last 7 days" = "最近7天无使用";
+"Open Token Meter" = "打开 Token Meter";
+"Open the app to load data" = "打开应用以加载数据";
+"%@: %d tokens" = "%@：%d Token";
+"reset time estimated from local activity" = "重置时间根据本地活动估算";
+"tokens · %@" = "Token · %@";

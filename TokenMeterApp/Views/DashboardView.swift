@@ -300,11 +300,12 @@ struct DashboardView: View {
     /// "Jul 15, 3:58–4:07 PM" — start with date, end as time only when same day.
     private func sessionInterval(_ s: SessionSummary) -> String {
         let cal = Calendar.current
-        let startText = s.start.formatted(.dateTime.month().day().hour().minute())
+        let locale = AppLocalization.dateTimeLocale
+        let startText = s.start.formatted(.dateTime.month().day().hour().minute().locale(locale))
         if cal.isDate(s.start, inSameDayAs: s.end) {
-            return "\(startText) – \(s.end.formatted(.dateTime.hour().minute()))"
+            return "\(startText) – \(s.end.formatted(.dateTime.hour().minute().locale(locale)))"
         }
-        return "\(startText) – \(s.end.formatted(.dateTime.month().day().hour().minute()))"
+        return "\(startText) – \(s.end.formatted(.dateTime.month().day().hour().minute().locale(locale)))"
     }
 }
 
@@ -360,6 +361,13 @@ struct DailyChart: View {
     /// The day the cursor is currently hovering over, if any.
     @State private var selectedDay: Date?
 
+    /// The distinct plotted days, ascending. Axis marks land on these exact dates
+    /// so each label centers on its gridline — and thus under its plotted point —
+    /// instead of drifting off a generic day-stride.
+    private var dayValues: [Date] {
+        Array(Set(rows.map { Calendar.current.startOfDay(for: $0.day) })).sorted()
+    }
+
     /// Rows for the hovered day, ordered by provider, with a non-zero total.
     private var selectedRows: [DailyRow] {
         guard let selectedDay else { return [] }
@@ -406,9 +414,9 @@ struct DailyChart: View {
         }
         .chartYAxis { AxisMarks(format: compactCount) }
         .chartXAxis {
-            AxisMarks(values: .stride(by: .day)) { _ in
+            AxisMarks(values: dayValues) { _ in
                 AxisGridLine()
-                AxisValueLabel(format: Date.FormatStyle().day())
+                AxisValueLabel(format: Date.FormatStyle().day(), centered: false)
             }
         }
         .frame(height: 220)
@@ -534,7 +542,7 @@ struct WindowSummaryRow: View {
                         .monospacedDigit()
                 }
                 if let remaining = quota?.remainingRatio {
-                    Text("\(Int((remaining * 100).rounded()))% \(Text("left"))")
+                    Text(AppLocalization.format("%@%% left", "\(Int((remaining * 100).rounded()))"))
                         .font(.callout.weight(.semibold))
                         .monospacedDigit()
                         .foregroundStyle(level.tint)
@@ -596,7 +604,7 @@ struct QuotaProvenanceFootnote: View {
                     )
                 }
                 if let updated = snapshot.quotaUpdatedAt {
-                    Text("Last updated \(updated.formatted(date: .abbreviated, time: .shortened))")
+                    Text(AppLocalization.format("Last updated %@", updated.formatted(Date.FormatStyle(date: .abbreviated, time: .shortened).locale(AppLocalization.dateTimeLocale))))
                         .font(.caption2)
                         .foregroundStyle(.secondary)
                 }

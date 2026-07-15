@@ -78,19 +78,13 @@ struct ProviderCard: View {
                 // Symbol + word + number: the state survives without colour.
                 Image(systemName: level.symbolName)
                     .foregroundStyle(level.tint)
-                Text("\(Int((remaining * 100).rounded()))% left")
+                Text(AppLocalization.format("%@%% remaining", "\(Int((remaining * 100).rounded()))"))
                     .font(.system(.title3, design: .rounded).weight(.semibold))
                     .monospacedDigit()
                 Text(AppLocalization.string(level.label))
                     .font(.caption)
                     .foregroundStyle(.secondary)
                 Spacer()
-                if let used = window.usedRatio {
-                    Text("\(Int((used * 100).rounded()))% used")
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                        .monospacedDigit()
-                }
             }
 
             ProgressView(value: max(0, min(1, remaining)))
@@ -147,7 +141,7 @@ struct ProviderCard: View {
                     }
                     Spacer()
                     if let updated = snapshot?.quotaUpdatedAt {
-                        Text("Updated \(updated, format: .relative(presentation: .named))")
+                        Text(AppLocalization.format("Updated %@", AppLocalization.relativeTime(updated)))
                     }
                 }
                 .font(.caption2)
@@ -320,7 +314,7 @@ struct QuotaWindowRow: View {
                     .foregroundStyle(.secondary)
                 Spacer()
                 if let remaining = window.remainingRatio {
-                    Text("\(Int((remaining * 100).rounded()))% remaining")
+                    Text(AppLocalization.format("%@%% remaining", "\(Int((remaining * 100).rounded()))"))
                         .font(.callout.weight(.semibold))
                         .monospacedDigit()
                 } else {
@@ -340,7 +334,7 @@ struct QuotaWindowRow: View {
                 HStack(spacing: 3) {
                     Image(systemName: "clock.arrow.circlepath")
                     Text("Resets \(resetsAt, style: .relative)")
-                    Text("· \(resetsAt.formatted(date: .abbreviated, time: .shortened))")
+                    Text(verbatim: "· \(resetsAt.formatted(Date.FormatStyle(date: .abbreviated, time: .shortened).locale(AppLocalization.dateTimeLocale)))")
                 }
                 .font(.caption2)
                 .foregroundStyle(.secondary)
@@ -407,7 +401,7 @@ struct FreshnessLabel: View {
     var body: some View {
         if let updated = state?.lastSuccessfulUpdate, let freshness = state?.freshness {
             VStack(alignment: .trailing, spacing: 0) {
-                Text("Updated \(updated, format: .relative(presentation: .named))")
+                Text(AppLocalization.format("Updated %@", AppLocalization.relativeTime(updated)))
                     .font(.caption2)
                     .foregroundStyle(freshness.isStale ? AnyShapeStyle(.orange) : AnyShapeStyle(.tertiary))
                 if freshness.isStale {
