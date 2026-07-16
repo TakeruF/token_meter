@@ -1,0 +1,47 @@
+<Window
+    x:Class="TokenMeter.Windows.TrayFlyoutWindow"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    Title="Token Meter">
+    <Border Padding="18"
+            Background="{ThemeResource SolidBackgroundFillColorBaseBrush}"
+            BorderBrush="{ThemeResource SurfaceStrokeColorDefaultBrush}"
+            BorderThickness="1" CornerRadius="12">
+        <StackPanel Spacing="14">
+            <Grid>
+                <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
+                <TextBlock Text="Token Meter" Style="{StaticResource SubtitleTextBlockStyle}" />
+                <Button Grid.Column="1" x:Uid="CompactRefreshButton" Click="Refresh_Click">
+                    <SymbolIcon Symbol="Refresh" />
+                </Button>
+            </Grid>
+            <ItemsControl x:Name="ProviderList">
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate>
+                        <Border Padding="12" Margin="0,0,0,8" Style="{StaticResource CardBorderStyle}">
+                            <Grid ColumnSpacing="12">
+                                <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
+                                <StackPanel Spacing="3">
+                                    <TextBlock Text="{Binding Name}" FontWeight="SemiBold" />
+                                    <TextBlock Text="{Binding UsageText}" />
+                                    <TextBlock Text="{Binding ResetText}" FontSize="12" Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                                </StackPanel>
+                                <StackPanel Grid.Column="1" HorizontalAlignment="Right">
+                                    <TextBlock x:Uid="CompactTodayLabel" HorizontalAlignment="Right" FontSize="12" Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                                    <TextBlock Text="{Binding TodayTokens}" HorizontalAlignment="Right" FontSize="18" FontWeight="SemiBold" />
+                                </StackPanel>
+                            </Grid>
+                        </Border>
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
+            <TextBlock x:Name="NoProvidersLabel" x:Uid="NoProviders" TextWrapping="Wrap"
+                       Foreground="{ThemeResource TextFillColorSecondaryBrush}" Visibility="Collapsed" />
+            <Grid ColumnSpacing="8">
+                <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
+                <Button x:Uid="OpenDashboardButton" HorizontalAlignment="Stretch" Click="Dashboard_Click" />
+                <Button Grid.Column="1" x:Uid="OpenSettingsButton" HorizontalAlignment="Stretch" Click="Settings_Click" />
+            </Grid>
+        </StackPanel>
+    </Border>
+</Window>

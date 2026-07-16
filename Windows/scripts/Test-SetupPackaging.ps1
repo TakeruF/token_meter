@@ -1,0 +1,102 @@
+[CmdletBinding()]
+param()
+
+$ErrorActionPreference = 'Stop'
+Set-StrictMode -Version Latest
+
+$repositoryRoot = (Resolve-Path -LiteralPath (Join-Path $PSScriptRoot '..\..')).Path
+$appProject = Join-Path $repositoryRoot 'Windows\src\TokenMeter.Windows.App\TokenMeter.Windows.App.csproj'
+$appManifest = Join-Path $repositoryRoot 'Windows\src\TokenMeter.Windows.App\Package.appxmanifest'
+$testRoot = Join-Path ([System.IO.Path]::GetTempPath()) "TokenMeterSetupTest-$([Guid]::NewGuid().ToString('N'))"
+$packageDirectory = Join-Path $testRoot 'package'
+$setupDirectory = Join-Path $testRoot 'setup'
+$signingCertificate = $null
+
+New-Item -ItemType Directory -Path $packageDirectory -Force | Out-Null
+
+try {
+    Write-Host 'Creating an ephemeral MSIX test certificate.'
+    $manifestDocument = [xml][System.IO.File]::ReadAllText($appManifest)
+    $identityElement = $manifestDocument.DocumentElement.SelectSingleNode("*[local-name()='Identity']")
+    $publisher = $identityElement.GetAttribute('Publisher')
+    if ([string]::IsNullOrWhiteSpace($publisher)) {
+        throw 'Package.appxmanifest does not define Identity/Publisher.'
+    }
+
+    $signingCertificate = New-SelfSignedCertificate `
+        -Type CodeSigningCert `
+        -Subject $publisher `
+        -CertStoreLocation 'Cert:\CurrentUser\My' `
+        -KeyAlgorithm RSA `
+        -KeyLength 2048 `
+        -KeyExportPolicy Exportable `
+        -KeySpec Signature `
+        -NotAfter (Get-Date).AddDays(1)
+
+    Write-Host 'Restoring the self-contained MSIX test build.'
+    $publishArguments = @(
+        'restore',
+        $appProject,
+        '-p:Platform=x64',
+        '-p:RuntimeIdentifier=win-x64',
+        '-p:SelfContained=true',
+        '-p:WindowsAppSDKSelfContained=true',
+        '--locked-mode'
+    )
+    & dotnet @publishArguments
+    if ($LASTEXITCODE -ne 0) {
+        throw "Test MSIX restore failed with exit code $LASTEXITCODE."
+    }
+
+    Write-Host 'Building and signing the self-contained MSIX test package.'
+    $publishArguments = @(
+        'publish',
+        $appProject,
+        '--configuration', 'Release',
+        '--no-restore',
+        '-p:Platform=x64',
+        '-p:RuntimeIdentifier=win-x64',
+        '-p:SelfContained=true',
+        '-p:WindowsAppSDKSelfContained=true',
+        '-p:GenerateAppxPackageOnBuild=true',
+        '-p:AppxPackageSigningEnabled=true',
+        "-p:PackageCertificateThumbprint=$($signingCertificate.Thumbprint)",
+        '-p:AppxBundle=Never',
+        '-p:UapAppxPackageBuildMode=SideloadOnly',
+        "-p:AppxPackageDir=$packageDirectory\"
+    )
+    & dotnet @publishArguments
+    if ($LASTEXITCODE -ne 0) {
+        throw "Test MSIX build failed with exit code $LASTEXITCODE."
+    }
+
+    $msix = Get-ChildItem -LiteralPath $packageDirectory -Filter '*.msix' -File -Recurse |
+        Select-Object -First 1
+    if ($null -eq $msix) {
+        throw 'The test MSIX package was not generated.'
+    }
+
+    Write-Host 'Embedding the signed MSIX in Setup.exe.'
+    & (Join-Path $PSScriptRoot 'Build-Setup.ps1') `
+        -MsixPath $msix.FullName `
+        -DeferSetupSigning `
+        -UntrustedTestSignerThumbprint $signingCertificate.Thumbprint `
+        -OutputDirectory $setupDirectory | Out-Host
+
+    $setupPath = Join-Path $setupDirectory 'TokenMeterSetup.exe'
+    Write-Host 'Verifying the embedded payload.'
+    & $setupPath '--verify-payload'
+    if ($LASTEXITCODE -ne 0) {
+        throw "The generated Setup.exe could not read its embedded MSIX payload. Exit code: $LASTEXITCODE."
+    }
+
+    Write-Host 'Setup.exe packaging smoke test passed.'
+}
+finally {
+    if ($null -ne $signingCertificate) {
+        Remove-Item -LiteralPath $signingCertificate.PSPath -Force -ErrorAction SilentlyContinue
+    }
+    if (Test-Path -LiteralPath $testRoot) {
+        Remove-Item -LiteralPath $testRoot -Recurse -Force -ErrorAction SilentlyContinue
+    }
+}

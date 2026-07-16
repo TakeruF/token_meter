@@ -1,0 +1,102 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <resheader name="resmimetype"><value>text/microsoft-resx</value></resheader>
+  <resheader name="version"><value>2.0</value></resheader>
+  <resheader name="reader"><value>System.Resources.ResXResourceReader, System.Windows.Forms</value></resheader>
+  <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms</value></resheader>
+  <data name="Dashboard" xml:space="preserve"><value>Dashboard</value></data>
+  <data name="Settings" xml:space="preserve"><value>Settings</value></data>
+  <data name="Refresh" xml:space="preserve"><value>Refresh</value></data>
+  <data name="Exit" xml:space="preserve"><value>Exit</value></data>
+  <data name="Today" xml:space="preserve"><value>Today</value></data>
+  <data name="SevenDays" xml:space="preserve"><value>7 days</value></data>
+  <data name="ThirtyDays" xml:space="preserve"><value>30 days</value></data>
+  <data name="NinetyDays" xml:space="preserve"><value>90 days</value></data>
+  <data name="NoResetTime" xml:space="preserve"><value>No reset time</value></data>
+  <data name="ResetDue" xml:space="preserve"><value>Reset due</value></data>
+  <data name="ResetsInDaysHours" xml:space="preserve"><value>Resets in {0}d {1}h</value></data>
+  <data name="ResetsInHoursMinutes" xml:space="preserve"><value>Resets in {0}h {1}m</value></data>
+  <data name="NotChecked" xml:space="preserve"><value>Not checked</value></data>
+  <data name="LocalUsageOnly" xml:space="preserve"><value>Local token usage</value></data>
+  <data name="RemainingFormat" xml:space="preserve"><value>{0} remaining</value></data>
+  <data name="UnknownModel" xml:space="preserve"><value>Unknown model</value></data>
+  <data name="TurnsFormat" xml:space="preserve"><value>{0} turns</value></data>
+  <data name="UpdatedFormat" xml:space="preserve"><value>Updated {0}</value></data>
+  <data name="WelcomeTitle" xml:space="preserve"><value>Welcome to Token Meter</value></data>
+  <data name="WelcomeMessage" xml:space="preserve"><value>Token Meter reads local CLI usage logs on this PC. Choose your providers and privacy options next.</value></data>
+  <data name="GetStarted" xml:space="preserve"><value>Get started</value></data>
+  <data name="RestartRequiredTitle" xml:space="preserve"><value>Restart required</value></data>
+  <data name="RestartRequiredMessage" xml:space="preserve"><value>Token Meter will restart to apply the selected language to every window.</value></data>
+  <data name="RestartNow" xml:space="preserve"><value>Restart now</value></data>
+  <data name="Cancel" xml:space="preserve"><value>Cancel</value></data>
+  <data name="Delete" xml:space="preserve"><value>Delete</value></data>
+  <data name="DeleteHistoryTitle" xml:space="preserve"><value>Delete usage history?</value></data>
+  <data name="DeleteHistoryMessage" xml:space="preserve"><value>The local database and read cursors will be deleted. Readable logs are rebuilt on the next refresh.</value></data>
+  <data name="StartupDisabledByUser" xml:space="preserve"><value>Startup was disabled in Windows Settings. Enable it there before trying again.</value></data>
+  <data name="StartupStatusReady" xml:space="preserve"><value>Controlled by Windows startup app settings.</value></data>
+  <data name="LimitNotificationTitle" xml:space="preserve"><value>{0} usage limit</value></data>
+  <data name="LimitNotificationBody" xml:space="preserve"><value>{0}% remaining. {1}</value></data>
+  <data name="ResetNotificationTitle" xml:space="preserve"><value>{0} limit reset</value></data>
+  <data name="ResetNotificationBody" xml:space="preserve"><value>Your available usage has reset.</value></data>
+  <data name="DataErrorNotificationTitle" xml:space="preserve"><value>{0} data error</value></data>
+  <data name="DataErrorNotificationBody" xml:space="preserve"><value>Token Meter could not update this provider. Open Settings for diagnostics.</value></data>
+  <data name="DashboardNavigation.Content" xml:space="preserve"><value>Dashboard</value></data>
+  <data name="SettingsNavigation.Content" xml:space="preserve"><value>Settings</value></data>
+  <data name="DashboardTitle.Text" xml:space="preserve"><value>Usage dashboard</value></data>
+  <data name="RefreshButton.AutomationProperties.Name" xml:space="preserve"><value>Refresh usage</value></data>
+  <data name="TotalTokensLabel.Text" xml:space="preserve"><value>Total tokens</value></data>
+  <data name="InputTokensLabel.Text" xml:space="preserve"><value>Input</value></data>
+  <data name="CachedTokensLabel.Text" xml:space="preserve"><value>Cached input</value></data>
+  <data name="OutputTokensLabel.Text" xml:space="preserve"><value>Output</value></data>
+  <data name="UsageTrendTitle.Text" xml:space="preserve"><value>Usage trend</value></data>
+  <data name="ModelsTitle.Text" xml:space="preserve"><value>Models</value></data>
+  <data name="RecentSessionsTitle.Text" xml:space="preserve"><value>Recent sessions</value></data>
+  <data name="ChartEmpty.Text" xml:space="preserve"><value>No usage in this period</value></data>
+  <data name="SettingsTitle.Text" xml:space="preserve"><value>Settings</value></data>
+  <data name="ProvidersTitle.Text" xml:space="preserve"><value>Providers</value></data>
+  <data name="ClaudeOAuthToggle.Header" xml:space="preserve"><value>Show Claude Pro / Max usage limits</value></data>
+  <data name="ClaudeCredentialNotice.Text" xml:space="preserve"><value>Opt-in only. The access token is read from .credentials.json into memory for the Anthropic request and is never logged or stored.</value></data>
+  <data name="DisplayTitle.Text" xml:space="preserve"><value>Display and refresh</value></data>
+  <data name="FiveHourToggle.Header" xml:space="preserve"><value>Show 5-hour window</value></data>
+  <data name="WeeklyToggle.Header" xml:space="preserve"><value>Show weekly window</value></data>
+  <data name="RefreshIntervalLabel.Text" xml:space="preserve"><value>Automatic refresh</value></data>
+  <data name="NotificationsTitle.Text" xml:space="preserve"><value>Notifications</value></data>
+  <data name="ThresholdLabel.Text" xml:space="preserve"><value>Low remaining usage</value></data>
+  <data name="ResetNotificationToggle.Header" xml:space="preserve"><value>Notify when a limit resets</value></data>
+  <data name="ErrorNotificationToggle.Header" xml:space="preserve"><value>Notify about data errors</value></data>
+  <data name="SystemTitle.Text" xml:space="preserve"><value>System</value></data>
+  <data name="StartupToggle.Header" xml:space="preserve"><value>Start Token Meter when I sign in</value></data>
+  <data name="LanguageLabel.Text" xml:space="preserve"><value>Language</value></data>
+  <data name="ApplyLanguageButton.Content" xml:space="preserve"><value>Apply</value></data>
+  <data name="DataTitle.Text" xml:space="preserve"><value>Local data</value></data>
+  <data name="RetentionLabel.Text" xml:space="preserve"><value>History retention</value></data>
+  <data name="CopyDiagnosticsButton.Content" xml:space="preserve"><value>Copy diagnostics</value></data>
+  <data name="DeleteHistoryButton.Content" xml:space="preserve"><value>Delete history</value></data>
+  <data name="CompactRefreshButton.AutomationProperties.Name" xml:space="preserve"><value>Refresh usage</value></data>
+  <data name="CompactTodayLabel.Text" xml:space="preserve"><value>Today</value></data>
+  <data name="NoProviders.Text" xml:space="preserve"><value>No providers enabled. Open Settings to choose one.</value></data>
+  <data name="OpenDashboardButton.Content" xml:space="preserve"><value>Dashboard</value></data>
+  <data name="OpenSettingsButton.Content" xml:space="preserve"><value>Settings</value></data>
+  <data name="MinutesFormat" xml:space="preserve"><value>{0} minutes</value></data>
+  <data name="DaysFormat" xml:space="preserve"><value>{0} days</value></data>
+  <data name="Off" xml:space="preserve"><value>Off</value></data>
+  <data name="RangeBox.AutomationProperties.Name" xml:space="preserve"><value>Time range</value></data>
+  <data name="UsageChartControl.AutomationProperties.Name" xml:space="preserve"><value>Token usage trend</value></data>
+  <data name="SystemDefaultLanguage.Content" xml:space="preserve"><value>System default</value></data>
+  <data name="ShortWindowName" xml:space="preserve"><value>5-hour</value></data>
+  <data name="WeeklyWindowName" xml:space="preserve"><value>Weekly</value></data>
+  <data name="SonnetWeeklyWindowName" xml:space="preserve"><value>Sonnet weekly</value></data>
+  <data name="AvailableStatus" xml:space="preserve"><value>Available</value></data>
+  <data name="NotInstalledStatus" xml:space="preserve"><value>Not installed</value></data>
+  <data name="NotLoggedInStatus" xml:space="preserve"><value>Sign-in required</value></data>
+  <data name="NoDataStatus" xml:space="preserve"><value>No usage logs yet</value></data>
+  <data name="PermissionDeniedStatus" xml:space="preserve"><value>Permission denied</value></data>
+  <data name="DataErrorStatus" xml:space="preserve"><value>Update failed</value></data>
+  <data name="PrivacyPolicyButton.Content" xml:space="preserve"><value>Privacy policy</value></data>
+  <data name="DataSourcesButton.Content" xml:space="preserve"><value>Data sources</value></data>
+  <data name="UninstallButton.Content" xml:space="preserve"><value>Uninstall instructions</value></data>
+  <data name="ClaudeConsentTitle" xml:space="preserve"><value>Enable Claude online usage lookup?</value></data>
+  <data name="ClaudeConsentMessage" xml:space="preserve"><value>Token Meter will read the OAuth access token from Claude Code's .credentials.json into memory and send it only to Anthropic's usage endpoint. The token is not saved or logged. You can withdraw consent by turning this setting off.</value></data>
+  <data name="EnableClaudeUsage" xml:space="preserve"><value>Enable</value></data>
+  <data name="PrivacyPolicy" xml:space="preserve"><value>Read the privacy policy</value></data>
+</root>

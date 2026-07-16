@@ -1,0 +1,102 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <resheader name="resmimetype"><value>text/microsoft-resx</value></resheader>
+  <resheader name="version"><value>2.0</value></resheader>
+  <resheader name="reader"><value>System.Resources.ResXResourceReader, System.Windows.Forms</value></resheader>
+  <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms</value></resheader>
+  <data name="Dashboard" xml:space="preserve"><value>ダッシュボード</value></data>
+  <data name="Settings" xml:space="preserve"><value>設定</value></data>
+  <data name="Refresh" xml:space="preserve"><value>更新</value></data>
+  <data name="Exit" xml:space="preserve"><value>終了</value></data>
+  <data name="Today" xml:space="preserve"><value>今日</value></data>
+  <data name="SevenDays" xml:space="preserve"><value>7日間</value></data>
+  <data name="ThirtyDays" xml:space="preserve"><value>30日間</value></data>
+  <data name="NinetyDays" xml:space="preserve"><value>90日間</value></data>
+  <data name="NoResetTime" xml:space="preserve"><value>リセット時刻なし</value></data>
+  <data name="ResetDue" xml:space="preserve"><value>リセット予定</value></data>
+  <data name="ResetsInDaysHours" xml:space="preserve"><value>あと{0}日{1}時間でリセット</value></data>
+  <data name="ResetsInHoursMinutes" xml:space="preserve"><value>あと{0}時間{1}分でリセット</value></data>
+  <data name="NotChecked" xml:space="preserve"><value>未確認</value></data>
+  <data name="LocalUsageOnly" xml:space="preserve"><value>ローカルトークン使用量</value></data>
+  <data name="RemainingFormat" xml:space="preserve"><value>残り {0}</value></data>
+  <data name="UnknownModel" xml:space="preserve"><value>不明なモデル</value></data>
+  <data name="TurnsFormat" xml:space="preserve"><value>{0}ターン</value></data>
+  <data name="UpdatedFormat" xml:space="preserve"><value>{0}に更新</value></data>
+  <data name="WelcomeTitle" xml:space="preserve"><value>Token Meterへようこそ</value></data>
+  <data name="WelcomeMessage" xml:space="preserve"><value>Token Meterは、このPCにあるCLIの利用ログを読み取ります。次の画面でプロバイダーとプライバシー設定を選択してください。</value></data>
+  <data name="GetStarted" xml:space="preserve"><value>はじめる</value></data>
+  <data name="RestartRequiredTitle" xml:space="preserve"><value>再起動が必要です</value></data>
+  <data name="RestartRequiredMessage" xml:space="preserve"><value>すべての画面に選択した言語を適用するため、Token Meterを再起動します。</value></data>
+  <data name="RestartNow" xml:space="preserve"><value>今すぐ再起動</value></data>
+  <data name="Cancel" xml:space="preserve"><value>キャンセル</value></data>
+  <data name="Delete" xml:space="preserve"><value>削除</value></data>
+  <data name="DeleteHistoryTitle" xml:space="preserve"><value>利用履歴を削除しますか？</value></data>
+  <data name="DeleteHistoryMessage" xml:space="preserve"><value>ローカルDBと読み取り位置を削除します。読み取り可能なログは次回の更新時に再構築されます。</value></data>
+  <data name="StartupDisabledByUser" xml:space="preserve"><value>Windowsの設定でスタートアップが無効です。先にWindows側で有効にしてください。</value></data>
+  <data name="StartupStatusReady" xml:space="preserve"><value>Windowsのスタートアップ アプリ設定で管理されます。</value></data>
+  <data name="LimitNotificationTitle" xml:space="preserve"><value>{0}の利用枠</value></data>
+  <data name="LimitNotificationBody" xml:space="preserve"><value>残り{0}%です。{1}</value></data>
+  <data name="ResetNotificationTitle" xml:space="preserve"><value>{0}の利用枠がリセットされました</value></data>
+  <data name="ResetNotificationBody" xml:space="preserve"><value>利用可能量がリセットされました。</value></data>
+  <data name="DataErrorNotificationTitle" xml:space="preserve"><value>{0}のデータエラー</value></data>
+  <data name="DataErrorNotificationBody" xml:space="preserve"><value>このプロバイダーを更新できませんでした。設定で診断情報を確認してください。</value></data>
+  <data name="DashboardNavigation.Content" xml:space="preserve"><value>ダッシュボード</value></data>
+  <data name="SettingsNavigation.Content" xml:space="preserve"><value>設定</value></data>
+  <data name="DashboardTitle.Text" xml:space="preserve"><value>利用状況ダッシュボード</value></data>
+  <data name="RefreshButton.AutomationProperties.Name" xml:space="preserve"><value>利用状況を更新</value></data>
+  <data name="TotalTokensLabel.Text" xml:space="preserve"><value>合計トークン</value></data>
+  <data name="InputTokensLabel.Text" xml:space="preserve"><value>入力</value></data>
+  <data name="CachedTokensLabel.Text" xml:space="preserve"><value>キャッシュ入力</value></data>
+  <data name="OutputTokensLabel.Text" xml:space="preserve"><value>出力</value></data>
+  <data name="UsageTrendTitle.Text" xml:space="preserve"><value>利用量の推移</value></data>
+  <data name="ModelsTitle.Text" xml:space="preserve"><value>モデル別</value></data>
+  <data name="RecentSessionsTitle.Text" xml:space="preserve"><value>最近のセッション</value></data>
+  <data name="ChartEmpty.Text" xml:space="preserve"><value>この期間の利用データはありません</value></data>
+  <data name="SettingsTitle.Text" xml:space="preserve"><value>設定</value></data>
+  <data name="ProvidersTitle.Text" xml:space="preserve"><value>プロバイダー</value></data>
+  <data name="ClaudeOAuthToggle.Header" xml:space="preserve"><value>Claude Pro / Maxの利用枠を表示</value></data>
+  <data name="ClaudeCredentialNotice.Text" xml:space="preserve"><value>明示的に有効化した場合のみ、Anthropicへの照会用に.credentials.jsonからアクセストークンをメモリへ読み込みます。ログやDBには保存しません。</value></data>
+  <data name="DisplayTitle.Text" xml:space="preserve"><value>表示と更新</value></data>
+  <data name="FiveHourToggle.Header" xml:space="preserve"><value>5時間枠を表示</value></data>
+  <data name="WeeklyToggle.Header" xml:space="preserve"><value>週次枠を表示</value></data>
+  <data name="RefreshIntervalLabel.Text" xml:space="preserve"><value>自動更新</value></data>
+  <data name="NotificationsTitle.Text" xml:space="preserve"><value>通知</value></data>
+  <data name="ThresholdLabel.Text" xml:space="preserve"><value>利用可能量低下</value></data>
+  <data name="ResetNotificationToggle.Header" xml:space="preserve"><value>利用枠のリセットを通知</value></data>
+  <data name="ErrorNotificationToggle.Header" xml:space="preserve"><value>データエラーを通知</value></data>
+  <data name="SystemTitle.Text" xml:space="preserve"><value>システム</value></data>
+  <data name="StartupToggle.Header" xml:space="preserve"><value>サインイン時にToken Meterを起動</value></data>
+  <data name="LanguageLabel.Text" xml:space="preserve"><value>言語</value></data>
+  <data name="ApplyLanguageButton.Content" xml:space="preserve"><value>適用</value></data>
+  <data name="DataTitle.Text" xml:space="preserve"><value>ローカルデータ</value></data>
+  <data name="RetentionLabel.Text" xml:space="preserve"><value>履歴の保持期間</value></data>
+  <data name="CopyDiagnosticsButton.Content" xml:space="preserve"><value>診断情報をコピー</value></data>
+  <data name="DeleteHistoryButton.Content" xml:space="preserve"><value>履歴を削除</value></data>
+  <data name="CompactRefreshButton.AutomationProperties.Name" xml:space="preserve"><value>利用状況を更新</value></data>
+  <data name="CompactTodayLabel.Text" xml:space="preserve"><value>今日</value></data>
+  <data name="NoProviders.Text" xml:space="preserve"><value>有効なプロバイダーがありません。設定から選択してください。</value></data>
+  <data name="OpenDashboardButton.Content" xml:space="preserve"><value>ダッシュボード</value></data>
+  <data name="OpenSettingsButton.Content" xml:space="preserve"><value>設定</value></data>
+  <data name="MinutesFormat" xml:space="preserve"><value>{0}分</value></data>
+  <data name="DaysFormat" xml:space="preserve"><value>{0}日</value></data>
+  <data name="Off" xml:space="preserve"><value>オフ</value></data>
+  <data name="RangeBox.AutomationProperties.Name" xml:space="preserve"><value>表示期間</value></data>
+  <data name="UsageChartControl.AutomationProperties.Name" xml:space="preserve"><value>トークン利用量の推移</value></data>
+  <data name="SystemDefaultLanguage.Content" xml:space="preserve"><value>システムの既定</value></data>
+  <data name="ShortWindowName" xml:space="preserve"><value>5時間</value></data>
+  <data name="WeeklyWindowName" xml:space="preserve"><value>週次</value></data>
+  <data name="SonnetWeeklyWindowName" xml:space="preserve"><value>Sonnet週次</value></data>
+  <data name="AvailableStatus" xml:space="preserve"><value>利用可能</value></data>
+  <data name="NotInstalledStatus" xml:space="preserve"><value>未インストール</value></data>
+  <data name="NotLoggedInStatus" xml:space="preserve"><value>サインインが必要です</value></data>
+  <data name="NoDataStatus" xml:space="preserve"><value>利用ログがまだありません</value></data>
+  <data name="PermissionDeniedStatus" xml:space="preserve"><value>アクセスが拒否されました</value></data>
+  <data name="DataErrorStatus" xml:space="preserve"><value>更新に失敗しました</value></data>
+  <data name="PrivacyPolicyButton.Content" xml:space="preserve"><value>プライバシーポリシー</value></data>
+  <data name="DataSourcesButton.Content" xml:space="preserve"><value>データソース</value></data>
+  <data name="UninstallButton.Content" xml:space="preserve"><value>アンインストール方法</value></data>
+  <data name="ClaudeConsentTitle" xml:space="preserve"><value>Claudeオンライン利用量照会を有効にしますか？</value></data>
+  <data name="ClaudeConsentMessage" xml:space="preserve"><value>Token MeterはClaude Codeの.credentials.jsonからOAuthアクセストークンをメモリへ読み、Anthropicの使用量エンドポイントだけへ送信します。トークンは保存・ログ出力しません。この設定をOFFにするといつでも同意を撤回できます。</value></data>
+  <data name="EnableClaudeUsage" xml:space="preserve"><value>有効にする</value></data>
+  <data name="PrivacyPolicy" xml:space="preserve"><value>プライバシーポリシーを読む</value></data>
+</root>
