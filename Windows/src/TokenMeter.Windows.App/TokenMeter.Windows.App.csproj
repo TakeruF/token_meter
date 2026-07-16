@@ -1,0 +1,33 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net10.0-windows10.0.26100.0</TargetFramework>
+    <TargetPlatformMinVersion>10.0.22000.0</TargetPlatformMinVersion>
+    <OutputType>WinExe</OutputType>
+    <RootNamespace>TokenMeter.Windows</RootNamespace>
+    <AssemblyName>TokenMeter</AssemblyName>
+    <UseWinUI>true</UseWinUI>
+    <EnableMsixTooling>true</EnableMsixTooling>
+    <EnableWindowsTargeting>true</EnableWindowsTargeting>
+    <WindowsPackageType>MSIX</WindowsPackageType>
+    <Platforms>x64</Platforms>
+    <PlatformTarget>x64</PlatformTarget>
+    <RuntimeIdentifier>win-x64</RuntimeIdentifier>
+    <ApplicationManifest>app.manifest</ApplicationManifest>
+    <ApplicationIcon>Assets/TokenMeter.ico</ApplicationIcon>
+    <ApplicationDisplayVersion>1.3.0</ApplicationDisplayVersion>
+    <ApplicationVersion>0</ApplicationVersion>
+    <PublishReadyToRun>true</PublishReadyToRun>
+    <SelfContained>false</SelfContained>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="Microsoft.WindowsAppSDK" Version="2.2.0" />
+    <ProjectReference Include="../TokenMeter.Windows.Core/TokenMeter.Windows.Core.csproj" />
+  </ItemGroup>
+  <ItemGroup Condition="'$(TokenMeterPackageManifest)' != ''">
+    <AppxManifest Include="$(TokenMeterPackageManifest)" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="Assets/*.png" CopyToOutputDirectory="PreserveNewest" />
+    <Content Include="Assets/*.ico" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+</Project>

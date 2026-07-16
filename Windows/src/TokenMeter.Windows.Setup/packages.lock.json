@@ -1,0 +1,14 @@
+{
+  "version": 1,
+  "dependencies": {
+    "net10.0-windows10.0.26100": {
+      "Microsoft.NET.ILLink.Tasks": {
+        "type": "Direct",
+        "requested": "[10.0.10, )",
+        "resolved": "10.0.10",
+        "contentHash": "USPlGK4SzGfR2gy8h4lZ54e9hHBJpPiaPn86f1jEuRmu92/T+DGiexDbPpRBQzNVSJtCW6VR0q2VslLbchrrnA=="
+      }
+    },
+    "net10.0-windows10.0.26100/win-x64": {}
+  }
+}

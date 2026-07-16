@@ -79,6 +79,13 @@ Copyright (c) Eric Sink.
 Bundles the **SQLite** library itself, which is in the public domain
 (<https://www.sqlite.org/copyright.html>).
 
+### SourceGear.sqlite3 3.50.4.2 / SQLite 3.50.4
+
+<https://www.nuget.org/packages/SourceGear.sqlite3> — native builds of SQLite
+packaged by SourceGear, LLC and consumed through SQLitePCLRaw. SQLite is in the
+public domain; its public-domain dedication and blessing are available at
+<https://www.sqlite.org/copyright.html>.
+
 ---
 
 ## Not bundled
@@ -87,4 +94,4 @@ Token Meter reads log files written by Claude Code, Codex, and Copilot CLI, and
 optionally queries Anthropic's usage endpoint. It does not redistribute any code
 from those products, and is not affiliated with or endorsed by Anthropic,
 OpenAI, GitHub, or Microsoft. Product names are the trademarks of their
-respective owners.
+respective owners. Windows binaries do not bundle the vendors' product logos.

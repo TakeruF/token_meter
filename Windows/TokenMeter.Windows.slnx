@@ -1,0 +1,8 @@
+<Solution>
+  <Project Path="src/TokenMeter.Windows.Core/TokenMeter.Windows.Core.csproj" />
+  <Project Path="src/TokenMeter.Windows.App/TokenMeter.Windows.App.csproj" />
+  <Project Path="src/TokenMeter.Windows.Setup/TokenMeter.Windows.Setup.csproj" />
+  <Project Path="tests/TokenMeter.Windows.App.CompileCheck/TokenMeter.Windows.App.CompileCheck.csproj" />
+  <Project Path="tests/TokenMeter.Windows.Core.Tests/TokenMeter.Windows.Core.Tests.csproj" />
+  <Project Path="tests/TokenMeter.Windows.Setup.Tests/TokenMeter.Windows.Setup.Tests.csproj" />
+</Solution>

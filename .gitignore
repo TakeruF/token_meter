@@ -5,6 +5,13 @@ TokenMeter.xcodeproj/
 build/
 DerivedData/
 .build/
+Windows/**/bin/
+Windows/**/obj/
+Windows/**/AppPackages/
+Windows/**/TestResults/
+Windows/**/*.msix
+Windows/**/*.msixupload
+Windows/artifacts/
 *.xcuserstate
 xcuserdata/
 

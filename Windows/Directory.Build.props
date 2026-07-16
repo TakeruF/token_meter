@@ -1,0 +1,26 @@
+<Project>
+  <PropertyGroup>
+    <LangVersion>latest</LangVersion>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <AnalysisLevel>latest</AnalysisLevel>
+    <Deterministic>true</Deterministic>
+    <ContinuousIntegrationBuild Condition="'$(CI)' == 'true'">true</ContinuousIntegrationBuild>
+    <RestorePackagesWithLockFile>true</RestorePackagesWithLockFile>
+    <RestoreLockedMode Condition="'$(CI)' == 'true'">true</RestoreLockedMode>
+
+    <!-- SignPath requires consistent product and version metadata in every signed binary. -->
+    <TokenMeterVersion>1.3.0.0</TokenMeterVersion>
+    <Version>$(TokenMeterVersion)</Version>
+    <AssemblyVersion>$(TokenMeterVersion)</AssemblyVersion>
+    <FileVersion>$(TokenMeterVersion)</FileVersion>
+    <InformationalVersion>$(TokenMeterVersion)</InformationalVersion>
+    <IncludeSourceRevisionInInformationalVersion>false</IncludeSourceRevisionInInformationalVersion>
+    <Product>Token Meter</Product>
+    <Company>Takeru Fujii</Company>
+    <Authors>Takeru Fujii</Authors>
+    <Copyright>Copyright © 2026 Takeru Fujii. Licensed under the Apache License, Version 2.0.</Copyright>
+    <RepositoryUrl>https://github.com/TakeruF/token_meter</RepositoryUrl>
+  </PropertyGroup>
+</Project>

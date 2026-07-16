@@ -486,6 +486,14 @@ figure {
   font-size: 40px;
 }
 
+.gallery-copy {
+  max-width: 620px;
+  margin: 20px 0 0;
+  color: var(--muted);
+  font-size: 15px;
+  line-height: 1.8;
+}
+
 .gallery-shot-detail {
   align-self: end;
   margin-bottom: -54px;

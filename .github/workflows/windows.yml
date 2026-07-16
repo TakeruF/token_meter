@@ -1,0 +1,292 @@
+name: Windows
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "Windows/**"
+      - ".github/workflows/windows.yml"
+      - "CODE_SIGNING.md"
+      - "SECURITY.md"
+      - "THIRD-PARTY-NOTICES.md"
+  pull_request:
+    paths:
+      - "Windows/**"
+      - ".github/workflows/windows.yml"
+      - "CODE_SIGNING.md"
+      - "SECURITY.md"
+      - "THIRD-PARTY-NOTICES.md"
+  workflow_dispatch:
+    inputs:
+      release_tag:
+        description: "Existing version tag on main, for example v1.3.0"
+        required: true
+        type: string
+      confirm_release:
+        description: "Manually approve creating release packages from this tag"
+        required: true
+        default: false
+        type: boolean
+
+permissions:
+  contents: read
+
+env:
+  DOTNET_NOLOGO: true
+  DOTNET_CLI_TELEMETRY_OPTOUT: true
+
+jobs:
+  build-test:
+    runs-on: windows-latest
+    timeout-minutes: 35
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.0
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+          ref: ${{ github.event_name == 'workflow_dispatch' && format('refs/tags/{0}', inputs.release_tag) || github.ref }}
+
+      - name: Verify release source and metadata
+        if: github.event_name == 'workflow_dispatch'
+        shell: pwsh
+        env:
+          RELEASE_TAG: ${{ inputs.release_tag }}
+        run: Windows/scripts/Test-ReleaseSource.ps1 -ReleaseTag $env:RELEASE_TAG
+
+      - name: Set up .NET 10
+        uses: actions/setup-dotnet@26b0ec14cb23fa6904739307f278c14f94c95bf1 # v5.0.0
+        with:
+          dotnet-version: 10.0.x
+          cache: true
+          cache-dependency-path: Windows/**/packages.lock.json
+
+      - name: Restore core tests
+        run: dotnet restore Windows/tests/TokenMeter.Windows.Core.Tests/TokenMeter.Windows.Core.Tests.csproj -r win-x64 --locked-mode
+
+      - name: Test core
+        run: dotnet test Windows/tests/TokenMeter.Windows.Core.Tests/TokenMeter.Windows.Core.Tests.csproj --configuration Release --no-restore -r win-x64 --logger "trx;LogFileName=windows-core.trx"
+
+      - name: Restore setup tests
+        run: dotnet restore Windows/tests/TokenMeter.Windows.Setup.Tests/TokenMeter.Windows.Setup.Tests.csproj --locked-mode
+
+      - name: Test setup payload
+        run: dotnet test Windows/tests/TokenMeter.Windows.Setup.Tests/TokenMeter.Windows.Setup.Tests.csproj --configuration Release --no-restore --logger "trx;LogFileName=windows-setup.trx"
+
+      - name: Restore WinUI C# compile check
+        run: dotnet restore Windows/tests/TokenMeter.Windows.App.CompileCheck/TokenMeter.Windows.App.CompileCheck.csproj -p:Platform=x64 -r win-x64 --locked-mode
+
+      - name: Compile WinUI C# code
+        run: dotnet build Windows/tests/TokenMeter.Windows.App.CompileCheck/TokenMeter.Windows.App.CompileCheck.csproj --configuration Release --no-restore -p:Platform=x64
+
+      - name: Restore WinUI app
+        run: dotnet restore Windows/src/TokenMeter.Windows.App/TokenMeter.Windows.App.csproj -p:Platform=x64 -r win-x64 --locked-mode
+
+      - name: Build WinUI app
+        run: dotnet build Windows/src/TokenMeter.Windows.App/TokenMeter.Windows.App.csproj --configuration Release --no-restore -p:Platform=x64 -p:AppxPackageSigningEnabled=false
+
+      - name: Restore setup bootstrapper
+        run: dotnet restore Windows/src/TokenMeter.Windows.Setup/TokenMeter.Windows.Setup.csproj -p:Platform=x64 -r win-x64 --locked-mode
+
+      - name: Compile setup bootstrapper
+        run: dotnet build Windows/src/TokenMeter.Windows.Setup/TokenMeter.Windows.Setup.csproj --configuration Release --no-restore -p:Platform=x64
+
+      - name: Smoke test signed MSIX inside Setup.exe
+        shell: pwsh
+        run: Windows/scripts/Test-SetupPackaging.ps1
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: windows-test-results
+          path: Windows/**/TestResults/*.trx
+          if-no-files-found: ignore
+
+  release-package:
+    if: github.event_name == 'workflow_dispatch' && inputs.confirm_release
+    needs: build-test
+    runs-on: windows-latest
+    timeout-minutes: 35
+    environment: windows-signing
+    concurrency:
+      group: windows-release-${{ inputs.release_tag }}
+      cancel-in-progress: false
+    steps:
+      - name: Checkout approved release tag
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.0
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+          ref: refs/tags/${{ inputs.release_tag }}
+
+      - name: Verify approved release source and metadata
+        id: release
+        shell: pwsh
+        env:
+          RELEASE_TAG: ${{ inputs.release_tag }}
+        run: Windows/scripts/Test-ReleaseSource.ps1 -ReleaseTag $env:RELEASE_TAG -GitHubOutputPath $env:GITHUB_OUTPUT
+
+      - name: Set up .NET 10
+        uses: actions/setup-dotnet@26b0ec14cb23fa6904739307f278c14f94c95bf1 # v5.0.0
+        with:
+          dotnet-version: 10.0.x
+          cache: true
+          cache-dependency-path: Windows/**/packages.lock.json
+
+      - name: Build Store package
+        shell: pwsh
+        run: |
+          dotnet restore Windows/src/TokenMeter.Windows.App/TokenMeter.Windows.App.csproj `
+            -p:Platform=x64 `
+            -p:RuntimeIdentifier=win-x64 `
+            -p:SelfContained=false `
+            -p:WindowsAppSDKSelfContained=false `
+            --locked-mode
+          if ($LASTEXITCODE -ne 0) {
+            throw "Store app restore failed with exit code $LASTEXITCODE."
+          }
+
+          dotnet publish Windows/src/TokenMeter.Windows.App/TokenMeter.Windows.App.csproj `
+            --configuration Release `
+            --no-restore `
+            -p:Platform=x64 `
+            -p:RuntimeIdentifier=win-x64 `
+            -p:SelfContained=false `
+            -p:WindowsAppSDKSelfContained=false `
+            -p:GenerateAppxPackageOnBuild=true `
+            -p:AppxPackageSigningEnabled=false `
+            -p:AppxBundle=Never `
+            -p:UapAppxPackageBuildMode=StoreUpload
+          if ($LASTEXITCODE -ne 0) {
+            throw "Store package build failed with exit code $LASTEXITCODE."
+          }
+
+      - name: Prepare optional PFX direct signing
+        id: direct-signing
+        shell: pwsh
+        env:
+          WINDOWS_SIGNING_CERTIFICATE_BASE64: ${{ secrets.WINDOWS_SIGNING_CERTIFICATE_BASE64 }}
+          WINDOWS_SIGNING_CERTIFICATE_PASSWORD: ${{ secrets.WINDOWS_SIGNING_CERTIFICATE_PASSWORD }}
+        run: |
+          if ([string]::IsNullOrWhiteSpace($env:WINDOWS_SIGNING_CERTIFICATE_BASE64)) {
+            "configured=false" >> $env:GITHUB_OUTPUT
+            "### Direct Setup.exe" >> $env:GITHUB_STEP_SUMMARY
+            "Skipped because PFX signing is not configured. SignPath integration will replace this optional path after approval." >> $env:GITHUB_STEP_SUMMARY
+            exit 0
+          }
+          if ([string]::IsNullOrWhiteSpace($env:WINDOWS_SIGNING_CERTIFICATE_PASSWORD)) {
+            throw "WINDOWS_SIGNING_CERTIFICATE_PASSWORD is not configured."
+          }
+
+          $certificatePath = Join-Path $env:RUNNER_TEMP "token-meter-signing.pfx"
+          [System.IO.File]::WriteAllBytes(
+            $certificatePath,
+            [Convert]::FromBase64String($env:WINDOWS_SIGNING_CERTIFICATE_BASE64))
+          $certificate = [System.Security.Cryptography.X509Certificates.X509Certificate2]::new(
+            $certificatePath,
+            $env:WINDOWS_SIGNING_CERTIFICATE_PASSWORD,
+            [System.Security.Cryptography.X509Certificates.X509KeyStorageFlags]::EphemeralKeySet)
+          try {
+            $manifestPath = Join-Path $env:RUNNER_TEMP "Package.direct.appxmanifest"
+            $sourceManifest = Join-Path $env:GITHUB_WORKSPACE "Windows/src/TokenMeter.Windows.App/Package.appxmanifest"
+            $manifest = [xml][System.IO.File]::ReadAllText($sourceManifest)
+            $identity = $manifest.DocumentElement.SelectSingleNode("*[local-name()='Identity']")
+            if ($null -eq $identity) {
+              throw "Package.appxmanifest does not contain an Identity element."
+            }
+            $identity.SetAttribute("Publisher", $certificate.Subject)
+            $manifest.Save($manifestPath)
+          }
+          finally {
+            $certificate.Dispose()
+          }
+          "configured=true" >> $env:GITHUB_OUTPUT
+          "certificate_path=$certificatePath" >> $env:GITHUB_OUTPUT
+          "manifest_path=$manifestPath" >> $env:GITHUB_OUTPUT
+
+      - name: Build signed direct-distribution MSIX
+        if: steps.direct-signing.outputs.configured == 'true'
+        shell: pwsh
+        env:
+          CERTIFICATE_PATH: ${{ steps.direct-signing.outputs.certificate_path }}
+          PACKAGE_MANIFEST_PATH: ${{ steps.direct-signing.outputs.manifest_path }}
+          WINDOWS_SIGNING_CERTIFICATE_PASSWORD: ${{ secrets.WINDOWS_SIGNING_CERTIFICATE_PASSWORD }}
+        run: |
+          $packageDirectory = Join-Path $env:RUNNER_TEMP "token-meter-direct-msix"
+          New-Item -ItemType Directory -Path $packageDirectory -Force | Out-Null
+          dotnet restore Windows/src/TokenMeter.Windows.App/TokenMeter.Windows.App.csproj `
+            -p:Platform=x64 `
+            -p:RuntimeIdentifier=win-x64 `
+            -p:SelfContained=true `
+            -p:WindowsAppSDKSelfContained=true `
+            "-p:TokenMeterPackageManifest=$env:PACKAGE_MANIFEST_PATH" `
+            --locked-mode
+          if ($LASTEXITCODE -ne 0) {
+            throw "Self-contained app restore failed with exit code $LASTEXITCODE."
+          }
+
+          dotnet publish Windows/src/TokenMeter.Windows.App/TokenMeter.Windows.App.csproj `
+            --configuration Release `
+            --no-restore `
+            -p:Platform=x64 `
+            -p:RuntimeIdentifier=win-x64 `
+            -p:SelfContained=true `
+            -p:WindowsAppSDKSelfContained=true `
+            "-p:TokenMeterPackageManifest=$env:PACKAGE_MANIFEST_PATH" `
+            -p:GenerateAppxPackageOnBuild=true `
+            -p:AppxPackageSigningEnabled=true `
+            "-p:PackageCertificateKeyFile=$env:CERTIFICATE_PATH" `
+            "-p:PackageCertificatePassword=$env:WINDOWS_SIGNING_CERTIFICATE_PASSWORD" `
+            -p:AppxBundle=Never `
+            -p:UapAppxPackageBuildMode=SideloadOnly `
+            "-p:AppxPackageDir=$packageDirectory\"
+          if ($LASTEXITCODE -ne 0) {
+            throw "Signed MSIX build failed with exit code $LASTEXITCODE."
+          }
+
+      - name: Build and sign Setup.exe
+        if: steps.direct-signing.outputs.configured == 'true'
+        shell: pwsh
+        env:
+          CERTIFICATE_PATH: ${{ steps.direct-signing.outputs.certificate_path }}
+          WINDOWS_SIGNING_CERTIFICATE_PASSWORD: ${{ secrets.WINDOWS_SIGNING_CERTIFICATE_PASSWORD }}
+        run: |
+          $packageDirectory = Join-Path $env:RUNNER_TEMP "token-meter-direct-msix"
+          $msix = Get-ChildItem -LiteralPath $packageDirectory -Filter "*.msix" -File -Recurse |
+            Select-Object -First 1
+          if ($null -eq $msix) {
+            throw "The signed direct-distribution MSIX was not generated."
+          }
+
+          Windows/scripts/Build-Setup.ps1 `
+            -MsixPath $msix.FullName `
+            -CertificatePath $env:CERTIFICATE_PATH `
+            -CertificatePassword $env:WINDOWS_SIGNING_CERTIFICATE_PASSWORD `
+            -OutputDirectory Windows/artifacts/setup
+
+      - name: Remove direct-distribution certificate
+        if: always()
+        shell: pwsh
+        run: |
+          Remove-Item -LiteralPath (Join-Path $env:RUNNER_TEMP "token-meter-signing.pfx") -Force -ErrorAction SilentlyContinue
+          Remove-Item -LiteralPath (Join-Path $env:RUNNER_TEMP "Package.direct.appxmanifest") -Force -ErrorAction SilentlyContinue
+
+      - name: Upload Store package
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: token-meter-windows-${{ steps.release.outputs.package_version }}
+          path: |
+            Windows/**/AppPackages/**/*.msix
+            Windows/**/AppPackages/**/*.msixupload
+          if-no-files-found: error
+
+      - name: Upload direct Setup.exe
+        if: steps.direct-signing.outputs.configured == 'true'
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: token-meter-windows-setup-${{ steps.release.outputs.package_version }}
+          path: |
+            Windows/artifacts/setup/TokenMeterSetup.exe
+            Windows/artifacts/setup/SHA256SUMS.txt
+          if-no-files-found: error

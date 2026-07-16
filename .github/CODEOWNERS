@@ -1,0 +1,6 @@
+# Release and signing surfaces require the signing approver's review.
+/.github/ @TakeruF
+/Windows/ @TakeruF
+/CODE_SIGNING.md @TakeruF
+/SECURITY.md @TakeruF
+/THIRD-PARTY-NOTICES.md @TakeruF
