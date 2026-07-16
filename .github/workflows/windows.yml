@@ -94,7 +94,7 @@ jobs:
 
       - name: Upload test results
         if: always()
-        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5.0.0
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: windows-test-results
           path: Windows/**/TestResults/*.trx
@@ -270,7 +270,7 @@ jobs:
           Remove-Item -LiteralPath (Join-Path $env:RUNNER_TEMP "Package.direct.appxmanifest") -Force -ErrorAction SilentlyContinue
 
       - name: Upload Store package
-        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5.0.0
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: token-meter-windows-${{ steps.release.outputs.package_version }}
           path: |
@@ -280,7 +280,7 @@ jobs:
 
       - name: Upload direct Setup.exe
         if: steps.direct-signing.outputs.configured == 'true'
-        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5.0.0
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: token-meter-windows-setup-${{ steps.release.outputs.package_version }}
           path: |
