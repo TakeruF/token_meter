@@ -10,10 +10,7 @@ $appManifest = Join-Path $repositoryRoot 'Windows\src\TokenMeter.Windows.App\Pac
 $testRoot = Join-Path ([System.IO.Path]::GetTempPath()) "TokenMeterSetupTest-$([Guid]::NewGuid().ToString('N'))"
 $packageDirectory = Join-Path $testRoot 'package'
 $setupDirectory = Join-Path $testRoot 'setup'
-$pfxPath = Join-Path $testRoot 'test-signing.pfx'
 $cerPath = Join-Path $testRoot 'test-signing.cer'
-$certificatePassword = [Guid]::NewGuid().ToString('N')
-$securePassword = ConvertTo-SecureString -String $certificatePassword -AsPlainText -Force
 $signingCertificate = $null
 $trustedCertificate = $null
 
@@ -34,11 +31,8 @@ try {
         -KeyAlgorithm RSA `
         -KeyLength 2048 `
         -KeyExportPolicy Exportable `
+        -KeySpec Signature `
         -NotAfter (Get-Date).AddDays(1)
-    Export-PfxCertificate `
-        -Cert $signingCertificate `
-        -FilePath $pfxPath `
-        -Password $securePassword | Out-Null
     Export-Certificate `
         -Cert $signingCertificate `
         -FilePath $cerPath | Out-Null
@@ -71,8 +65,7 @@ try {
         '-p:WindowsAppSDKSelfContained=true',
         '-p:GenerateAppxPackageOnBuild=true',
         '-p:AppxPackageSigningEnabled=true',
-        "-p:PackageCertificateKeyFile=$pfxPath",
-        "-p:PackageCertificatePassword=$certificatePassword",
+        "-p:PackageCertificateThumbprint=$($signingCertificate.Thumbprint)",
         '-p:AppxBundle=Never',
         '-p:UapAppxPackageBuildMode=SideloadOnly',
         "-p:AppxPackageDir=$packageDirectory\"
