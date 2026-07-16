@@ -103,12 +103,48 @@ public enum ClaudeCredentialError: Error, LocalizedError, Sendable, Equatable {
     }
 }
 
+/// A Claude Code OAuth access token together with the moment it stops being valid,
+/// so callers can tell "expired sign-in" apart from a transient network failure
+/// without first spending a request that would only come back 401 (or, worse, be
+/// masked by a 429 from retrying an already-dead token).
+public struct ClaudeCredential: Sendable, Equatable {
+    public let accessToken: String
+    /// When the access token expires, if the credential records it. `nil` means the
+    /// field was absent and expiry cannot be judged locally.
+    public let expiresAt: Date?
+
+    public init(accessToken: String, expiresAt: Date?) {
+        self.accessToken = accessToken
+        self.expiresAt = expiresAt
+    }
+
+    /// True only when we positively know the token is past its expiry. An unknown
+    /// (`nil`) expiry is never treated as expired.
+    public func isExpired(now: Date = Date(), skew: TimeInterval = 30) -> Bool {
+        guard let expiresAt else { return false }
+        return expiresAt.addingTimeInterval(-skew) <= now
+    }
+}
+
 public protocol ClaudeCredentialProviding: Sendable {
     func accessToken() throws -> String
+    /// The token plus its expiry. Defaults to wrapping `accessToken()` with an
+    /// unknown expiry, so existing conformances keep working unchanged.
+    func credential() throws -> ClaudeCredential
+}
+
+public extension ClaudeCredentialProviding {
+    func credential() throws -> ClaudeCredential {
+        ClaudeCredential(accessToken: try accessToken(), expiresAt: nil)
+    }
 }
 
 public enum ClaudeCredentialJSONDecoder {
     public static func accessToken(from data: Data) throws -> String {
+        try credential(from: data).accessToken
+    }
+
+    public static func credential(from data: Data) throws -> ClaudeCredential {
         let object: Any
         do {
             object = try JSONSerialization.jsonObject(with: data)
@@ -123,7 +159,21 @@ public enum ClaudeCredentialJSONDecoder {
               !token.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
             throw ClaudeCredentialError.accessTokenMissing
         }
-        return token
+        return ClaudeCredential(accessToken: token, expiresAt: expiryDate(from: oauth["expiresAt"]))
+    }
+
+    /// Claude Code stores `expiresAt` as epoch milliseconds. Accept a couple of
+    /// encodings defensively; an unrecognised value just yields an unknown expiry.
+    private static func expiryDate(from value: Any?) -> Date? {
+        let millis: Double?
+        switch value {
+        case let n as Double: millis = n
+        case let n as Int: millis = Double(n)
+        case let s as String: millis = Double(s)
+        default: millis = nil
+        }
+        guard let millis, millis > 0 else { return nil }
+        return Date(timeIntervalSince1970: millis / 1000)
     }
 
     private static func findDictionary(named key: String, in value: Any) -> [String: Any]? {
@@ -147,6 +197,10 @@ public struct KeychainClaudeCredentialProvider: ClaudeCredentialProviding {
     public init() {}
 
     public func accessToken() throws -> String {
+        try credential().accessToken
+    }
+
+    public func credential() throws -> ClaudeCredential {
         let query: [CFString: Any] = [
             kSecClass: kSecClassGenericPassword,
             kSecAttrService: Self.service,
@@ -159,7 +213,7 @@ public struct KeychainClaudeCredentialProvider: ClaudeCredentialProviding {
         switch status {
         case errSecSuccess:
             guard let data = item as? Data else { throw ClaudeCredentialError.malformedData }
-            return try ClaudeCredentialJSONDecoder.accessToken(from: data)
+            return try ClaudeCredentialJSONDecoder.credential(from: data)
         case errSecItemNotFound:
             throw ClaudeCredentialError.notFound
         case errSecAuthFailed, errSecUserCanceled, errSecInteractionNotAllowed, errSecMissingEntitlement:
@@ -176,6 +230,9 @@ public enum ClaudeUsageError: Error, LocalizedError, Codable, Sendable, Equatabl
     case credentialsNotFound
     case keychainAccessDenied
     case invalidCredentials
+    /// The stored access token is past its expiry. Detected locally, before any
+    /// request, so it is never hidden behind a 429 from retrying a dead token.
+    case sessionExpired
     case unauthorized
     case forbidden
     case rateLimited(retryAfter: String?)
@@ -190,8 +247,10 @@ public enum ClaudeUsageError: Error, LocalizedError, Codable, Sendable, Equatabl
             return "Claude usage is unavailable. Sign in with Claude Code, then refresh."
         case .keychainAccessDenied:
             return "Claude usage is unavailable because macOS denied Keychain access. Check Keychain permissions and try again."
+        case .sessionExpired:
+            return "Claude Code sign-in has expired. Open Claude Code, run /login to sign in again, then re-check."
         case .unauthorized, .forbidden:
-            return "Claude Code sign-in has expired or is not authorized. Sign in again with Claude Code."
+            return "Claude Code sign-in has expired or is not authorized. Open Claude Code, run /login to sign in again, then re-check."
         case .rateLimited:
             return "Claude usage is temporarily rate limited. The last successful value is still shown when available."
         case .serverError:
@@ -349,9 +408,16 @@ public actor ClaudeUsageService: ClaudeUsageServicing {
 
         let credentials = self.credentials
         let client = self.client
+        let clock = self.now
         let task = Task<ClaudeUsageResponse, Error> {
-            let token = try credentials.accessToken()
-            return try await client.fetchUsage(accessToken: token)
+            let credential = try credentials.credential()
+            // A token we already know is expired will only ever come back 401 — and
+            // hammering it invites a 429 that hides the real cause. Fail fast with a
+            // precise, actionable error instead of spending the request.
+            if credential.isExpired(now: clock()) {
+                throw ClaudeUsageError.sessionExpired
+            }
+            return try await client.fetchUsage(accessToken: credential.accessToken)
         }
         inFlight = task
         let result = await result(of: task)

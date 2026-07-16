@@ -21,6 +21,20 @@ struct SettingsView: View {
                 Toggle(isOn: $settings.showCodex) {
                     ProviderLabel(providerID: .codex, font: .body, iconSize: 15)
                 }
+                Toggle(isOn: $settings.showCopilotCli) {
+                    ProviderLabel(providerID: .copilotCli, font: .body, iconSize: 15)
+                }
+                .onChange(of: settings.showCopilotCli) { _, on in
+                    guard on else { return }
+                    Task {
+                        await monitor.detectDataSources()
+                        await monitor.refresh(reason: .manual)
+                    }
+                }
+                Text("GitHub Copilot CLI counts tokens only, and its models overlap Claude Code — enable it if you use Copilot in the terminal.")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
             }
 
             Section("Setup") {

@@ -3,6 +3,7 @@ import Foundation
 public enum UsageProviderID: String, Codable, Sendable, CaseIterable, Identifiable {
     case claudeCode
     case codex
+    case copilotCli
 
     public var id: String { rawValue }
 
@@ -10,6 +11,7 @@ public enum UsageProviderID: String, Codable, Sendable, CaseIterable, Identifiab
         switch self {
         case .claudeCode: return "Claude"
         case .codex: return "Codex"
+        case .copilotCli: return "Copilot"
         }
     }
 
@@ -17,6 +19,7 @@ public enum UsageProviderID: String, Codable, Sendable, CaseIterable, Identifiab
         switch self {
         case .claudeCode: return "Claude"
         case .codex: return "Codex"
+        case .copilotCli: return "Copilot"
         }
     }
 }

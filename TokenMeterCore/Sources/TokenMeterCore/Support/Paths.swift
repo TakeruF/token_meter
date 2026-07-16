@@ -21,6 +21,34 @@ public enum TokenMeterPaths {
     /// Existence is checked to infer sign-in state. The file is never read.
     public static var codexAuthMarker: URL { codexHome.appendingPathComponent("auth.json") }
 
+    // MARK: GitHub Copilot CLI
+
+    public static var copilotHome: URL { home.appendingPathComponent(".copilot", isDirectory: true) }
+    /// One directory per session, each holding an `events.jsonl` transcript.
+    public static var copilotSessionState: URL { copilotHome.appendingPathComponent("session-state", isDirectory: true) }
+
+    /// All `events.jsonl` transcripts under `~/.copilot/session-state/`, newest first.
+    public static func copilotEventFiles(limit: Int? = nil) -> [URL] {
+        let fm = FileManager.default
+        guard let entries = try? fm.contentsOfDirectory(
+            at: copilotSessionState,
+            includingPropertiesForKeys: [.contentModificationDateKey],
+            options: [.skipsHiddenFiles]
+        ) else { return [] }
+
+        var files: [(URL, Date)] = []
+        for dir in entries {
+            let events = dir.appendingPathComponent("events.jsonl")
+            guard fm.fileExists(atPath: events.path) else { continue }
+            let mod = (try? events.resourceValues(forKeys: [.contentModificationDateKey]))?.contentModificationDate ?? .distantPast
+            files.append((events, mod))
+        }
+        files.sort { $0.1 > $1.1 }
+        let urls = files.map(\.0)
+        if let limit { return Array(urls.prefix(limit)) }
+        return urls
+    }
+
     // MARK: App storage
 
     public static var applicationSupport: URL {

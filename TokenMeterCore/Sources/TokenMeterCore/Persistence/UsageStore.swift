@@ -236,6 +236,28 @@ public final class UsageStore: @unchecked Sendable {
         }
     }
 
+    /// Model names of a session whose totals are stored under composite keys
+    /// `"<sessionID>|<model>"` (Copilot). Returns the `<model>` suffixes.
+    public func sessionModels(provider: UsageProviderID, sessionPrefix: String) -> [String] {
+        queue.sync {
+            var stmt: OpaquePointer?
+            let sql = "SELECT session_id FROM session_totals WHERE provider = ? AND session_id LIKE ?;"
+            guard sqlite3_prepare_v2(db, sql, -1, &stmt, nil) == SQLITE_OK else { return [] }
+            defer { sqlite3_finalize(stmt) }
+            sqlite3_bind_text(stmt, 1, provider.rawValue, -1, SQLITE_TRANSIENT)
+            sqlite3_bind_text(stmt, 2, sessionPrefix + "%", -1, SQLITE_TRANSIENT)
+            var models: [String] = []
+            while sqlite3_step(stmt) == SQLITE_ROW {
+                guard let c = sqlite3_column_text(stmt, 0) else { continue }
+                let key = String(cString: c)
+                if key.hasPrefix(sessionPrefix) {
+                    models.append(String(key.dropFirst(sessionPrefix.count)))
+                }
+            }
+            return models
+        }
+    }
+
     public func setSessionTotals(sessionID: String, provider: UsageProviderID, totals: CodexCumulativeTotals) throws {
         try queue.sync {
             let sql = """

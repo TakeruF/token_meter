@@ -81,6 +81,7 @@ final class UsageMonitor {
             self.providers = [
                 .claudeCode: claudeProvider,
                 .codex: CodexUsageProvider(store: store),
+                .copilotCli: CopilotUsageProvider(store: store),
             ]
         } catch {
             fatalError = AppLocalization.format(
@@ -267,6 +268,7 @@ final class UsageMonitor {
             switch id {
             case .claudeCode: snapshot.claudeCode = provider
             case .codex: snapshot.codex = provider
+            case .copilotCli: snapshot.copilotCli = provider
             }
         }
 

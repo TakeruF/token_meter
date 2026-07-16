@@ -10,13 +10,24 @@ struct ProviderIcon: View {
     var size: CGFloat = 16
 
     var body: some View {
-        Image(providerID == .claudeCode ? "ClaudeLogo" : "CodexLogo")
-            .renderingMode(providerID == .claudeCode ? .template : .original)
-            .resizable()
-            .scaledToFit()
-            .frame(width: size, height: size)
-            .foregroundStyle(.primary)
-            .accessibilityHidden(true)
+        Group {
+            // Copilot ships no bundled brand asset, so it falls back to an SF Symbol.
+            if providerID == .copilotCli {
+                Image(systemName: "chevron.left.forwardslash.chevron.right")
+                    .resizable()
+                    .scaledToFit()
+                    .fontWeight(.semibold)
+                    .padding(size * 0.08)
+            } else {
+                Image(providerID == .claudeCode ? "ClaudeLogo" : "CodexLogo")
+                    .renderingMode(providerID == .claudeCode ? .template : .original)
+                    .resizable()
+                    .scaledToFit()
+            }
+        }
+        .frame(width: size, height: size)
+        .foregroundStyle(.primary)
+        .accessibilityHidden(true)
     }
 }
 
@@ -45,9 +56,17 @@ struct MenuBarProviderIcon: View {
     }
 
     static func statusBarImage(for providerID: UsageProviderID) -> NSImage? {
-        let name = providerID == .claudeCode ? "ClaudeLogo" : "CodexLogo"
-        guard let source = NSImage(named: name),
-              let image = source.copy() as? NSImage else { return nil }
+        let source: NSImage?
+        if providerID == .copilotCli {
+            // No bundled brand asset — use an SF Symbol mark instead.
+            source = NSImage(
+                systemSymbolName: "chevron.left.forwardslash.chevron.right",
+                accessibilityDescription: nil
+            )
+        } else {
+            source = NSImage(named: providerID == .claudeCode ? "ClaudeLogo" : "CodexLogo")
+        }
+        guard let source, let image = source.copy() as? NSImage else { return nil }
 
         image.size = Self.logicalSize
         image.isTemplate = true

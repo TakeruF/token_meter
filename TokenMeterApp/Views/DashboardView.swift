@@ -11,6 +11,7 @@ struct DashboardView: View {
         case today = 1
         case week = 7
         case month = 30
+        case quarter = 90
 
         var id: Int { rawValue }
         var label: String {
@@ -18,6 +19,18 @@ struct DashboardView: View {
             case .today: return AppLocalization.string("Today")
             case .week: return AppLocalization.string("7 days")
             case .month: return AppLocalization.string("30 days")
+            case .quarter: return AppLocalization.string("90 days")
+            }
+        }
+
+        /// Human phrase for the immediately-preceding period of the same length,
+        /// used by the trend comparison.
+        var previousPeriodLabel: String {
+            switch self {
+            case .today: return AppLocalization.string("vs yesterday")
+            case .week: return AppLocalization.string("vs prev 7 days")
+            case .month: return AppLocalization.string("vs prev 30 days")
+            case .quarter: return AppLocalization.string("vs prev 90 days")
             }
         }
     }
@@ -87,13 +100,29 @@ struct DashboardView: View {
                     providerID: id,
                     value: work > 0 ? work.abbreviatedTokens : nil,
                     total: total > 0 ? total.abbreviatedTokens : nil,
-                    caption: AppLocalization.format("tokens · %@", range.label)
+                    caption: AppLocalization.format("tokens · %@", range.label),
+                    trend: trend(id, currentWork: work)
                 )
             }
             if providers.isEmpty {
                 NoDataCard(message: "No providers enabled")
             }
         }
+    }
+
+    /// Working-token change versus the immediately-preceding period of the same
+    /// length. Both halves come from one fetch of twice the range, split at the
+    /// current period's start, so the comparison is apples-to-apples.
+    private func trend(_ id: UsageProviderID, currentWork: Int) -> UsageTrend? {
+        guard currentWork > 0 else { return nil }
+        let both = monitor.events(provider: id, days: range.rawValue * 2)
+        let periodStart = aggregator.day(offsetFromToday: range.rawValue - 1)
+        let previousWork = both
+            .filter { $0.timestamp < periodStart }
+            .reduce(0) { $0 + $1.workingTokens }
+        guard previousWork > 0 else { return nil }
+        let change = Double(currentWork - previousWork) / Double(previousWork)
+        return UsageTrend(changeRatio: change, caption: range.previousPeriodLabel)
     }
 
     /// The live 5-hour and weekly windows, one row each per provider, combining the
@@ -238,16 +267,7 @@ struct DashboardView: View {
             if models.isEmpty {
                 NoDataInline()
             } else {
-                Chart(models) { m in
-                    BarMark(
-                        x: .value("Tokens", m.totalTokens),
-                        y: .value("Model", m.model)
-                    )
-                    .foregroundStyle(by: .value("Provider", m.provider.displayName))
-                }
-                .chartXAxis { AxisMarks(format: compactCount) }
-                .frame(height: CGFloat(max(120, models.count * 32)))
-                .accessibilityLabel("Tokens by model")
+                ModelChart(models: models)
             }
         }
     }
@@ -346,6 +366,21 @@ struct HourlyChart: View {
             .sorted { $0.provider.rawValue < $1.provider.rawValue }
     }
 
+    /// Midnight of the day being charted, taken from the data so it matches the rows.
+    private var dayStart: Date {
+        Calendar.current.startOfDay(for: rows.map(\.hour).min() ?? Date())
+    }
+
+    /// The full day, 00:00–24:00, padded slightly so the 0h and 24h labels don't clip
+    /// at the plot edges. The axis is always the whole day; the line only reaches the
+    /// current hour (rows stop there), so the chart fills in as the day progresses.
+    private var xDomain: ClosedRange<Date> {
+        let end = Calendar.current.date(byAdding: .day, value: 1, to: dayStart)
+            ?? dayStart.addingTimeInterval(86_400)
+        let pad: TimeInterval = 30 * 60
+        return dayStart.addingTimeInterval(-pad)...end.addingTimeInterval(pad)
+    }
+
     var body: some View {
         Chart(rows) { row in
             LineMark(
@@ -382,11 +417,18 @@ struct HourlyChart: View {
                     }
             }
         }
+        .chartXScale(domain: xDomain)
         .chartYAxis { AxisMarks(format: compactCount) }
         .chartXAxis {
+            // Every 3 hours across the whole day. These ticks land on plotted hours,
+            // and `centered: false` keeps each label directly under its point.
             AxisMarks(values: .stride(by: .hour, count: 3)) { _ in
                 AxisGridLine()
-                AxisValueLabel(format: Date.FormatStyle().hour())
+                // `anchor: .top` attaches the label's top-centre to the tick — which
+                // sits on the point — so the time reads directly under its plotted
+                // value instead of hanging off to the right (most visible on wide,
+                // two-digit labels).
+                AxisValueLabel(format: Date.FormatStyle().hour(), anchor: .top)
             }
         }
         .frame(height: 220)
@@ -431,6 +473,87 @@ struct HourlyChart: View {
     }
 }
 
+/// Horizontal "By model" bar chart. Split out so it can carry its own hover state.
+struct ModelChart: View {
+    let models: [ModelUsage]
+
+    /// The model whose bar the cursor is currently over, if any.
+    @State private var selectedModel: String?
+
+    /// The hovered model's row, if any.
+    private var selectedRow: ModelUsage? {
+        guard let selectedModel else { return nil }
+        return models.first { $0.model == selectedModel }
+    }
+
+    var body: some View {
+        Chart(models) { m in
+            BarMark(
+                x: .value("Tokens", m.totalTokens),
+                y: .value("Model", m.model)
+            )
+            .foregroundStyle(by: .value("Provider", m.provider.displayName))
+            .opacity(selectedModel == nil || selectedModel == m.model ? 1 : 0.4)
+        }
+        .chartYSelection(value: $selectedModel)
+        .chartOverlay { proxy in
+            // `chartYSelection` covers clicks/drags; add hover for the pointer.
+            GeometryReader { geo in
+                Rectangle().fill(.clear).contentShape(Rectangle())
+                    .onContinuousHover { phase in
+                        switch phase {
+                        case .active(let location):
+                            let origin = geo[proxy.plotFrame!].origin
+                            let y = location.y - origin.y
+                            selectedModel = proxy.value(atY: y, as: String.self)
+                        case .ended:
+                            selectedModel = nil
+                        }
+                    }
+            }
+        }
+        .chartXAxis { AxisMarks(format: compactCount) }
+        .frame(height: CGFloat(max(120, models.count * 32)))
+        .overlay(alignment: .topTrailing) {
+            if let selectedRow {
+                selectionLabel(selectedRow)
+            }
+        }
+        .accessibilityLabel("Tokens by model")
+    }
+
+    /// A floating tooltip showing the hovered model's token usage.
+    private func selectionLabel(_ row: ModelUsage) -> some View {
+        Grid(alignment: .leading, horizontalSpacing: 12, verticalSpacing: 2) {
+            GridRow {
+                Text(row.model)
+                    .font(.caption2.bold())
+                    .monospaced()
+                    .gridCellColumns(2)
+            }
+            GridRow {
+                Text(row.provider.displayName)
+                    .foregroundStyle(.secondary)
+                Text(row.totalTokens, format: compactCount)
+                    .monospacedDigit()
+                    .gridColumnAlignment(.trailing)
+            }
+            .font(.caption2)
+        }
+        .fixedSize()
+        .padding(.horizontal, 8)
+        .padding(.vertical, 6)
+        .background(
+            RoundedRectangle(cornerRadius: 6)
+                .fill(Color(nsColor: .windowBackgroundColor))
+                .stroke(.quaternary, lineWidth: 1)
+        )
+        .shadow(color: .black.opacity(0.15), radius: 3, y: 1)
+        .padding(8)
+        .allowsHitTesting(false)
+    }
+}
+
 /// Split out of DashboardView: as one inline expression the type-checker gave up.
 struct DailyChart: View {
     let rows: [DailyRow]
@@ -443,6 +566,20 @@ struct DailyChart: View {
     /// instead of drifting off a generic day-stride.
     private var dayValues: [Date] {
         Array(Set(rows.map { Calendar.current.startOfDay(for: $0.day) })).sorted()
+    }
+
+    /// The plotted days padded by half a day on each side. Without this the first and
+    /// last points sit exactly on the plot edges, so their axis labels — the latest
+    /// date in particular — overflow the plot and get clipped away. The padding gives
+    /// those end labels room to render while keeping every label centred on its point.
+    private var xDomain: ClosedRange<Date> {
+        let days = dayValues
+        guard let first = days.first, let last = days.last else {
+            let now = Calendar.current.startOfDay(for: Date())
+            return now...now.addingTimeInterval(86_400)
+        }
+        let pad: TimeInterval = 12 * 3600
+        return first.addingTimeInterval(-pad)...last.addingTimeInterval(pad)
     }
 
     /// Rows for the hovered day, ordered by provider, with a non-zero total.
@@ -493,11 +630,16 @@ struct DailyChart: View {
                     }
             }
         }
+        .chartXScale(domain: xDomain)
         .chartYAxis { AxisMarks(format: compactCount) }
         .chartXAxis {
             AxisMarks(values: dayValues) { _ in
                 AxisGridLine()
-                AxisValueLabel(format: Date.FormatStyle().day(), centered: false)
+                // `anchor: .top` attaches the label's top-centre to the tick, which
+                // sits on the point — so each date reads directly under its plotted
+                // value instead of hanging off to the right (most visible on two-digit
+                // days).
+                AxisValueLabel(format: Date.FormatStyle().day(), anchor: .top)
             }
         }
         .frame(height: 220)
@@ -564,6 +706,28 @@ struct SectionBox<Content: View>: View {
     }
 }
 
+/// Period-over-period change in working tokens, shown as a small chip on a card.
+struct UsageTrend {
+    /// Signed fractional change, e.g. 0.12 for +12%.
+    let changeRatio: Double
+    /// Localized phrase naming the comparison period ("vs prev 7 days").
+    let caption: String
+
+    /// Rising usage is not "good" or "bad", so the chip stays colour-neutral and
+    /// leans on the arrow direction rather than red/green.
+    var symbol: String {
+        if changeRatio > 0.005 { return "arrow.up.right" }
+        if changeRatio < -0.005 { return "arrow.down.right" }
+        return "arrow.right"
+    }
+
+    var text: String {
+        let pct = Int((abs(changeRatio) * 100).rounded())
+        let sign = changeRatio > 0.005 ? "+" : (changeRatio < -0.005 ? "−" : "±")
+        return "\(sign)\(pct)%"
+    }
+}
+
 struct SummaryCard: View {
     let providerID: UsageProviderID
     /// Working tokens (real processing) — the headline figure.
@@ -571,6 +735,7 @@ struct SummaryCard: View {
     /// Cache-inclusive total, shown small as context for `value`.
     let total: String?
     let caption: String
+    var trend: UsageTrend? = nil
 
     var body: some View {
         VStack(alignment: .leading, spacing: 6) {
@@ -592,6 +757,16 @@ struct SummaryCard: View {
                     .font(.caption)
                     .foregroundStyle(.secondary)
                     .monospacedDigit()
+            }
+
+            if let trend, value != nil {
+                HStack(spacing: 3) {
+                    Image(systemName: trend.symbol)
+                    Text(trend.text).monospacedDigit()
+                    Text(LocalizedStringKey(trend.caption)).foregroundStyle(.secondary)
+                }
+                .font(.caption2.weight(.medium))
+                .padding(.top, 1)
             }
         }
         .padding(14)

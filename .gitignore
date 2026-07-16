@@ -7,3 +7,6 @@ DerivedData/
 .build/
 *.xcuserstate
 xcuserdata/
+
+# Local planning notes; not part of a product release.
+docs/unify-quota-ui.md

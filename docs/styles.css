@@ -262,7 +262,7 @@ h1 {
 .intro {
   width: min(calc(100% - 48px), 880px);
   margin: 0 auto;
-  padding: 150px 0 130px;
+  padding: 100px 0 80px;
   text-align: center;
 }
 
@@ -290,11 +290,11 @@ h1 {
 .feature-row {
   display: grid;
   grid-template-columns: minmax(240px, 0.72fr) minmax(0, 1.28fr);
-  gap: 8vw;
+  gap: 64px;
   align-items: center;
   width: min(calc(100% - 48px), var(--max));
   margin: 0 auto;
-  padding: 120px 0;
+  padding: 80px 0;
   border-bottom: 1px solid var(--line);
 }
 
@@ -362,7 +362,7 @@ figure {
 }
 
 .widget-promo {
-  padding: 132px max(24px, calc((100vw - var(--max)) / 2));
+  padding: 90px max(24px, calc((100vw - var(--max)) / 2));
   background: #e5ece8;
   border-bottom: 1px solid #d4ddd8;
 }
@@ -370,7 +370,7 @@ figure {
 .widget-promo-inner {
   display: grid;
   grid-template-columns: minmax(260px, 0.72fr) minmax(0, 1.28fr);
-  gap: 7vw;
+  gap: 60px;
   align-items: center;
   max-width: var(--max);
   margin: 0 auto;
@@ -440,8 +440,8 @@ figure {
 .privacy-band {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 10vw;
-  padding: 130px max(24px, calc((100vw - var(--max)) / 2));
+  gap: 80px;
+  padding: 90px max(24px, calc((100vw - var(--max)) / 2));
   color: white;
   background: #20272d;
 }
@@ -473,7 +473,7 @@ figure {
   gap: 32px;
   width: min(calc(100% - 48px), var(--max));
   margin: 0 auto;
-  padding: 150px 0;
+  padding: 100px 0;
 }
 
 .gallery-heading {
@@ -492,7 +492,7 @@ figure {
 }
 
 .download-section {
-  padding: 150px 24px;
+  padding: 100px 24px;
   text-align: center;
   background: var(--surface);
   border-top: 1px solid var(--line);

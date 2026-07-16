@@ -65,7 +65,12 @@
       footerPrivacy: "プライバシー",
       footerSource: "ソースコード",
       languageAria: "言語を選択",
-      copyright: "© 2026 Token Meter · macOSのために開発"
+      copyright: "© 2026 Token Meter · macOSのために開発",
+      viewReleases: "リリースノートを見る",
+      navReleases: "リリースノート",
+      releasesTitle: "リリースノート",
+      releasesSubtitle: "Token Meter のアップデート履歴",
+      backToHome: "ホームへ戻る"
     },
     en: {
       pageTitle: "Token Meter - Claude Code and Codex usage at a glance",
@@ -130,7 +135,12 @@
       footerPrivacy: "Privacy",
       footerSource: "Source",
       languageAria: "Choose language",
-      copyright: "© 2026 Token Meter · Built for macOS"
+      copyright: "© 2026 Token Meter · Built for macOS",
+      viewReleases: "Release Notes",
+      navReleases: "Releases",
+      releasesTitle: "Release Notes",
+      releasesSubtitle: "Update history of Token Meter",
+      backToHome: "Back to Home"
     },
     "zh-CN": {
       pageTitle: "Token Meter - 一目了然地查看 Claude Code 和 Codex 用量",
@@ -195,7 +205,12 @@
       footerPrivacy: "隐私",
       footerSource: "源代码",
       languageAria: "选择语言",
-      copyright: "© 2026 Token Meter · 为 macOS 打造"
+      copyright: "© 2026 Token Meter · 为 macOS 打造",
+      viewReleases: "查看更新日志",
+      navReleases: "更新日志",
+      releasesTitle: "更新日志",
+      releasesSubtitle: "Token Meter 更新历史",
+      backToHome: "返回首页"
     },
     ko: {
       pageTitle: "Token Meter - Claude Code와 Codex 사용량을 한눈에",
@@ -260,7 +275,12 @@
       footerPrivacy: "개인정보",
       footerSource: "소스 코드",
       languageAria: "언어 선택",
-      copyright: "© 2026 Token Meter · macOS를 위해 제작"
+      copyright: "© 2026 Token Meter · macOS를 위해 제작",
+      viewReleases: "릴리스 노트 보기",
+      navReleases: "릴리스 노트",
+      releasesTitle: "릴리스 노트",
+      releasesSubtitle: "Token Meter 업데이트 내역",
+      backToHome: "홈으로 돌아가기"
     }
   };
 
@@ -337,6 +357,7 @@
     });
 
     if (persist) rememberLanguage(selected);
+    window.dispatchEvent(new CustomEvent('languagechange', { detail: selected }));
   }
 
   document.querySelectorAll("[data-language]").forEach((button) => {

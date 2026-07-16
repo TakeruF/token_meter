@@ -24,6 +24,19 @@ final class ClaudeCredentialJSONTests: XCTestCase {
             XCTAssertEqual($0 as? ClaudeCredentialError, .accessTokenMissing)
         }
     }
+
+    func testDecodesExpiresAtAsEpochMilliseconds() throws {
+        let data = Data(#"{"claudeAiOauth":{"accessToken":"t","expiresAt":1700000000000}}"#.utf8)
+        let credential = try ClaudeCredentialJSONDecoder.credential(from: data)
+        XCTAssertEqual(credential.expiresAt, Date(timeIntervalSince1970: 1_700_000_000))
+    }
+
+    func testMissingExpiresAtLeavesExpiryUnknown() throws {
+        let data = Data(#"{"claudeAiOauth":{"accessToken":"t"}}"#.utf8)
+        let credential = try ClaudeCredentialJSONDecoder.credential(from: data)
+        XCTAssertNil(credential.expiresAt)
+        XCTAssertFalse(credential.isExpired(now: Date()))
+    }
 }
 
 final class ClaudeUsageResponseTests: XCTestCase {
@@ -190,6 +203,47 @@ final class ClaudeUsageServiceTests: XCTestCase {
         XCTAssertEqual(callCount, 1)
     }
 
+    func testExpiredTokenFailsFastWithoutNetwork() async {
+        let now = Date(timeIntervalSince1970: 2000)
+        let client = MockClaudeClient(results: [])
+        let service = ClaudeUsageService(
+            credentials: StubCredentials(
+                result: .success("token"),
+                expiresAt: now.addingTimeInterval(-3600)  // expired an hour ago
+            ),
+            client: client,
+            now: { now }
+        )
+
+        let result = await service.usage(forceRefresh: true)
+
+        XCTAssertNil(result.usage)
+        XCTAssertEqual(result.error, .sessionExpired)
+        let callCount = await client.callCount
+        XCTAssertEqual(callCount, 0)  // never spends a request on a dead token
+    }
+
+    func testValidExpiryStillCallsNetwork() async {
+        let now = Date(timeIntervalSince1970: 2000)
+        let usage = ClaudeUsageResponse(fiveHour: .init(utilization: 10, resetsAt: nil))
+        let client = MockClaudeClient(results: [.success(usage)])
+        let service = ClaudeUsageService(
+            credentials: StubCredentials(
+                result: .success("token"),
+                expiresAt: now.addingTimeInterval(3600)  // valid for another hour
+            ),
+            client: client,
+            now: { now }
+        )
+
+        let result = await service.usage(forceRefresh: true)
+
+        XCTAssertEqual(result.usage, usage)
+        XCTAssertNil(result.error)
+        let callCount = await client.callCount
+        XCTAssertEqual(callCount, 1)
+    }
+
     func testMissingCredentialDoesNotCallNetwork() async {
         let client = MockClaudeClient(results: [])
         let service = ClaudeUsageService(
@@ -254,7 +308,11 @@ final class ClaudeOAuthProviderIntegrationTests: XCTestCase {
 
 private struct StubCredentials: ClaudeCredentialProviding {
     let result: Result<String, ClaudeCredentialError>
+    var expiresAt: Date?
     func accessToken() throws -> String { try result.get() }
+    func credential() throws -> ClaudeCredential {
+        ClaudeCredential(accessToken: try result.get(), expiresAt: expiresAt)
+    }
 }
 
 private struct StubQuotaService: ClaudeUsageServicing {

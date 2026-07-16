@@ -94,30 +94,35 @@ public struct SharedSnapshot: Codable, Sendable, Equatable {
     public var languageCode: String?
     public var claudeCode: Provider?
     public var codex: Provider?
+    /// Optional for compatibility with snapshots written by older releases.
+    public var copilotCli: Provider?
 
     public init(
         updatedAt: Date,
         languageCode: String? = nil,
         claudeCode: Provider? = nil,
-        codex: Provider? = nil
+        codex: Provider? = nil,
+        copilotCli: Provider? = nil
     ) {
         self.updatedAt = updatedAt
         self.languageCode = languageCode
         self.claudeCode = claudeCode
         self.codex = codex
+        self.copilotCli = copilotCli
     }
 
     public func provider(_ id: UsageProviderID) -> Provider? {
         switch id {
         case .claudeCode: return claudeCode
         case .codex: return codex
+        case .copilotCli: return copilotCli
         }
     }
 
     /// True when at least one provider carries data worth showing. A snapshot
     /// without this renders as the widget's empty state, so we neither cache it
     /// nor let it replace a good one on screen.
-    public var hasData: Bool { claudeCode != nil || codex != nil }
+    public var hasData: Bool { claudeCode != nil || codex != nil || copilotCli != nil }
 }
 
 /// Reads and writes the snapshot JSON in the App Group container.

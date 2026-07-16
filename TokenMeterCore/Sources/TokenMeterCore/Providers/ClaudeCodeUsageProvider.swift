@@ -46,8 +46,8 @@ public actor ClaudeCodeUsageProvider: UsageProvider {
         // state is reported by `quotaError` after a refresh without exposing secrets.
         if oauthUsageEnabled {
             switch lastQuotaError {
-            case .credentialsNotFound, .invalidCredentials, .unauthorized, .forbidden:
-                return .notLoggedIn(detail: "Sign in again with Claude Code to load plan usage")
+            case .sessionExpired, .credentialsNotFound, .invalidCredentials, .unauthorized, .forbidden:
+                return .notLoggedIn(detail: "Open Claude Code and run /login to refresh the sign-in, then re-check")
             case .keychainAccessDenied:
                 return .permissionDenied(path: "macOS Keychain item \(KeychainClaudeCredentialProvider.service)")
             default:

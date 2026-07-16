@@ -103,6 +103,13 @@
 "Today" = "오늘";
 "7 days" = "7일";
 "30 days" = "30일";
+"90 days" = "90일";
+"vs yesterday" = "어제 대비";
+"vs prev 7 days" = "지난 7일 대비";
+"vs prev 30 days" = "지난 30일 대비";
+"vs prev 90 days" = "지난 90일 대비";
+"GitHub Copilot CLI counts tokens only, and its models overlap Claude Code — enable it if you use Copilot in the terminal." = "GitHub Copilot CLI는 토큰 수만 집계하며 모델은 Claude Code와 겹칩니다. 터미널에서 Copilot을 사용한다면 활성화하세요.";
+"Also track GitHub Copilot CLI. Token counts only, and its models overlap Claude Code. Off by default — turn it on if you use Copilot in the terminal." = "GitHub Copilot CLI도 추적합니다. 토큰 수만 집계하며 모델은 Claude Code와 겹칩니다. 기본값은 꺼짐 — 터미널에서 Copilot을 사용한다면 켜세요.";
 "No providers enabled" = "활성화된 제공자 없음";
 "Plan usage remaining" = "플랜 잔여 사용량";
 "5-hour" = "5시간";
@@ -305,3 +312,19 @@
 "Already installed? Re-check to detect it. Token Meter also keeps looking in the background." = "이미 설치했나요? '다시 확인'으로 감지할 수 있습니다. Token Meter는 백그라운드에서도 계속 확인합니다.";
 "Run the setup guide again" = "설정 가이드 다시 실행";
 "Reopens the welcome flow, including command-line tool installation steps for any provider that isn't set up yet." = "시작 화면을 다시 엽니다. 아직 설정되지 않은 제공자가 있으면 명령줄 도구 설치 단계도 포함됩니다.";
+
+/* Connection verification (onboarding + setup, added 1.2.0) */
+"Let's confirm the connection" = "연결을 확인해 볼까요";
+"Token Meter checks whether it can actually read usage for what you picked — not just whether a tool is installed. Follow any step below, then Re-check." = "Token Meter는 도구가 설치되었는지뿐 아니라 선택한 항목의 사용량을 실제로 읽을 수 있는지 확인합니다. 아래 단계를 따른 후 다시 확인을 누르세요.";
+"Re-checking…" = "다시 확인 중…";
+"Fixed it? Re-check to confirm. Token Meter also keeps looking in the background — you can finish setup now and connect later." = "해결하셨나요? 다시 확인을 눌러 확인하세요. Token Meter는 백그라운드에서도 계속 확인하므로 지금 설정을 마치고 나중에 연결해도 됩니다.";
+"Connected — usage is coming through." = "연결됨 — 사용량을 받아오고 있습니다.";
+"Codex is installed but signed out. Run `codex login`, then run Codex once." = "Codex는 설치되었지만 로그아웃 상태입니다. `codex login`을 실행한 후 Codex를 한 번 실행하세요.";
+"Codex is signed in but hasn't written a session log yet. Run Codex once." = "Codex는 로그인되었지만 아직 세션 로그가 없습니다. Codex를 한 번 실행하세요.";
+"Install Claude Code and run it once. Token Meter needs no CLI on your PATH — it only reads the session logs." = "Claude Code를 설치하고 한 번 실행하세요. Token Meter는 CLI가 PATH에 없어도 됩니다 — 세션 로그만 읽습니다.";
+"Claude Code's sign-in has expired. Open Claude Code, run /login to sign in again, then Re-check." = "Claude Code 로그인이 만료되었습니다. Claude Code를 열고 /login으로 다시 로그인한 후 다시 확인을 누르세요.";
+"Claude Code is present but hasn't written a session log yet. Start a session, then Re-check." = "Claude Code는 있지만 아직 세션 로그가 없습니다. 세션을 시작한 후 다시 확인을 누르세요.";
+"macOS is blocking access. Grant Token Meter access in System Settings > Privacy & Security, then Re-check." = "macOS가 접근을 차단하고 있습니다. 시스템 설정 > 개인정보 보호 및 보안에서 Token Meter에 접근을 허용한 후 다시 확인을 누르세요.";
+"Not connected yet. Follow the steps in Setup, then Re-check." = "아직 연결되지 않았습니다. 설정의 단계를 따른 후 다시 확인을 누르세요.";
+"Open Claude Code and run /login to refresh the sign-in, then re-check" = "Claude Code를 열고 /login으로 로그인을 갱신한 후 다시 확인하세요";
+"Claude Code's sign-in has expired, so plan usage can't be loaded. Open Claude Code and run /login to sign in again, then re-check." = "Claude Code 로그인이 만료되어 플랜 사용량을 불러올 수 없습니다. Claude Code를 열고 /login으로 다시 로그인한 후 다시 확인하세요.";

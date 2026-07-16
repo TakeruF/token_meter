@@ -75,6 +75,7 @@ final class AppSettings {
         static let showClaude = "showClaudeCode"
         static let claudeOAuthUsage = "claudeOAuthUsageEnabled"
         static let showCodex = "showCodex"
+        static let showCopilotCli = "showCopilotCli"
         static let refreshInterval = "refreshIntervalSeconds"
         static let menuBarStyle = "menuBarStyle"
         static let showMenuBarExtra = "showMenuBarExtra"
@@ -105,6 +106,10 @@ final class AppSettings {
         didSet { defaults.set(claudeOAuthUsageEnabled, forKey: Key.claudeOAuthUsage) }
     }
     var showCodex: Bool { didSet { defaults.set(showCodex, forKey: Key.showCodex) } }
+    /// Opt-in: GitHub Copilot CLI is off by default. It is a secondary provider
+    /// (smaller audience) and its models overlap Claude Code, so it stays hidden
+    /// until the user explicitly enables it.
+    var showCopilotCli: Bool { didSet { defaults.set(showCopilotCli, forKey: Key.showCopilotCli) } }
 
     /// Seconds between periodic refreshes. The file watcher is the primary trigger;
     /// this is only a backstop, so the floor is deliberately high.
@@ -163,6 +168,7 @@ final class AppSettings {
             Key.showClaude: true,
             Key.claudeOAuthUsage: false,
             Key.showCodex: true,
+            Key.showCopilotCli: false,
             Key.refreshInterval: 300.0,
             Key.menuBarStyle: MenuBarStyle.full.rawValue,
             Key.showMenuBarExtra: true,
@@ -189,6 +195,7 @@ final class AppSettings {
         showClaudeCode = defaults.bool(forKey: Key.showClaude)
         claudeOAuthUsageEnabled = defaults.bool(forKey: Key.claudeOAuthUsage)
         showCodex = defaults.bool(forKey: Key.showCodex)
+        showCopilotCli = defaults.bool(forKey: Key.showCopilotCli)
         refreshInterval = defaults.double(forKey: Key.refreshInterval)
         menuBarStyle = MenuBarStyle(rawValue: defaults.string(forKey: Key.menuBarStyle) ?? "") ?? .full
         showMenuBarExtra = defaults.bool(forKey: Key.showMenuBarExtra)
@@ -217,6 +224,7 @@ final class AppSettings {
         var set: Set<UsageProviderID> = []
         if showClaudeCode { set.insert(.claudeCode) }
         if showCodex { set.insert(.codex) }
+        if showCopilotCli { set.insert(.copilotCli) }
         return set
     }
 

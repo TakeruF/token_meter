@@ -151,6 +151,16 @@ struct SetupView: View {
                 Toggle(isOn: $settings.showCodex) {
                     ProviderLabel(providerID: .codex, font: .body, iconSize: 15)
                 }
+                Toggle(isOn: $settings.showCopilotCli) {
+                    ProviderLabel(providerID: .copilotCli, font: .body, iconSize: 15)
+                }
+                .onChange(of: settings.showCopilotCli) { _, on in
+                    guard on else { return }
+                    Task {
+                        await monitor.detectDataSources()
+                        await monitor.refresh(reason: .manual)
+                    }
+                }
 
                 LabeledContent("Preview") {
                     MenuBarLabel(monitor: monitor)
@@ -304,6 +314,18 @@ struct ConnectionCard: View {
                 command: "codex",
                 url: nil
             )
+        case (.copilotCli, .notInstalled):
+            return Step(
+                text: "No GitHub Copilot CLI data found. Install it and run it once. Token Meter does not need the CLI on your PATH — it only reads the session logs.",
+                command: "npm install -g @github/copilot",
+                url: URL(string: "https://github.com/github/copilot-cli")
+            )
+        case (.copilotCli, .noData):
+            return Step(
+                text: "Copilot CLI is present but has not written any session logs yet. Run a session and end it, and the usage will appear here.",
+                command: "copilot",
+                url: nil
+            )
         case (.claudeCode, .notInstalled):
             return Step(
                 text: "No Claude Code data found. Install Claude Code and run it once. Token Meter does not need the CLI on your PATH — it only reads the session logs.",
@@ -318,8 +340,8 @@ struct ConnectionCard: View {
             )
         case (.claudeCode, .notLoggedIn):
             return Step(
-                text: "Claude plan usage is unavailable. Sign in again with Claude Code, then re-check.",
-                command: nil,
+                text: "Claude Code's sign-in has expired, so plan usage can't be loaded. Open Claude Code and run /login to sign in again, then re-check.",
+                command: "claude",
                 url: URL(string: "https://claude.com/claude-code")
             )
         case (_, .permissionDenied(let path)) where path.contains("Keychain"):

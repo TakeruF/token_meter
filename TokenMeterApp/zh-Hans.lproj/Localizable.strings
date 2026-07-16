@@ -103,6 +103,13 @@
 "Today" = "今天";
 "7 days" = "7天";
 "30 days" = "30天";
+"90 days" = "90天";
+"vs yesterday" = "对比昨天";
+"vs prev 7 days" = "对比前7天";
+"vs prev 30 days" = "对比前30天";
+"vs prev 90 days" = "对比前90天";
+"GitHub Copilot CLI counts tokens only, and its models overlap Claude Code — enable it if you use Copilot in the terminal." = "GitHub Copilot CLI 仅统计 token 数，且其模型与 Claude Code 重叠。如果你在终端使用 Copilot，请启用它。";
+"Also track GitHub Copilot CLI. Token counts only, and its models overlap Claude Code. Off by default — turn it on if you use Copilot in the terminal." = "同时追踪 GitHub Copilot CLI。仅统计 token 数，且其模型与 Claude Code 重叠。默认关闭——如果你在终端使用 Copilot，请开启。";
 "No providers enabled" = "没有启用服务商";
 "Plan usage remaining" = "套餐剩余用量";
 "5-hour" = "5小时";
@@ -305,3 +312,19 @@
 "Already installed? Re-check to detect it. Token Meter also keeps looking in the background." = "已经安装了？点击“重新检查”即可检测。Token Meter 也会在后台持续查找。";
 "Run the setup guide again" = "重新运行设置向导";
 "Reopens the welcome flow, including command-line tool installation steps for any provider that isn't set up yet." = "重新打开欢迎流程，若有尚未设置的提供方，也会包含命令行工具的安装步骤。";
+
+/* Connection verification (onboarding + setup, added 1.2.0) */
+"Let's confirm the connection" = "确认一下连接";
+"Token Meter checks whether it can actually read usage for what you picked — not just whether a tool is installed. Follow any step below, then Re-check." = "Token Meter 会检查是否真的能读取所选项目的用量，而不仅仅是工具是否已安装。请按下面的步骤操作，然后点击“重新检查”。";
+"Re-checking…" = "正在重新检查…";
+"Fixed it? Re-check to confirm. Token Meter also keeps looking in the background — you can finish setup now and connect later." = "解决了吗？点击“重新检查”确认。Token Meter 也会在后台持续查找——你可以现在完成设置，稍后再连接。";
+"Connected — usage is coming through." = "已连接——正在获取用量。";
+"Codex is installed but signed out. Run `codex login`, then run Codex once." = "Codex 已安装但未登录。运行 `codex login`，然后运行一次 Codex。";
+"Codex is signed in but hasn't written a session log yet. Run Codex once." = "Codex 已登录但尚未写入会话日志。请运行一次 Codex。";
+"Install Claude Code and run it once. Token Meter needs no CLI on your PATH — it only reads the session logs." = "安装 Claude Code 并运行一次。Token Meter 不需要 CLI 在你的 PATH 中——它只读取会话日志。";
+"Claude Code's sign-in has expired. Open Claude Code, run /login to sign in again, then Re-check." = "Claude Code 的登录已过期。打开 Claude Code，运行 /login 重新登录，然后点击“重新检查”。";
+"Claude Code is present but hasn't written a session log yet. Start a session, then Re-check." = "Claude Code 已存在但尚未写入会话日志。请开始一个会话，然后点击“重新检查”。";
+"macOS is blocking access. Grant Token Meter access in System Settings > Privacy & Security, then Re-check." = "macOS 正在阻止访问。请在“系统设置 > 隐私与安全性”中授予 Token Meter 访问权限，然后点击“重新检查”。";
+"Not connected yet. Follow the steps in Setup, then Re-check." = "尚未连接。请按“设置”中的步骤操作，然后点击“重新检查”。";
+"Open Claude Code and run /login to refresh the sign-in, then re-check" = "打开 Claude Code 并运行 /login 刷新登录，然后重新检查";
+"Claude Code's sign-in has expired, so plan usage can't be loaded. Open Claude Code and run /login to sign in again, then re-check." = "Claude Code 的登录已过期，因此无法加载套餐用量。打开 Claude Code，运行 /login 重新登录，然后重新检查。";

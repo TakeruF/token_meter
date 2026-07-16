@@ -9,6 +9,7 @@ struct OnboardingView: View {
 
     @State private var settings = AppSettings.shared
     @State private var step: Step
+    @State private var rechecking = false
 
     private enum Step: Int, CaseIterable, Identifiable {
         case welcome
@@ -173,6 +174,20 @@ struct OnboardingView: View {
                 .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 12))
             }
 
+            VStack(alignment: .leading, spacing: 6) {
+                Toggle(isOn: $settings.showCopilotCli) {
+                    ProviderLabel(providerID: .copilotCli, font: .body, iconSize: 15)
+                }
+                .toggleStyle(.switch)
+                Text("Also track GitHub Copilot CLI. Token counts only, and its models overlap Claude Code. Off by default — turn it on if you use Copilot in the terminal.")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+            .padding(14)
+            .frame(maxWidth: 650, alignment: .leading)
+            .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 12))
+
             if !hasSelectedProvider {
                 Label("Select at least one provider to continue.", systemImage: "info.circle")
                     .font(.callout)
@@ -188,13 +203,13 @@ struct OnboardingView: View {
             Spacer()
 
             OnboardingHeading(
-                title: "Install the command-line tools",
-                subtitle: "Token Meter reads the local logs these tools write. Install the ones you picked, then continue — you can also finish setup now and install later."
+                title: "Let's confirm the connection",
+                subtitle: "Token Meter checks whether it can actually read usage for what you picked — not just whether a tool is installed. Follow any step below, then Re-check."
             )
 
             VStack(spacing: 14) {
-                ForEach(providersNeedingInstall) { id in
-                    InstallInstructionCard(providerID: id, availability: monitor.states[id]?.availability)
+                ForEach(selectedProviders) { id in
+                    ConnectionStatusCard(providerID: id, availability: monitor.states[id]?.availability)
                 }
             }
             .frame(maxWidth: 620)
@@ -202,16 +217,23 @@ struct OnboardingView: View {
             Button {
                 recheck()
             } label: {
-                Label("Re-check", systemImage: "arrow.clockwise")
+                Label(rechecking ? "Re-checking…" : "Re-check", systemImage: "arrow.clockwise")
             }
             .controlSize(.large)
+            .disabled(rechecking)
 
-            Text("Already installed? Re-check to detect it. Token Meter also keeps looking in the background.")
+            Text("Fixed it? Re-check to confirm. Token Meter also keeps looking in the background — you can finish setup now and connect later.")
                 .font(.callout)
                 .foregroundStyle(.secondary)
                 .multilineTextAlignment(.center)
 
             Spacer()
+        }
+        // Verify against reality on entry: OAuth sign-in state, in particular, is only
+        // known after a live refresh, so a stale "connected" guess can't slip through.
+        .task(id: step) {
+            guard step == .install else { return }
+            recheck()
         }
     }
 
@@ -327,7 +349,7 @@ struct OnboardingView: View {
     }
 
     private var hasSelectedProvider: Bool {
-        settings.showClaudeCode || settings.showCodex
+        settings.showClaudeCode || settings.showCodex || settings.showCopilotCli
     }
 
     private var selectedProviderNames: String {
@@ -337,23 +359,19 @@ struct OnboardingView: View {
         return settings.showClaudeCode ? "Claude" : "Codex"
     }
 
-    /// The install step only appears when a selected provider is missing its CLI, so
-    /// people who already have the tools installed never see an empty screen.
+    /// The connection step is a real verification, so it shows whenever a provider is
+    /// selected — each one reports connected (green) or the exact action to fix it.
+    /// Its truth comes from live availability, not from whether a CLI is on PATH.
     private var visibleSteps: [Step] {
-        Step.allCases.filter { $0 != .install || !providersNeedingInstall.isEmpty }
+        Step.allCases.filter { $0 != .install || hasSelectedProvider }
     }
 
     private var stepNumber: Int {
         (visibleSteps.firstIndex(of: step) ?? step.rawValue) + 1
     }
 
-    /// Selected providers whose CLI was not found on this machine.
-    private var providersNeedingInstall: [UsageProviderID] {
-        UsageProviderID.allCases.filter { id in
-            guard settings.enabledProviders().contains(id) else { return false }
-            if case .notInstalled = monitor.states[id]?.availability { return true }
-            return false
-        }
+    private var selectedProviders: [UsageProviderID] {
+        UsageProviderID.allCases.filter { settings.enabledProviders().contains($0) }
     }
 
     private func move(by offset: Int) {
@@ -365,9 +383,12 @@ struct OnboardingView: View {
     }
 
     private func recheck() {
+        guard !rechecking else { return }
+        rechecking = true
         Task {
             await monitor.detectDataSources()
             await monitor.refresh(reason: .manual)
+            rechecking = false
         }
     }
 
@@ -487,39 +508,70 @@ private struct ProviderChoiceCard: View {
     }
 }
 
-/// Install guidance for one provider whose CLI was not found. Mirrors the verified
-/// steps in Setup: Codex installs via Homebrew, Claude Code needs no CLI on PATH
-/// because Token Meter only reads its logs.
-private struct InstallInstructionCard: View {
+/// Connection guidance for one provider that is not yet returning data. Unlike a
+/// pure "is it installed?" check, this speaks to the actual availability — missing
+/// tool, signed out, expired sign-in, blocked permission, or simply no logs yet —
+/// so onboarding tells the truth about whether usage can be read. Mirrors the
+/// verified steps in Setup.
+private struct ConnectionStatusCard: View {
     let providerID: UsageProviderID
     let availability: ProviderAvailability?
 
     @State private var copied = false
 
-    private var isInstalled: Bool {
-        guard let availability else { return false }
-        if case .notInstalled = availability { return false }
-        return true
-    }
+    private var isConnected: Bool { availability?.isAvailable == true }
 
-    private var instruction: LocalizedStringKey {
-        switch providerID {
-        case .codex:
+    /// The concrete next action for the current state. `nil` while availability is
+    /// still being determined.
+    private var instruction: LocalizedStringKey? {
+        switch (providerID, availability) {
+        case (_, .none):
+            return "Checking…"
+        case (_, .available):
+            return nil
+        case (.codex, .notInstalled):
             return "Install Codex with Homebrew, then sign in with `codex login` and run it once."
-        case .claudeCode:
-            return "Install Claude Code and run it once. Token Meter does not need the CLI on your PATH — it only reads the session logs."
+        case (.codex, .notLoggedIn):
+            return "Codex is installed but signed out. Run `codex login`, then run Codex once."
+        case (.codex, .noData):
+            return "Codex is signed in but hasn't written a session log yet. Run Codex once."
+        case (.claudeCode, .notInstalled):
+            return "Install Claude Code and run it once. Token Meter needs no CLI on your PATH — it only reads the session logs."
+        case (.claudeCode, .notLoggedIn):
+            return "Claude Code's sign-in has expired. Open Claude Code, run /login to sign in again, then Re-check."
+        case (.claudeCode, .noData):
+            return "Claude Code is present but hasn't written a session log yet. Start a session, then Re-check."
+        case (.copilotCli, .notInstalled):
+            return "Install GitHub Copilot CLI and run it once. Token Meter needs no CLI on your PATH — it only reads the session logs."
+        case (.copilotCli, .noData):
+            return "Copilot CLI is present but hasn't written a session log yet. Run a session and end it, then Re-check."
+        case (_, .permissionDenied):
+            return "macOS is blocking access. Grant Token Meter access in System Settings > Privacy & Security, then Re-check."
+        default:
+            return "Not connected yet. Follow the steps in Setup, then Re-check."
         }
     }
 
     private var command: String? {
-        providerID == .codex ? "brew install --cask codex" : nil
+        switch (providerID, availability) {
+        case (.codex, .notInstalled): return "brew install --cask codex"
+        case (.codex, .notLoggedIn): return "codex login"
+        case (.claudeCode, .notLoggedIn): return "claude"
+        case (.copilotCli, .notInstalled): return "npm install -g @github/copilot"
+        default: return nil
+        }
     }
 
     private var url: URL? {
         switch providerID {
         case .codex: return URL(string: "https://github.com/openai/codex")
         case .claudeCode: return URL(string: "https://claude.com/claude-code")
+        case .copilotCli: return URL(string: "https://github.com/github/copilot-cli")
         }
+    }
+
+    private var statusLabel: LocalizedStringKey {
+        LocalizedStringKey(availability?.headline ?? "Checking…")
     }
 
     var body: some View {
@@ -529,18 +581,18 @@ private struct InstallInstructionCard: View {
                 Text(providerID.displayName)
                     .font(.headline)
                 Spacer()
-                Image(systemName: isInstalled ? "checkmark.circle.fill" : "arrow.down.circle")
-                    .foregroundStyle(isInstalled ? AnyShapeStyle(.green) : AnyShapeStyle(.orange))
-                Text(LocalizedStringKey(isInstalled ? "Installed" : "Not installed"))
+                Image(systemName: isConnected ? "checkmark.circle.fill" : (availability?.symbolName ?? "arrow.down.circle"))
+                    .foregroundStyle(isConnected ? AnyShapeStyle(.green) : AnyShapeStyle(.orange))
+                Text(statusLabel)
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }
 
-            if isInstalled {
-                Label("Detected on this Mac.", systemImage: "checkmark.seal")
+            if isConnected {
+                Label("Connected — usage is coming through.", systemImage: "checkmark.seal")
                     .font(.callout)
                     .foregroundStyle(.green)
-            } else {
+            } else if let instruction {
                 Text(instruction)
                     .font(.callout)
                     .fixedSize(horizontal: false, vertical: true)
