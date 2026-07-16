@@ -317,19 +317,56 @@ public struct UsageAggregator: Sendable {
     }
 }
 
+/// How a token count is abbreviated for display.
+///
+/// The two systems group digits differently — every 3 digits versus every 4 — so
+/// no single scale suits both. Which one a reader expects depends on the language
+/// they chose, not on arithmetic, so the choice is theirs to make.
+public enum TokenNotation: String, Sendable, CaseIterable, Codable {
+    /// 1_840_230 -> "1.84M". The engineering convention, and the only system that
+    /// makes sense in a Latin-script UI.
+    case metric
+    /// 1_840_230 -> "184万". East Asian myriad grouping. Meaningful only in
+    /// Japanese, Chinese and Korean, whose number words break at 万 and 億.
+    case myriad
+}
+
 public extension Int {
-    /// 1_840_230 -> "1.84M". Used everywhere token counts are shown.
-    var abbreviatedTokens: String {
-        let n = Double(self)
-        switch abs(n) {
-        case 1_000_000_000...:
-            return String(format: "%.2fB", n / 1_000_000_000)
-        case 1_000_000...:
-            return String(format: "%.2fM", n / 1_000_000)
-        case 1_000...:
-            return String(format: "%.1fK", n / 1_000)
-        default:
-            return "\(self)"
+    /// 1_840_230 -> "1.84M". Used wherever token counts are shown in a UI with no
+    /// notation preference to consult — notably the tests and Latin-script text.
+    var abbreviatedTokens: String { abbreviatedTokens(.metric) }
+
+    /// A token count abbreviated in `notation`.
+    ///
+    /// `locale` names the myriad units and is ignored by `.metric`, whose K/M/B are
+    /// spelled the same everywhere. Pass the *app* language rather than letting it
+    /// default, or a myriad count picks up the system language instead.
+    func abbreviatedTokens(
+        _ notation: TokenNotation,
+        locale: Locale = .autoupdatingCurrent
+    ) -> String {
+        switch notation {
+        case .metric:
+            let n = Double(self)
+            switch abs(n) {
+            case 1_000_000_000...:
+                return String(format: "%.2fB", n / 1_000_000_000)
+            case 1_000_000...:
+                return String(format: "%.2fM", n / 1_000_000)
+            case 1_000...:
+                return String(format: "%.1fK", n / 1_000)
+            default:
+                return "\(self)"
+            }
+        case .myriad:
+            // Three significant digits — the same information density the metric
+            // scale gives, and the precision a compact reading can carry before the
+            // trailing digits stop meaning anything ("184万", not "184.02万").
+            return IntegerFormatStyle<Int>.number
+                .notation(.compactName)
+                .precision(.significantDigits(1...3))
+                .locale(locale)
+                .format(self)
         }
     }
 }

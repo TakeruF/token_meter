@@ -12,6 +12,11 @@ struct SettingsView: View {
         Form {
             Section("Language") {
                 AppLanguagePicker()
+                // Only where the choice means something: English has no myriad words,
+                // and an English UI formats as K/M/B whatever is stored here.
+                if settings.appLanguage.supportsMyriadNotation {
+                    TokenNotationPicker()
+                }
             }
 
             Section("Providers") {

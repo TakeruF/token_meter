@@ -206,5 +206,19 @@ final class TimeWindowTests: XCTestCase {
         XCTAssertNil(read.fiveHourWindow)
         XCTAssertNil(read.weeklyWindow)
         XCTAssertNil(decoded.languageCode)
+        // A snapshot from a release that predates the notation choice: the widget
+        // must keep formatting it the way that release always did.
+        XCTAssertNil(decoded.tokenNotation)
+        XCTAssertEqual(decoded.tokens(1_840_230), "1.84M")
+    }
+
+    func testSnapshotFormatsTokensInTheNotationTheAppChose() {
+        let myriad = SharedSnapshot(updatedAt: Date(), languageCode: "ja", tokenNotation: .myriad)
+        XCTAssertEqual(myriad.tokens(1_840_230), "184万")
+
+        // The app resolves an English UI to `.metric` before publishing, but a
+        // snapshot naming both must still format by what it says, not by language.
+        let metric = SharedSnapshot(updatedAt: Date(), languageCode: "ja", tokenNotation: .metric)
+        XCTAssertEqual(metric.tokens(1_840_230), "1.84M")
     }
 }

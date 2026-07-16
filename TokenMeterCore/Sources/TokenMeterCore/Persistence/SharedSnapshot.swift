@@ -92,6 +92,9 @@ public struct SharedSnapshot: Codable, Sendable, Equatable {
     /// The language selected in the main app. Optional for compatibility with
     /// snapshots written by older releases.
     public var languageCode: String?
+    /// The token notation selected in the main app. Optional for compatibility with
+    /// snapshots written by older releases, which predate the choice.
+    public var tokenNotation: TokenNotation?
     public var claudeCode: Provider?
     public var codex: Provider?
     /// Optional for compatibility with snapshots written by older releases.
@@ -100,15 +103,27 @@ public struct SharedSnapshot: Codable, Sendable, Equatable {
     public init(
         updatedAt: Date,
         languageCode: String? = nil,
+        tokenNotation: TokenNotation? = nil,
         claudeCode: Provider? = nil,
         codex: Provider? = nil,
         copilotCli: Provider? = nil
     ) {
         self.updatedAt = updatedAt
         self.languageCode = languageCode
+        self.tokenNotation = tokenNotation
         self.claudeCode = claudeCode
         self.codex = codex
         self.copilotCli = copilotCli
+    }
+
+    /// Formats a token count exactly as the main app would. Falls back to the metric
+    /// scale for a snapshot written before the notation existed — the notation those
+    /// releases always used.
+    public func tokens(_ count: Int) -> String {
+        count.abbreviatedTokens(
+            tokenNotation ?? .metric,
+            locale: Locale(identifier: languageCode ?? "en")
+        )
     }
 
     public func provider(_ id: UsageProviderID) -> Provider? {

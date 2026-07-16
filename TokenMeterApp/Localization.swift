@@ -1,5 +1,18 @@
 import Foundation
 import SwiftUI
+import TokenMeterCore
+
+extension Int {
+    /// A token count in the notation and language the user picked. The app-side
+    /// counterpart to `abbreviatedTokens`, which knows nothing of AppSettings —
+    /// prefer this anywhere a count is shown, so every count agrees with the charts.
+    var displayTokens: String {
+        abbreviatedTokens(
+            AppSettings.shared.effectiveTokenNotation,
+            locale: AppSettings.shared.appLanguage.locale
+        )
+    }
+}
 
 enum AppLocalization {
     static func string(_ key: String, language: AppLanguage = AppSettings.shared.appLanguage) -> String {
@@ -86,6 +99,37 @@ enum AppLocalization {
             )
         }
         return string(detail)
+    }
+}
+
+/// Chooses between the K/M/B scale and East Asian myriad grouping.
+///
+/// Shown only in a language that has myriad words — see `supportsMyriadNotation`.
+struct TokenNotationPicker: View {
+    @State private var settings = AppSettings.shared
+
+    /// A worked example rather than a name: "1.84M" and "184万" say what the choice
+    /// does more exactly than a label could, and need no translating to stay right.
+    /// This count is the one number that renders cleanly on both scales — most land
+    /// on a bare "120.00M" against a "1.2億", which reads as noise beside the point.
+    private func example(_ notation: TokenNotation) -> String {
+        1_840_230.abbreviatedTokens(notation, locale: settings.appLanguage.locale)
+    }
+
+    var body: some View {
+        HStack {
+            Text("Number format")
+            Spacer()
+            Picker("Number format", selection: $settings.tokenNotation) {
+                ForEach(TokenNotation.allCases, id: \.self) { notation in
+                    Text(verbatim: example(notation)).tag(notation)
+                }
+            }
+            .labelsHidden()
+            .pickerStyle(.menu)
+            .fixedSize()
+            .accessibilityLabel(Text("Token number format"))
+        }
     }
 }
 

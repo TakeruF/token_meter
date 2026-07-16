@@ -328,3 +328,5 @@
 "Not connected yet. Follow the steps in Setup, then Re-check." = "尚未连接。请按“设置”中的步骤操作，然后点击“重新检查”。";
 "Open Claude Code and run /login to refresh the sign-in, then re-check" = "打开 Claude Code 并运行 /login 刷新登录，然后重新检查";
 "Claude Code's sign-in has expired, so plan usage can't be loaded. Open Claude Code and run /login to sign in again, then re-check." = "Claude Code 的登录已过期，因此无法加载套餐用量。打开 Claude Code，运行 /login 重新登录，然后重新检查。";
+"Number format" = "数字格式";
+"Token number format" = "令牌数字格式";

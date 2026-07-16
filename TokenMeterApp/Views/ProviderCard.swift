@@ -243,7 +243,7 @@ struct ProviderCard: View {
                 .foregroundStyle(.secondary)
             Spacer()
             if let today = snapshot?.totalTokens, today > 0 {
-                Text("\(today.abbreviatedTokens) tokens")
+                Text("\(today.displayTokens) tokens")
                     .font(.callout.weight(.medium))
                     .monospacedDigit()
             } else {
@@ -270,10 +270,10 @@ struct ProviderCard: View {
                 Text("Context").font(.caption).foregroundStyle(.secondary)
                 Spacer()
                 if let capacity = snapshot?.contextWindowTokens, capacity > 0 {
-                    Text("\(context.abbreviatedTokens) / \(capacity.abbreviatedTokens)")
+                    Text("\(context.displayTokens) / \(capacity.displayTokens)")
                         .font(.caption).monospacedDigit()
                 } else {
-                    Text(context.abbreviatedTokens).font(.caption).monospacedDigit()
+                    Text(context.displayTokens).font(.caption).monospacedDigit()
                 }
             }
         }
@@ -369,7 +369,7 @@ struct WindowRow: View {
                     .font(.caption)
                     .foregroundStyle(.secondary)
                 Spacer()
-                Text("\(usage.tokens.abbreviatedTokens) tokens")
+                Text("\(usage.tokens.displayTokens) tokens")
                     .font(.callout.weight(.medium))
                     .monospacedDigit()
             }

@@ -328,3 +328,5 @@
 "Not connected yet. Follow the steps in Setup, then Re-check." = "まだ接続されていません。「セットアップ」の手順に従い、「再確認」を押してください。";
 "Open Claude Code and run /login to refresh the sign-in, then re-check" = "Claude Code を開いて /login でサインインを更新し、再確認してください";
 "Claude Code's sign-in has expired, so plan usage can't be loaded. Open Claude Code and run /login to sign in again, then re-check." = "Claude Code のサインインが失効したため、プラン使用量を取得できません。Claude Code を開いて /login で再ログインし、再確認してください。";
+"Number format" = "数値表記";
+"Token number format" = "トークン数の表記";

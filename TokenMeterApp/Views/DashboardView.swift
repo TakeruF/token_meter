@@ -98,8 +98,8 @@ struct DashboardView: View {
                 let total = all.reduce(0) { $0 + $1.totalTokens }
                 SummaryCard(
                     providerID: id,
-                    value: work > 0 ? work.abbreviatedTokens : nil,
-                    total: total > 0 ? total.abbreviatedTokens : nil,
+                    value: work > 0 ? work.displayTokens : nil,
+                    total: total > 0 ? total.displayTokens : nil,
                     caption: AppLocalization.format("tokens · %@", range.label),
                     trend: trend(id, currentWork: work)
                 )
@@ -303,9 +303,9 @@ struct DashboardView: View {
                         // The real work this session did; total is shown as the
                         // context it ran against, since most of it is cached reuse.
                         VStack(alignment: .leading, spacing: 1) {
-                            Text(s.workingTokens.abbreviatedTokens)
+                            Text(s.workingTokens.displayTokens)
                                 .monospacedDigit()
-                            Text("\(Text("of")) \(s.totalTokens.abbreviatedTokens)")
+                            Text("\(Text("of")) \(s.totalTokens.displayTokens)")
                                 .font(.caption2)
                                 .foregroundStyle(.secondary)
                                 .monospacedDigit()
@@ -331,9 +331,25 @@ struct DashboardView: View {
 
 // MARK: - Charts
 
-/// Axis labels as "1.2M" rather than "1,200,000". Spelled out because
-/// `.number.notation(...)` is ambiguous without the concrete format style.
-let compactCount: IntegerFormatStyle<Int> = .number.notation(.compactName)
+/// Axis labels as "1.2M" rather than "1,200,000" — or "184万", for a reader who
+/// picked myriad notation. Spelled out because `.number.notation(...)` is ambiguous
+/// without the concrete format style.
+///
+/// The locale is bound explicitly: chart axis labels ignore `\.locale` from the
+/// environment, so an unlocalized style would name the units off the *system*
+/// language ("6億" under an English UI on a Japanese Mac). Computed rather than
+/// stored, or it would freeze whichever language was current when first touched.
+var compactCount: IntegerFormatStyle<Int> {
+    .number.notation(.compactName).locale(AppSettings.shared.tokenFormattingLocale)
+}
+
+/// Date axis labels and tooltips, in the app language rather than the system one —
+/// same reason as `compactCount` ("16日" under an English UI, otherwise).
+var chartHour: Date.FormatStyle { Date.FormatStyle().hour().locale(AppLocalization.dateTimeLocale) }
+var chartDay: Date.FormatStyle { Date.FormatStyle().day().locale(AppLocalization.dateTimeLocale) }
+var chartMonthDay: Date.FormatStyle {
+    Date.FormatStyle().month().day().locale(AppLocalization.dateTimeLocale)
+}
 
 struct DailyRow: Identifiable {
     let day: Date
@@ -428,7 +444,7 @@ struct HourlyChart: View {
                 // sits on the point — so the time reads directly under its plotted
                 // value instead of hanging off to the right (most visible on wide,
                 // two-digit labels).
-                AxisValueLabel(format: Date.FormatStyle().hour(), anchor: .top)
+                AxisValueLabel(format: chartHour, anchor: .top)
             }
         }
         .frame(height: 220)
@@ -444,7 +460,7 @@ struct HourlyChart: View {
     private var selectionLabel: some View {
         Grid(alignment: .leading, horizontalSpacing: 12, verticalSpacing: 2) {
             GridRow {
-                Text(selectedHour ?? .now, format: Date.FormatStyle().hour())
+                Text(selectedHour ?? .now, format: chartHour)
                     .font(.caption2.bold())
                     .gridCellColumns(2)
             }
@@ -568,17 +584,41 @@ struct DailyChart: View {
         Array(Set(rows.map { Calendar.current.startOfDay(for: $0.day) })).sorted()
     }
 
-    /// The plotted days padded by half a day on each side. Without this the first and
-    /// last points sit exactly on the plot edges, so their axis labels — the latest
-    /// date in particular — overflow the plot and get clipped away. The padding gives
-    /// those end labels room to render while keeping every label centred on its point.
+    /// Days between axis labels. One per day suits a week or a month, but over the
+    /// 90-day range they collide into an unreadable smear.
+    private var labelStride: Int { dayValues.count >= 90 ? 10 : 1 }
+
+    /// Ten-day marks span roughly three months, where a bare day number repeats —
+    /// "6", "16", "26", "6" — with nothing to say which month each belongs to. Name
+    /// the month there. A week or a month of consecutive days needs no such help,
+    /// and the shorter label keeps those denser axes readable.
+    private var dayLabelFormat: Date.FormatStyle { labelStride > 1 ? chartMonthDay : chartDay }
+
+    /// The days that get an axis mark. The stride counts back from the most recent
+    /// day, so the latest date always keeps its label; it is the one worth reading.
+    /// The series is zero-filled and contiguous, so striding by index strides by
+    /// exactly `labelStride` days.
+    private var labelledDays: [Date] {
+        let days = dayValues
+        guard labelStride > 1 else { return days }
+        return days.enumerated()
+            .filter { (days.count - 1 - $0.offset).isMultiple(of: labelStride) }
+            .map(\.element)
+    }
+
+    /// The plotted days padded by half a label interval on each side. Without this the
+    /// first and last points sit exactly on the plot edges, so their axis labels — the
+    /// latest date in particular — overflow the plot and get clipped to "…". Half an
+    /// interval is the room a centred label needs; scaling it with the stride keeps
+    /// that room constant on screen, since a fixed half-day shrinks to a few clipped
+    /// pixels once the range stretches to 90 days.
     private var xDomain: ClosedRange<Date> {
         let days = dayValues
         guard let first = days.first, let last = days.last else {
             let now = Calendar.current.startOfDay(for: Date())
             return now...now.addingTimeInterval(86_400)
         }
-        let pad: TimeInterval = 12 * 3600
+        let pad = TimeInterval(labelStride) * 12 * 3600
         return first.addingTimeInterval(-pad)...last.addingTimeInterval(pad)
     }
 
@@ -633,13 +673,13 @@ struct DailyChart: View {
         .chartXScale(domain: xDomain)
         .chartYAxis { AxisMarks(format: compactCount) }
         .chartXAxis {
-            AxisMarks(values: dayValues) { _ in
+            AxisMarks(values: labelledDays) { _ in
                 AxisGridLine()
                 // `anchor: .top` attaches the label's top-centre to the tick, which
                 // sits on the point — so each date reads directly under its plotted
                 // value instead of hanging off to the right (most visible on two-digit
                 // days).
-                AxisValueLabel(format: Date.FormatStyle().day(), anchor: .top)
+                AxisValueLabel(format: dayLabelFormat, anchor: .top)
             }
         }
         .frame(height: 220)
@@ -655,7 +695,7 @@ struct DailyChart: View {
     private var selectionLabel: some View {
         Grid(alignment: .leading, horizontalSpacing: 12, verticalSpacing: 2) {
             GridRow {
-                Text(selectedDay ?? .now, format: Date.FormatStyle().month().day())
+                Text(selectedDay ?? .now, format: chartMonthDay)
                     .font(.caption2.bold())
                     .gridCellColumns(2)
             }
@@ -793,7 +833,7 @@ struct WindowSummaryRow: View {
                     .foregroundStyle(.secondary)
                 Spacer()
                 if let tokens = usage?.tokens {
-                    Text("\(tokens.abbreviatedTokens) \(Text("tokens"))")
+                    Text("\(tokens.displayTokens) \(Text("tokens"))")
                         .font(.callout.weight(.medium))
                         .monospacedDigit()
                 }
@@ -883,7 +923,7 @@ struct BreakdownStat: View {
         VStack(alignment: .leading, spacing: 2) {
             Text(LocalizedStringKey(label)).font(.caption).foregroundStyle(.secondary)
             if let value {
-                Text(value.abbreviatedTokens)
+                Text(value.displayTokens)
                     .font(.callout.weight(.medium))
                     .monospacedDigit()
             } else {

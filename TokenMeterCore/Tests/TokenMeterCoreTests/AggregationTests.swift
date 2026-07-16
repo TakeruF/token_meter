@@ -122,6 +122,32 @@ final class AggregationTests: XCTestCase {
         XCTAssertEqual(842.abbreviatedTokens, "842")
     }
 
+    /// The metric scale is spelled the same in every language: a Japanese reader who
+    /// left the notation on K/M/B must not be handed "1.84百万".
+    func testMetricAbbreviationIgnoresLocale() {
+        for id in ["en", "ja", "zh-Hans", "ko"] {
+            XCTAssertEqual(
+                1_840_230.abbreviatedTokens(.metric, locale: Locale(identifier: id)),
+                "1.84M",
+                "metric changed shape in \(id)"
+            )
+        }
+    }
+
+    func testMyriadAbbreviationGroupsEveryFourDigits() {
+        let ja = Locale(identifier: "ja")
+        XCTAssertEqual(1_840_230.abbreviatedTokens(.myriad, locale: ja), "184万")
+        XCTAssertEqual(600_000_000.abbreviatedTokens(.myriad, locale: ja), "6億")
+        XCTAssertEqual(12_500.abbreviatedTokens(.myriad, locale: ja), "1.25万")
+        // Below 万 there is no unit to name, so the count reads out in full.
+        XCTAssertEqual(842.abbreviatedTokens(.myriad, locale: ja), "842")
+    }
+
+    func testMyriadAbbreviationNamesUnitsPerLanguage() {
+        XCTAssertEqual(600_000_000.abbreviatedTokens(.myriad, locale: Locale(identifier: "zh-Hans")), "6亿")
+        XCTAssertEqual(600_000_000.abbreviatedTokens(.myriad, locale: Locale(identifier: "ko")), "6억")
+    }
+
     func testRecentSessionsGroupBySessionAndSeparateWorkFromCache() throws {
         let aggregator = UsageAggregator(calendar: tokyo)
         let events = [

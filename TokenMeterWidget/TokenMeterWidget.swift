@@ -2,6 +2,31 @@ import WidgetKit
 import SwiftUI
 import TokenMeterCore
 
+/// Formats token counts the way the main app would.
+///
+/// Carried in the environment alongside `\.locale`, because the leaf views that show
+/// a count hold a number and nothing else — and a widget has no AppSettings to
+/// consult, only what the snapshot brought across.
+struct TokenFormatter: Sendable {
+    var notation: TokenNotation = .metric
+    var locale: Locale = Locale(identifier: "en")
+
+    func callAsFunction(_ count: Int) -> String {
+        count.abbreviatedTokens(notation, locale: locale)
+    }
+}
+
+private struct TokenFormatterKey: EnvironmentKey {
+    static let defaultValue = TokenFormatter()
+}
+
+extension EnvironmentValues {
+    var tokenFormatter: TokenFormatter {
+        get { self[TokenFormatterKey.self] }
+        set { self[TokenFormatterKey.self] = newValue }
+    }
+}
+
 /// The widget never touches the CLI logs. It only reads the JSON snapshot the main
 /// app writes into the App Group container.
 struct Provider: TimelineProvider {
@@ -43,6 +68,8 @@ struct ProviderRow: View {
     var showReset = false
     var showTokens = false
 
+    @Environment(\.tokenFormatter) private var tokens
+
     private var name: String { providerID.displayName }
 
     private var level: UsageStatusLevel {
@@ -83,7 +110,7 @@ struct ProviderRow: View {
 
             if showTokens {
                 if let tokens = provider?.todayTokens, tokens > 0 {
-                    Text("\(tokens.abbreviatedTokens) \(Text("today"))")
+                    Text("\(self.tokens(tokens)) \(Text("today"))")
                         .font(.caption2)
                         .foregroundStyle(.secondary)
                         .monospacedDigit()
@@ -147,7 +174,7 @@ struct ProviderRow: View {
                     .monospacedDigit()
             }
         } else if let tokens = provider?.todayTokens, tokens > 0 {
-            Text(tokens.abbreviatedTokens)
+            Text(self.tokens(tokens))
                 .font(.caption.weight(.semibold))
                 .monospacedDigit()
         } else {
@@ -163,7 +190,7 @@ struct ProviderRow: View {
             return "\(Int((remaining * 100).rounded())) percent remaining, \(level.label)"
         }
         if let tokens = provider?.todayTokens, tokens > 0 {
-            return "\(tokens.abbreviatedTokens) tokens today, no quota information"
+            return "\(self.tokens(tokens)) tokens today, no quota information"
         }
         return "No data"
     }
@@ -330,13 +357,15 @@ struct LargeWidgetView: View {
         let label: String
         let tokens: Int?
 
+        @Environment(\.tokenFormatter) private var formatted
+
         var body: some View {
             VStack(alignment: .leading, spacing: 1) {
                 Text(label)
                     .font(.system(size: 9))
                     .foregroundStyle(.secondary)
                 if let tokens, tokens > 0 {
-                    Text(tokens.abbreviatedTokens)
+                    Text(formatted(tokens))
                         .font(.caption.weight(.medium))
                         .monospacedDigit()
                 } else {
@@ -407,6 +436,7 @@ struct UsageLineChart: View {
     // Set at the widget root from the snapshot's language; `.formatted` otherwise
     // uses the system locale, so weekday letters would ignore the app language.
     @Environment(\.locale) private var locale
+    @Environment(\.tokenFormatter) private var tokens
 
     /// Height of the plot area (the line). The axis labels live outside this.
     private let plotHeight: CGFloat = 30
@@ -423,7 +453,7 @@ struct UsageLineChart: View {
                 // Y axis: max at the top, zero on the baseline. Fixed to the plot
                 // height so "0" lines up with the bottom of the plot.
                 VStack(alignment: .trailing, spacing: 0) {
-                    Text(maxValue.abbreviatedTokens)
+                    Text(tokens(maxValue))
                     Spacer(minLength: 0)
                     Text(verbatim: "0")
                 }
@@ -492,6 +522,10 @@ struct TokenMeterWidgetEntryView: View {
     @Environment(\.widgetFamily) private var family
     let entry: Entry
 
+    private var locale: Locale {
+        Locale(identifier: entry.snapshot?.languageCode ?? Locale.preferredLanguages.first ?? "en")
+    }
+
     var body: some View {
         Group {
             switch family {
@@ -500,9 +534,10 @@ struct TokenMeterWidgetEntryView: View {
             default: MediumWidgetView(entry: entry)
             }
         }
+        .environment(\.locale, locale)
         .environment(
-            \.locale,
-            Locale(identifier: entry.snapshot?.languageCode ?? Locale.preferredLanguages.first ?? "en")
+            \.tokenFormatter,
+            TokenFormatter(notation: entry.snapshot?.tokenNotation ?? .metric, locale: locale)
         )
         // Tapping anywhere opens the dashboard.
         .widgetURL(URL(string: "tokenmeter://dashboard"))

@@ -12,6 +12,15 @@ enum AppLanguage: String, CaseIterable, Identifiable {
     var id: String { rawValue }
     var locale: Locale { Locale(identifier: rawValue) }
 
+    /// Whether "184万" reads as a number in this language. English has no myriad
+    /// words, so offering the choice there would only be a way to break the UI.
+    var supportsMyriadNotation: Bool {
+        switch self {
+        case .english: return false
+        case .japanese, .simplifiedChinese, .korean: return true
+        }
+    }
+
     /// Language names stay in their own language so the picker remains usable
     /// even when the currently selected language is unfamiliar.
     var displayName: String {
@@ -96,9 +105,28 @@ final class AppSettings {
         static let widgetShowTokens = "widgetShowTokens"
         static let widgetShowReset = "widgetShowReset"
         static let launchAtLogin = "launchAtLogin"
+        static let tokenNotation = "tokenNotation"
     }
 
     var appLanguage: AppLanguage { didSet { defaults.set(appLanguage.rawValue, forKey: Key.appLanguage) } }
+    /// The notation the user picked. Only meaningful in a language that has myriad
+    /// words — read `effectiveTokenNotation` to display a count, never this.
+    var tokenNotation: TokenNotation { didSet { defaults.set(tokenNotation.rawValue, forKey: Key.tokenNotation) } }
+
+    /// The notation to actually format with. A stored `.myriad` is ignored in a
+    /// language that has no myriad words, so an English UI cannot end up reading
+    /// "6億" — whether because the user switched language after choosing, or
+    /// because the preference outlived the language it was chosen for.
+    var effectiveTokenNotation: TokenNotation {
+        appLanguage.supportsMyriadNotation ? tokenNotation : .metric
+    }
+
+    /// The locale to format token counts with. Metric is spelled by formatting in
+    /// English, whose compact names *are* the K/M/B scale — so a single format style
+    /// can render either notation, which is what the chart axes need.
+    var tokenFormattingLocale: Locale {
+        effectiveTokenNotation == .myriad ? appLanguage.locale : Locale(identifier: "en")
+    }
     var showClaudeCode: Bool { didSet { defaults.set(showClaudeCode, forKey: Key.showClaude) } }
     /// Explicit opt-in: enabling this permits reading Claude Code's Keychain item
     /// solely to request usage data from Anthropic.
@@ -165,6 +193,10 @@ final class AppSettings {
     private init() {
         defaults.register(defaults: [
             Key.appLanguage: AppLanguage.preferred.rawValue,
+            // K/M/B by default even in Japanese: it is what every token count in the
+            // app has always shown, and tokens are read as an engineering quantity.
+            // Myriad is there for those who want it, not imposed on those who don't.
+            Key.tokenNotation: TokenNotation.metric.rawValue,
             Key.showClaude: true,
             Key.claudeOAuthUsage: false,
             Key.showCodex: true,
@@ -192,6 +224,7 @@ final class AppSettings {
         ])
 
         appLanguage = AppLanguage(rawValue: defaults.string(forKey: Key.appLanguage) ?? "") ?? .preferred
+        tokenNotation = TokenNotation(rawValue: defaults.string(forKey: Key.tokenNotation) ?? "") ?? .metric
         showClaudeCode = defaults.bool(forKey: Key.showClaude)
         claudeOAuthUsageEnabled = defaults.bool(forKey: Key.claudeOAuthUsage)
         showCodex = defaults.bool(forKey: Key.showCodex)

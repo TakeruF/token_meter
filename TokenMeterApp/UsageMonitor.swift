@@ -232,7 +232,8 @@ final class UsageMonitor {
     func publishSnapshot() {
         var snapshot = SharedSnapshot(
             updatedAt: Date(),
-            languageCode: settings.appLanguage.rawValue
+            languageCode: settings.appLanguage.rawValue,
+            tokenNotation: settings.effectiveTokenNotation
         )
 
         for id in UsageProviderID.allCases {
@@ -376,7 +377,7 @@ final class UsageMonitor {
             }
             // No quota published (or percentages switched off): show today's tokens.
             if settings.menuBarShowTokens, let tokens = state.snapshot?.totalTokens, tokens > 0 {
-                let tokenValue = tokens.abbreviatedTokens
+                let tokenValue = tokens.displayTokens
                 return MenuBarProviderValue(providerID: id, value: tokenValue, compactValue: tokenValue)
             }
             return MenuBarProviderValue(providerID: id, value: "—", compactValue: "—")
