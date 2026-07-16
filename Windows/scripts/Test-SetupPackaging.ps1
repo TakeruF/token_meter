@@ -10,13 +10,12 @@ $appManifest = Join-Path $repositoryRoot 'Windows\src\TokenMeter.Windows.App\Pac
 $testRoot = Join-Path ([System.IO.Path]::GetTempPath()) "TokenMeterSetupTest-$([Guid]::NewGuid().ToString('N'))"
 $packageDirectory = Join-Path $testRoot 'package'
 $setupDirectory = Join-Path $testRoot 'setup'
-$cerPath = Join-Path $testRoot 'test-signing.cer'
 $signingCertificate = $null
-$trustedCertificate = $null
 
 New-Item -ItemType Directory -Path $packageDirectory -Force | Out-Null
 
 try {
+    Write-Host 'Creating an ephemeral MSIX test certificate.'
     $manifestDocument = [xml][System.IO.File]::ReadAllText($appManifest)
     $identityElement = $manifestDocument.DocumentElement.SelectSingleNode("*[local-name()='Identity']")
     $publisher = $identityElement.GetAttribute('Publisher')
@@ -33,13 +32,8 @@ try {
         -KeyExportPolicy Exportable `
         -KeySpec Signature `
         -NotAfter (Get-Date).AddDays(1)
-    Export-Certificate `
-        -Cert $signingCertificate `
-        -FilePath $cerPath | Out-Null
-    $trustedCertificate = Import-Certificate `
-        -FilePath $cerPath `
-        -CertStoreLocation 'Cert:\CurrentUser\Root'
 
+    Write-Host 'Restoring the self-contained MSIX test build.'
     $publishArguments = @(
         'restore',
         $appProject,
@@ -54,6 +48,7 @@ try {
         throw "Test MSIX restore failed with exit code $LASTEXITCODE."
     }
 
+    Write-Host 'Building and signing the self-contained MSIX test package.'
     $publishArguments = @(
         'publish',
         $appProject,
@@ -81,12 +76,15 @@ try {
         throw 'The test MSIX package was not generated.'
     }
 
+    Write-Host 'Embedding the signed MSIX in Setup.exe.'
     & (Join-Path $PSScriptRoot 'Build-Setup.ps1') `
         -MsixPath $msix.FullName `
         -DeferSetupSigning `
+        -UntrustedTestSignerThumbprint $signingCertificate.Thumbprint `
         -OutputDirectory $setupDirectory | Out-Host
 
     $setupPath = Join-Path $setupDirectory 'TokenMeterSetup.exe'
+    Write-Host 'Verifying the embedded payload.'
     & $setupPath '--verify-payload'
     if ($LASTEXITCODE -ne 0) {
         throw "The generated Setup.exe could not read its embedded MSIX payload. Exit code: $LASTEXITCODE."
@@ -95,9 +93,6 @@ try {
     Write-Host 'Setup.exe packaging smoke test passed.'
 }
 finally {
-    if ($null -ne $trustedCertificate) {
-        Remove-Item -LiteralPath $trustedCertificate.PSPath -Force -ErrorAction SilentlyContinue
-    }
     if ($null -ne $signingCertificate) {
         Remove-Item -LiteralPath $signingCertificate.PSPath -Force -ErrorAction SilentlyContinue
     }

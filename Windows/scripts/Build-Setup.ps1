@@ -14,6 +14,9 @@ param(
     [Parameter(Mandatory = $true, ParameterSetName = 'Deferred')]
     [switch]$DeferSetupSigning,
 
+    [Parameter(ParameterSetName = 'Deferred')]
+    [string]$UntrustedTestSignerThumbprint,
+
     [string]$OutputDirectory = (Join-Path $PSScriptRoot '..\artifacts\setup'),
 
     [string]$TimestampUrl = 'http://timestamp.digicert.com'
@@ -46,13 +49,32 @@ function Assert-SignatureValid {
         [string]$Path,
 
         [Parameter(Mandatory = $true)]
-        [string]$Description
+        [string]$Description,
+
+        [string]$AllowedUntrustedSignerThumbprint
     )
 
     $signature = Get-AuthenticodeSignature -LiteralPath $Path
-    if ($signature.Status -ne [System.Management.Automation.SignatureStatus]::Valid) {
-        throw "$Description does not have a trusted, valid signature. Status: $($signature.Status). $($signature.StatusMessage)"
+    if ($signature.Status -eq [System.Management.Automation.SignatureStatus]::Valid) {
+        return
     }
+
+    $isExplicitTestSigner =
+        -not [string]::IsNullOrWhiteSpace($AllowedUntrustedSignerThumbprint) -and
+        $null -ne $signature.SignerCertificate -and
+        [string]::Equals(
+            $signature.SignerCertificate.Thumbprint,
+            $AllowedUntrustedSignerThumbprint,
+            [System.StringComparison]::OrdinalIgnoreCase) -and
+        $signature.Status -in @(
+            [System.Management.Automation.SignatureStatus]::NotTrusted,
+            [System.Management.Automation.SignatureStatus]::UnknownError)
+    if ($isExplicitTestSigner) {
+        Write-Warning "$Description uses the expected untrusted test signer. Production builds still require a trusted signature."
+        return
+    }
+
+    throw "$Description does not have a trusted, valid signature. Status: $($signature.Status). $($signature.StatusMessage)"
 }
 
 $resolvedMsixPath = (Resolve-Path -LiteralPath $MsixPath).Path
@@ -60,7 +82,10 @@ if ([System.IO.Path]::GetExtension($resolvedMsixPath) -ne '.msix') {
     throw 'MsixPath must point to a .msix package, not an upload bundle.'
 }
 
-Assert-SignatureValid -Path $resolvedMsixPath -Description 'The embedded MSIX package'
+Assert-SignatureValid `
+    -Path $resolvedMsixPath `
+    -Description 'The embedded MSIX package' `
+    -AllowedUntrustedSignerThumbprint $UntrustedTestSignerThumbprint
 
 $setupProject = (Resolve-Path -LiteralPath (Join-Path $PSScriptRoot '..\src\TokenMeter.Windows.Setup\TokenMeter.Windows.Setup.csproj')).Path
 $resolvedOutputDirectory = [System.IO.Path]::GetFullPath($OutputDirectory)
