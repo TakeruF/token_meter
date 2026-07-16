@@ -14,3 +14,6 @@ Contributions are welcome through GitHub pull requests.
 
 The responsibilities used for code signing are documented in
 [the Code signing policy](CODE_SIGNING.md).
+
+Participation in this project is governed by the
+[Code of Conduct](CODE_OF_CONDUCT.md).

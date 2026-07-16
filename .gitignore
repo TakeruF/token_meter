@@ -17,3 +17,7 @@ xcuserdata/
 
 # Local planning notes; not part of a product release.
 docs/unify-quota-ui.md
+
+# Local agent instructions; not part of the public repo.
+CLAUDE.md
+AGENTS.md
