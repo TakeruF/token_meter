@@ -9,13 +9,8 @@ on:
       - "CODE_SIGNING.md"
       - "SECURITY.md"
       - "THIRD-PARTY-NOTICES.md"
+  # This check is required on main, so every PR must create the same check run.
   pull_request:
-    paths:
-      - "Windows/**"
-      - ".github/workflows/windows.yml"
-      - "CODE_SIGNING.md"
-      - "SECURITY.md"
-      - "THIRD-PARTY-NOTICES.md"
   workflow_dispatch:
     inputs:
       release_tag:
