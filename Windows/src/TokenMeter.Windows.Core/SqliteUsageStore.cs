@@ -22,7 +22,10 @@ public sealed class SqliteUsageStore : IUsageStore
             DataSource = databasePath,
             Mode = SqliteOpenMode.ReadWriteCreate,
             Cache = SqliteCacheMode.Shared,
-            Pooling = true,
+            // The store owns one long-lived connection. Disabling pooling also
+            // releases the database/WAL handles immediately on Windows when the
+            // store is disposed, which is required for uninstall and test cleanup.
+            Pooling = false,
         };
         _connection = new SqliteConnection(builder.ConnectionString);
         _connection.Open();
