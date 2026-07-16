@@ -26,7 +26,12 @@ public struct TokenWindowUsage: Codable, Sendable, Equatable {
     public let start: Date
     /// nil for a rolling window, and for any window whose reset time is unknown.
     public let resetsAt: Date?
+    /// Everything that crossed the wire inside the window, cache reads included.
     public let tokens: Int
+    /// The part of `tokens` that was genuine new work — see `UsageEvent.workingTokens`.
+    /// Carried alongside the total rather than derived by callers, so a window can
+    /// never be rendered in one meaning while the count next to it uses the other.
+    public let workingTokens: Int
     public let boundary: Boundary
     public let windowMinutes: Int?
 
@@ -34,14 +39,30 @@ public struct TokenWindowUsage: Codable, Sendable, Equatable {
         start: Date,
         resetsAt: Date?,
         tokens: Int,
+        workingTokens: Int,
         boundary: Boundary,
         windowMinutes: Int? = nil
     ) {
         self.start = start
         self.resetsAt = resetsAt
         self.tokens = tokens
+        self.workingTokens = workingTokens
         self.boundary = boundary
         self.windowMinutes = windowMinutes
+    }
+
+    /// A widget payload written before work and total were split knows only the
+    /// total. Reading it back as `workingTokens == tokens` reproduces exactly what
+    /// that release displayed, and the next refresh overwrites it with both counts —
+    /// whereas defaulting to 0 would flash "no work" for a window that had plenty.
+    public init(from decoder: any Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        start = try container.decode(Date.self, forKey: .start)
+        resetsAt = try container.decodeIfPresent(Date.self, forKey: .resetsAt)
+        tokens = try container.decode(Int.self, forKey: .tokens)
+        workingTokens = try container.decodeIfPresent(Int.self, forKey: .workingTokens) ?? tokens
+        boundary = try container.decode(Boundary.self, forKey: .boundary)
+        windowMinutes = try container.decodeIfPresent(Int.self, forKey: .windowMinutes)
     }
 
     /// True when the reset time is our own derivation rather than the provider's.

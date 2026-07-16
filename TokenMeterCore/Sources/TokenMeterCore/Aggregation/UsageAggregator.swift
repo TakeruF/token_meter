@@ -141,12 +141,15 @@ public struct UsageAggregator: Sendable {
 
         var blockStart = sorted[0].timestamp
         var blockTokens = 0
+        var blockWorking = 0
         for event in sorted {
             if event.timestamp >= blockStart.addingTimeInterval(length) {
                 blockStart = event.timestamp
                 blockTokens = 0
+                blockWorking = 0
             }
             blockTokens += event.totalTokens
+            blockWorking += event.workingTokens
         }
 
         let resetsAt = blockStart.addingTimeInterval(length)
@@ -156,6 +159,7 @@ public struct UsageAggregator: Sendable {
             start: blockStart,
             resetsAt: resetsAt,
             tokens: blockTokens,
+            workingTokens: blockWorking,
             boundary: .inferred,
             windowMinutes: Int(length / 60)
         )
@@ -173,14 +177,14 @@ public struct UsageAggregator: Sendable {
     ) -> TokenWindowUsage? {
         guard let resetsAt = window.resetsAt, let minutes = window.windowMinutes else { return nil }
         let start = resetsAt.addingTimeInterval(-Double(minutes) * 60)
-        let tokens = events
+        let matching = events
             .filter { $0.provider == provider && $0.timestamp >= start && $0.timestamp <= resetsAt }
-            .reduce(0) { $0 + $1.totalTokens }
 
         return TokenWindowUsage(
             start: start,
             resetsAt: resetsAt,
-            tokens: tokens,
+            tokens: matching.reduce(0) { $0 + $1.totalTokens },
+            workingTokens: matching.reduce(0) { $0 + $1.workingTokens },
             boundary: .reported,
             windowMinutes: minutes
         )
@@ -202,6 +206,7 @@ public struct UsageAggregator: Sendable {
             start: start,
             resetsAt: nil,
             tokens: matching.reduce(0) { $0 + $1.totalTokens },
+            workingTokens: matching.reduce(0) { $0 + $1.workingTokens },
             boundary: .rolling,
             windowMinutes: days * 24 * 60
         )
@@ -223,10 +228,10 @@ public struct UsageAggregator: Sendable {
                 ModelUsage(
                     model: String(key.split(separator: "|", maxSplits: 1)[1]),
                     provider: value.0,
-                    totalTokens: value.1
+                    workingTokens: value.1
                 )
             }
-            .sorted { $0.totalTokens > $1.totalTokens }
+            .sorted { $0.workingTokens > $1.workingTokens }
     }
 
     /// Recent work sessions, newest first by last activity. Events are grouped by

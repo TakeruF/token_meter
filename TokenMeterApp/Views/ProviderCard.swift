@@ -242,10 +242,18 @@ struct ProviderCard: View {
                 .font(.caption)
                 .foregroundStyle(.secondary)
             Spacer()
-            if let today = snapshot?.totalTokens, today > 0 {
-                Text("\(today.displayTokens) tokens")
-                    .font(.callout.weight(.medium))
-                    .monospacedDigit()
+            if let total = snapshot?.totalTokens, let work = snapshot?.workingTokens, total > 0 {
+                // Real work leads, cache-inflated total as context — the same pair the
+                // dashboard's summary card shows, so a glance at either one agrees.
+                VStack(alignment: .trailing, spacing: 1) {
+                    Text("\(work.displayTokens) tokens")
+                        .font(.callout.weight(.medium))
+                        .monospacedDigit()
+                    Text("\(Text("of")) \(total.displayTokens) \(Text("total"))")
+                        .font(.caption2)
+                        .foregroundStyle(.secondary)
+                        .monospacedDigit()
+                }
             } else {
                 // No usage recorded today is different from "we don't know".
                 Text(AppLocalization.string(
@@ -354,7 +362,7 @@ struct WindowRow: View {
     let usage: TokenWindowUsage
 
     private var accessibilityText: String {
-        var parts = [AppLocalization.format("%@: %d tokens", AppLocalization.string(title), usage.tokens)]
+        var parts = [AppLocalization.format("%@: %d tokens", AppLocalization.string(title), usage.workingTokens)]
         if let reset = AppLocalization.resetDescription(resetsAt: usage.resetsAt) { parts.append(reset) }
         if usage.isBoundaryInferred {
             parts.append(AppLocalization.string("reset time estimated from local activity"))
@@ -369,9 +377,19 @@ struct WindowRow: View {
                     .font(.caption)
                     .foregroundStyle(.secondary)
                 Spacer()
-                Text("\(usage.tokens.displayTokens) tokens")
-                    .font(.callout.weight(.medium))
-                    .monospacedDigit()
+                // Work over the window, with its total — the same pair, in the same
+                // order, as the "Today" row below. These sit inches apart, so one
+                // showing work while the other showed the total made the shorter
+                // window look like the busier one.
+                VStack(alignment: .trailing, spacing: 1) {
+                    Text("\(usage.workingTokens.displayTokens) tokens")
+                        .font(.callout.weight(.medium))
+                        .monospacedDigit()
+                    Text("\(Text("of")) \(usage.tokens.displayTokens) \(Text("total"))")
+                        .font(.caption2)
+                        .foregroundStyle(.secondary)
+                        .monospacedDigit()
+                }
             }
 
             if let reset = AppLocalization.resetDescription(resetsAt: usage.resetsAt) {

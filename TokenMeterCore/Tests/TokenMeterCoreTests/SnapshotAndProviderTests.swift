@@ -14,7 +14,7 @@ final class SharedSnapshotTests: XCTestCase {
                 remainingRatio: nil,
                 usedRatio: nil,
                 resetsAt: nil,
-                todayTokens: 1_840_230,
+                todayWorkingTokens: 1_840_230,
                 modelName: "claude-opus-4-8",
                 lastUpdated: Date(timeIntervalSince1970: 1_784_000_000),
                 hasQuotaInformation: false
@@ -24,7 +24,7 @@ final class SharedSnapshotTests: XCTestCase {
                 remainingRatio: 0.42,
                 usedRatio: 0.58,
                 resetsAt: Date(timeIntervalSince1970: 1_784_494_842),
-                todayTokens: 2_471_020,
+                todayWorkingTokens: 2_471_020,
                 modelName: "gpt-5.6-sol",
                 lastUpdated: Date(timeIntervalSince1970: 1_784_000_000),
                 hasQuotaInformation: true
@@ -53,7 +53,7 @@ final class SharedSnapshotTests: XCTestCase {
             claudeCode: .init(
                 displayName: "Claude Code",
                 remainingRatio: nil, usedRatio: nil, resetsAt: nil,
-                todayTokens: tokens, modelName: "m",
+                todayWorkingTokens: tokens, modelName: "m",
                 lastUpdated: Date(), hasQuotaInformation: false
             )
         )
@@ -70,7 +70,7 @@ final class SharedSnapshotTests: XCTestCase {
 
         XCTAssertNil(store.readIfPresent()?.claudeCode, "primary really is empty now")
         let resilient = try XCTUnwrap(store.readResilient())
-        XCTAssertEqual(resilient.claudeCode?.todayTokens, 1_000, "kept the last good data")
+        XCTAssertEqual(resilient.claudeCode?.todayWorkingTokens, 1_000, "kept the last good data")
     }
 
     /// An unreadable primary also falls back to the cache rather than nil.
@@ -80,7 +80,7 @@ final class SharedSnapshotTests: XCTestCase {
         try Data("{ not json".utf8).write(to: store.fileURL)
 
         XCTAssertNil(store.readIfPresent(), "corrupt primary reads as nil")
-        XCTAssertEqual(store.readResilient()?.claudeCode?.todayTokens, 2_000)
+        XCTAssertEqual(store.readResilient()?.claudeCode?.todayWorkingTokens, 2_000)
     }
 
     /// With nothing ever cached, a genuine first run still surfaces "no data".

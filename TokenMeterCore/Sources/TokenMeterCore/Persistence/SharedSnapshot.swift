@@ -9,14 +9,21 @@ public struct SharedSnapshot: Codable, Sendable, Equatable {
         public var remainingRatio: Double?
         public var usedRatio: Double?
         public var resetsAt: Date?
-        public var todayTokens: Int?
-        public var last7DaysTokens: Int?
+        /// Today's real work, and the cache-inclusive total it ran against. Spelled
+        /// out rather than left as a bare `todayTokens`, which said nothing about
+        /// which of the two it held — and so got filled with the total here while the
+        /// dashboard showed the work, leaving one "Today" with two values.
+        public var todayWorkingTokens: Int?
+        public var todayTotalTokens: Int?
+        public var last7DaysWorkingTokens: Int?
+        public var last7DaysTotalTokens: Int?
         public var modelName: String?
         public var lastUpdated: Date?
         /// Human-readable state when there is nothing to show ("Not installed", …).
         public var statusHeadline: String?
         public var hasQuotaInformation: Bool
-        /// Token totals for the last 7 days, oldest first, for the Large widget chart.
+        /// Real work per day over the last 7 days, oldest first, for the Large widget
+        /// chart — the same series the dashboard plots, so both draw one shape.
         public var dailyTotals: [DayPoint]?
 
         /// Tokens counted in the 5-hour window and the weekly window, with their reset
@@ -39,8 +46,10 @@ public struct SharedSnapshot: Codable, Sendable, Equatable {
             remainingRatio: Double? = nil,
             usedRatio: Double? = nil,
             resetsAt: Date? = nil,
-            todayTokens: Int? = nil,
-            last7DaysTokens: Int? = nil,
+            todayWorkingTokens: Int? = nil,
+            todayTotalTokens: Int? = nil,
+            last7DaysWorkingTokens: Int? = nil,
+            last7DaysTotalTokens: Int? = nil,
             modelName: String? = nil,
             lastUpdated: Date? = nil,
             statusHeadline: String? = nil,
@@ -59,8 +68,10 @@ public struct SharedSnapshot: Codable, Sendable, Equatable {
             self.remainingRatio = remainingRatio
             self.usedRatio = usedRatio
             self.resetsAt = resetsAt
-            self.todayTokens = todayTokens
-            self.last7DaysTokens = last7DaysTokens
+            self.todayWorkingTokens = todayWorkingTokens
+            self.todayTotalTokens = todayTotalTokens
+            self.last7DaysWorkingTokens = last7DaysWorkingTokens
+            self.last7DaysTotalTokens = last7DaysTotalTokens
             self.modelName = modelName
             self.lastUpdated = lastUpdated
             self.statusHeadline = statusHeadline
@@ -79,12 +90,36 @@ public struct SharedSnapshot: Codable, Sendable, Equatable {
 
     public struct DayPoint: Codable, Sendable, Equatable, Identifiable {
         public var day: Date
-        public var totalTokens: Int
+        /// Real work that day — see `UsageEvent.workingTokens`.
+        public var workingTokens: Int
         public var id: Date { day }
 
-        public init(day: Date, totalTokens: Int) {
+        public init(day: Date, workingTokens: Int) {
             self.day = day
-            self.totalTokens = totalTokens
+            self.workingTokens = workingTokens
+        }
+
+        private enum CodingKeys: String, CodingKey {
+            case day, workingTokens
+            /// What this field was called while it still carried cache-inflated totals.
+            case totalTokens
+        }
+
+        /// Unlike the optional fields around it, a missing count here would throw and
+        /// take the whole snapshot — and with it the widget — down. So an older
+        /// payload's `totalTokens` is read rather than rejected; the next refresh
+        /// replaces it with the work figure.
+        public init(from decoder: any Decoder) throws {
+            let container = try decoder.container(keyedBy: CodingKeys.self)
+            day = try container.decode(Date.self, forKey: .day)
+            workingTokens = try container.decodeIfPresent(Int.self, forKey: .workingTokens)
+                ?? container.decode(Int.self, forKey: .totalTokens)
+        }
+
+        public func encode(to encoder: any Encoder) throws {
+            var container = encoder.container(keyedBy: CodingKeys.self)
+            try container.encode(day, forKey: .day)
+            try container.encode(workingTokens, forKey: .workingTokens)
         }
     }
 

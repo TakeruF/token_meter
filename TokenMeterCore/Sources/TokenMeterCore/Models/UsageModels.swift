@@ -166,6 +166,14 @@ public struct UsageSnapshot: Codable, Identifiable, Sendable, Equatable {
         self.source = source
     }
 
+    /// See `UsageEvent.workingTokens`: today's counts minus the cached context that
+    /// every turn re-sends. nil when the provider reported nothing for today at all,
+    /// which is not the same as a counted zero.
+    public var workingTokens: Int? {
+        guard let totalTokens else { return nil }
+        return totalTokens - (cachedInputTokens ?? 0)
+    }
+
     /// The window the UI should lead with: the tightest one that actually exists.
     public var primaryWindow: UsageWindow? {
         [shortWindow, weeklyWindow, sonnetWeeklyWindow]
@@ -224,11 +232,20 @@ public struct UsageEvent: Codable, Sendable, Equatable, Identifiable {
         self.source = source
     }
 
-    /// Tokens that represent genuine new work: fresh input, cache writes, output,
-    /// and reasoning. Excludes cached context re-sent on every turn, which inflates
-    /// `totalTokens` without reflecting real usage.
+    /// Tokens that represent genuine new work: the provider's own total minus the
+    /// cached context re-sent on every turn, which inflates `totalTokens` without
+    /// reflecting real usage.
+    ///
+    /// Stated as a subtraction from `totalTokens` rather than a sum of the parts
+    /// because the parts do not mean the same thing for every provider: Claude Code
+    /// reports four disjoint counts, while Codex and Copilot fold the cached tokens
+    /// into `inputTokens` (and Codex folds reasoning into `outputTokens`). Adding the
+    /// parts up therefore double-counts on those two. Each parser already builds
+    /// `totalTokens` to its own provider's semantics, and `cachedInputTokens` is
+    /// always counted exactly once inside it — so this holds everywhere, and can
+    /// never exceed the total.
     public var workingTokens: Int {
-        inputTokens + cacheCreationTokens + outputTokens + (reasoningTokens ?? 0)
+        totalTokens - cachedInputTokens
     }
 }
 
@@ -246,7 +263,7 @@ public struct DailyUsage: Codable, Sendable, Equatable, Identifiable {
 
     /// See `UsageEvent.workingTokens`: usage minus re-sent cached context.
     public var workingTokens: Int {
-        inputTokens + cacheCreationTokens + outputTokens + (reasoningTokens ?? 0)
+        totalTokens - cachedInputTokens
     }
 
     public var id: String { "\(provider.rawValue)-\(day.timeIntervalSince1970)" }
@@ -291,11 +308,11 @@ public struct SessionSummary: Codable, Sendable, Equatable, Identifiable {
     public let reasoningTokens: Int?
     public let totalTokens: Int
 
-    /// Tokens that represent genuine new work: fresh input, cache writes, output,
-    /// and reasoning. Excludes the cached context re-sent on every turn, which is
-    /// what makes a raw per-turn list look like the same row over and over.
+    /// See `UsageEvent.workingTokens`: usage minus the cached context re-sent on
+    /// every turn, which is what makes a raw per-turn list look like the same row
+    /// over and over.
     public var workingTokens: Int {
-        inputTokens + cacheCreationTokens + outputTokens + (reasoningTokens ?? 0)
+        totalTokens - cachedInputTokens
     }
 
     public init(
@@ -330,15 +347,14 @@ public struct SessionSummary: Codable, Sendable, Equatable, Identifiable {
 public struct ModelUsage: Codable, Sendable, Equatable, Identifiable {
     public let model: String
     public let provider: UsageProviderID
-    /// Working tokens (real processing), not cache-inflated totals — so the "By
-    /// model" comparison reflects actual work per model. Named `totalTokens` for
-    /// source compatibility; see `UsageEvent.workingTokens`.
-    public let totalTokens: Int
+    /// Real processing per model, not cache-inflated totals — so the "By model"
+    /// comparison reflects actual work. See `UsageEvent.workingTokens`.
+    public let workingTokens: Int
     public var id: String { "\(provider.rawValue)-\(model)" }
 
-    public init(model: String, provider: UsageProviderID, totalTokens: Int) {
+    public init(model: String, provider: UsageProviderID, workingTokens: Int) {
         self.model = model
         self.provider = provider
-        self.totalTokens = totalTokens
+        self.workingTokens = workingTokens
     }
 }

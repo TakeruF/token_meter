@@ -241,21 +241,24 @@ final class UsageMonitor {
 
             let window = state.snapshot?.primaryWindow
             let weekTotal = state.weekSeries.reduce(0) { $0 + $1.totalTokens }
+            let weekWorking = state.weekSeries.reduce(0) { $0 + $1.workingTokens }
 
             let provider = SharedSnapshot.Provider(
                 displayName: id.displayName,
                 remainingRatio: window?.remainingRatio,
                 usedRatio: window?.usedRatio,
                 resetsAt: settings.widgetShowReset ? window?.resetsAt : nil,
-                todayTokens: settings.widgetShowTokens ? state.snapshot?.totalTokens : nil,
-                last7DaysTokens: settings.widgetShowTokens ? weekTotal : nil,
+                todayWorkingTokens: settings.widgetShowTokens ? state.snapshot?.workingTokens : nil,
+                todayTotalTokens: settings.widgetShowTokens ? state.snapshot?.totalTokens : nil,
+                last7DaysWorkingTokens: settings.widgetShowTokens ? weekWorking : nil,
+                last7DaysTotalTokens: settings.widgetShowTokens ? weekTotal : nil,
                 modelName: state.snapshot?.modelName,
                 lastUpdated: state.lastSuccessfulUpdate,
                 statusHeadline: state.availability.isAvailable || state.snapshot?.hasQuotaInformation == true
                     ? nil
                     : AppLocalization.string(state.availability.headline),
                 hasQuotaInformation: state.snapshot?.hasQuotaInformation ?? false,
-                dailyTotals: state.weekSeries.map { .init(day: $0.day, totalTokens: $0.totalTokens) },
+                dailyTotals: state.weekSeries.map { .init(day: $0.day, workingTokens: $0.workingTokens) },
                 fiveHourWindow: settings.showFiveHourWindow ? state.snapshot?.shortWindowUsage : nil,
                 weeklyWindow: settings.showWeeklyWindow ? state.snapshot?.weeklyWindowUsage : nil,
                 fiveHourQuota: state.snapshot?.shortWindow,
@@ -375,8 +378,10 @@ final class UsageMonitor {
                     compactValue: percentage
                 )
             }
-            // No quota published (or percentages switched off): show today's tokens.
-            if settings.menuBarShowTokens, let tokens = state.snapshot?.totalTokens, tokens > 0 {
+            // No quota published (or percentages switched off): show today's work.
+            // The total belongs to the popover, where there is room to caption it;
+            // alone in the menu bar it would just read as a wildly larger "Today".
+            if settings.menuBarShowTokens, let tokens = state.snapshot?.workingTokens, tokens > 0 {
                 let tokenValue = tokens.displayTokens
                 return MenuBarProviderValue(providerID: id, value: tokenValue, compactValue: tokenValue)
             }

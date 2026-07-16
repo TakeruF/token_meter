@@ -109,7 +109,7 @@ struct ProviderRow: View {
             if showReset { resetLine }
 
             if showTokens {
-                if let tokens = provider?.todayTokens, tokens > 0 {
+                if let tokens = provider?.todayWorkingTokens, tokens > 0 {
                     Text("\(self.tokens(tokens)) \(Text("today"))")
                         .font(.caption2)
                         .foregroundStyle(.secondary)
@@ -173,7 +173,7 @@ struct ProviderRow: View {
                     .font(.caption.weight(.semibold))
                     .monospacedDigit()
             }
-        } else if let tokens = provider?.todayTokens, tokens > 0 {
+        } else if let tokens = provider?.todayWorkingTokens, tokens > 0 {
             Text(self.tokens(tokens))
                 .font(.caption.weight(.semibold))
                 .monospacedDigit()
@@ -189,7 +189,7 @@ struct ProviderRow: View {
         if let remaining = provider?.remainingRatio {
             return "\(Int((remaining * 100).rounded())) percent remaining, \(level.label)"
         }
-        if let tokens = provider?.todayTokens, tokens > 0 {
+        if let tokens = provider?.todayWorkingTokens, tokens > 0 {
             return "\(self.tokens(tokens)) tokens today, no quota information"
         }
         return "No data"
@@ -334,12 +334,12 @@ struct LargeWidgetView: View {
                             }
                             HStack(spacing: 12) {
                                 Stat(label: "5h", tokens: provider.fiveHourWindow?.tokens)
-                                Stat(label: "Today", tokens: provider.todayTokens)
+                                Stat(label: "Today", tokens: provider.todayWorkingTokens)
                                 // Codex's weekly figure is its real quota window; Claude
                                 // Code has no weekly anchor, so it is a 7-day lookback.
                                 Stat(
                                     label: provider.weeklyWindow?.boundary == .reported ? "Week" : "7 days",
-                                    tokens: provider.weeklyWindow?.tokens ?? provider.last7DaysTokens
+                                    tokens: provider.weeklyWindow?.tokens ?? provider.last7DaysWorkingTokens
                                 )
                             }
                             UsageLineChart(points: provider.dailyTotals ?? [])
@@ -442,7 +442,7 @@ struct UsageLineChart: View {
     private let plotHeight: CGFloat = 30
 
     var body: some View {
-        let maxValue = points.map(\.totalTokens).max() ?? 0
+        let maxValue = points.map(\.workingTokens).max() ?? 0
         if points.isEmpty || maxValue == 0 {
             Text("No usage in the last 7 days")
                 .font(.system(size: 9))
@@ -468,7 +468,7 @@ struct UsageLineChart: View {
                         // so it lines up with the weekday label below it.
                         let coordinates = points.enumerated().map { index, point -> CGPoint in
                             let slot = geo.size.width / CGFloat(points.count)
-                            let ratio = CGFloat(point.totalTokens) / CGFloat(maxValue)
+                            let ratio = CGFloat(point.workingTokens) / CGFloat(maxValue)
                             return CGPoint(
                                 x: slot * (CGFloat(index) + 0.5),
                                 y: plotHeight * (1 - ratio)

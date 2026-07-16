@@ -141,13 +141,14 @@ final class TimeWindowTests: XCTestCase {
             start: now,
             resetsAt: try date("2026-07-15T12:30:00.000Z"),
             tokens: 1,
+            workingTokens: 1,
             boundary: .reported
         )
         XCTAssertEqual(usage.resetDescription(now: now), "Resets in 2h 30m")
 
         let lapsed = TokenWindowUsage(
             start: now, resetsAt: try date("2026-07-15T09:00:00.000Z"),
-            tokens: 1, boundary: .reported
+            tokens: 1, workingTokens: 1, boundary: .reported
         )
         XCTAssertEqual(lapsed.resetDescription(now: now), "Resetting now")
     }
@@ -168,11 +169,11 @@ final class TimeWindowTests: XCTestCase {
                 fiveHourWindow: TokenWindowUsage(
                     start: try date("2026-07-15T09:00:00.000Z"),
                     resetsAt: try date("2026-07-15T14:00:00.000Z"),
-                    tokens: 300, boundary: .inferred, windowMinutes: 300
+                    tokens: 300, workingTokens: 120, boundary: .inferred, windowMinutes: 300
                 ),
                 weeklyWindow: TokenWindowUsage(
                     start: try date("2026-07-09T00:00:00.000Z"),
-                    resetsAt: nil, tokens: 9_000, boundary: .rolling, windowMinutes: 10080
+                    resetsAt: nil, tokens: 9_000, workingTokens: 400, boundary: .rolling, windowMinutes: 10080
                 )
             )
         )
@@ -189,6 +190,48 @@ final class TimeWindowTests: XCTestCase {
 
     /// A snapshot written by an older build has none of these keys. It must decode to
     /// nil windows rather than failing and blanking the widget.
+    /// The chart series is not optional, so an unrecognised key here throws and takes
+    /// the entire snapshot — every provider, every window — down with it, blanking the
+    /// widget rather than one number. The old `totalTokens` key must keep decoding.
+    func testWidgetChartPointsFromAnOlderReleaseStillDecode() throws {
+        let dir = makeTempDirectory()
+        let url = dir.appendingPathComponent(SharedSnapshotStore.fileName)
+        let legacy = """
+        {
+          "updatedAt": "2026-07-15T10:00:00Z",
+          "claudeCode": {
+            "displayName": "Claude Code",
+            "hasQuotaInformation": false,
+            "dailyTotals": [{ "day": "2026-07-15T00:00:00Z", "totalTokens": 4321 }]
+          }
+        }
+        """
+        try legacy.write(to: url, atomically: true, encoding: .utf8)
+
+        let decoded = try XCTUnwrap(SharedSnapshotStore(containerURL: dir).readIfPresent())
+        let points = try XCTUnwrap(decoded.claudeCode?.dailyTotals)
+        XCTAssertEqual(points.first?.workingTokens, 4321, "read the old key rather than throwing")
+    }
+
+    /// And a point this release wrote round-trips under the new key.
+    func testWidgetChartPointsRoundTripUnderTheWorkingKey() throws {
+        let dir = makeTempDirectory()
+        let store = SharedSnapshotStore(containerURL: dir)
+        let day = try date("2026-07-15T00:00:00.000Z")
+        try store.write(
+            SharedSnapshot(
+                updatedAt: Date(),
+                claudeCode: .init(
+                    displayName: "Claude Code",
+                    hasQuotaInformation: false,
+                    dailyTotals: [.init(day: day, workingTokens: 77)]
+                )
+            )
+        )
+        let read = try XCTUnwrap(store.readIfPresent()?.claudeCode?.dailyTotals?.first)
+        XCTAssertEqual(read.workingTokens, 77)
+    }
+
     func testWidgetSnapshotWithoutWindowKeysStillDecodes() throws {
         let dir = makeTempDirectory()
         let url = dir.appendingPathComponent(SharedSnapshotStore.fileName)
@@ -202,7 +245,12 @@ final class TimeWindowTests: XCTestCase {
 
         let decoded = try XCTUnwrap(SharedSnapshotStore(containerURL: dir).readIfPresent())
         let read = try XCTUnwrap(decoded.claudeCode)
-        XCTAssertEqual(read.todayTokens, 1234)
+        // `todayTokens` was that release's cache-inflated total under a name that did
+        // not say so. There is no way to recover the work figure from it, and showing
+        // the total where the widget now promises work would misreport by ~50x — so
+        // the count is dropped and the app's next refresh (seconds away) fills it in.
+        XCTAssertNil(read.todayWorkingTokens)
+        XCTAssertNil(read.todayTotalTokens)
         XCTAssertNil(read.fiveHourWindow)
         XCTAssertNil(read.weeklyWindow)
         XCTAssertNil(decoded.languageCode)

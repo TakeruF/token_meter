@@ -9,7 +9,9 @@ actor NotificationManager {
     /// The lowest threshold already announced for a provider. Cleared when the quota
     /// recovers (a reset), so the next cycle can warn again.
     private var announcedThreshold: [UsageProviderID: Double] = [:]
-    private var announcedResetAt: [UsageProviderID: Date] = [:]
+    /// Keyed by window as well as provider: the 5-hour and weekly limits roll over on
+    /// their own schedules, and one must never suppress the other's notice.
+    private var announcedResetAt: [UsageProviderID: [QuotaWindowKind: Date]] = [:]
     private var lastErrorMessage: [UsageProviderID: String] = [:]
     private var authorized = false
 
@@ -35,31 +37,32 @@ actor NotificationManager {
     ) async {
         let provider = snapshot.provider
 
+        // Each window is checked against its own previous reading, so the notice names
+        // the limit that actually rolled over rather than whichever one is now tightest.
+        for kind in snapshot.windowsThatReset(since: previous) {
+            announcedThreshold[provider] = nil
+            guard notifyOnReset, let resetWindow = snapshot.window(kind) else { continue }
+
+            // Guard against announcing the same reset twice — per window, since the
+            // next 5-hour rollover must not be swallowed by the weekly's reset time.
+            let resetsAt = resetWindow.resetsAt ?? Date()
+            guard announcedResetAt[provider]?[kind] != resetsAt else { continue }
+            announcedResetAt[provider, default: [:]][kind] = resetsAt
+
+            // Name which window rolled over ("5-hour" / "Weekly"), so the one
+            // sentence says everything — no separate "N% available again" line.
+            await send(
+                title: AppLocalization.format(
+                    "%@ %@ quota reset",
+                    provider.displayName,
+                    AppLocalization.string(kind.label)
+                ),
+                body: ""
+            )
+        }
+
         // No provider-reported quota -> nothing to threshold on.
         guard let window = snapshot.primaryWindow, let remaining = window.remainingRatio else { return }
-
-        // A quota reset: the remaining ratio jumped back up.
-        if let previousRemaining = previous?.primaryWindow?.remainingRatio, remaining > previousRemaining + 0.05 {
-            announcedThreshold[provider] = nil
-            if notifyOnReset {
-                let resetsAt = window.resetsAt ?? Date()
-                // Guard against announcing the same reset twice.
-                if announcedResetAt[provider] != resetsAt {
-                    announcedResetAt[provider] = resetsAt
-                    // Name which window rolled over ("5-hour" / "Weekly"), so the one
-                    // sentence says everything — no separate "N% available again" line.
-                    let title: String
-                    if let label = resetWindowLabel(window, in: snapshot) {
-                        title = AppLocalization.format(
-                            "%@ %@ quota reset", provider.displayName, label
-                        )
-                    } else {
-                        title = AppLocalization.format("%@ quota reset", provider.displayName)
-                    }
-                    await send(title: title, body: "")
-                }
-            }
-        }
 
         // Fire only for the lowest threshold now crossed, and only if we have not
         // already announced that one (or a lower one) for this cycle.
@@ -98,15 +101,6 @@ actor NotificationManager {
             title: AppLocalization.format("%@: data error", provider.displayName),
             body: message
         )
-    }
-
-    /// The localized name of whichever reported window this is, so a reset notice can
-    /// say "5-hour" / "Weekly" instead of a bare "quota". Nil if it matches none.
-    private func resetWindowLabel(_ window: UsageWindow, in snapshot: UsageSnapshot) -> String? {
-        if window == snapshot.shortWindow { return AppLocalization.string("5-hour") }
-        if window == snapshot.weeklyWindow { return AppLocalization.string("Weekly") }
-        if window == snapshot.sonnetWeeklyWindow { return AppLocalization.string("Sonnet weekly") }
-        return nil
     }
 
     private func send(title: String, body: String) async {

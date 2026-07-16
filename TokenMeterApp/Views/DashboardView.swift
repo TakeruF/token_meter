@@ -505,7 +505,7 @@ struct ModelChart: View {
     var body: some View {
         Chart(models) { m in
             BarMark(
-                x: .value("Tokens", m.totalTokens),
+                x: .value("Tokens", m.workingTokens),
                 y: .value("Model", m.model)
             )
             .foregroundStyle(by: .value("Provider", m.provider.displayName))
@@ -550,7 +550,7 @@ struct ModelChart: View {
             GridRow {
                 Text(row.provider.displayName)
                     .foregroundStyle(.secondary)
-                Text(row.totalTokens, format: compactCount)
+                Text(row.workingTokens, format: compactCount)
                     .monospacedDigit()
                     .gridColumnAlignment(.trailing)
             }
@@ -832,9 +832,15 @@ struct WindowSummaryRow: View {
                     .font(.caption)
                     .foregroundStyle(.secondary)
                 Spacer()
-                if let tokens = usage?.tokens {
-                    Text("\(tokens.displayTokens) \(Text("tokens"))")
+                if let usage {
+                    // Work first, total as context — matching the summary cards above,
+                    // which is the only way the two sections can be read together.
+                    Text("\(usage.workingTokens.displayTokens) \(Text("tokens"))")
                         .font(.callout.weight(.medium))
+                        .monospacedDigit()
+                    Text("\(Text("of")) \(usage.tokens.displayTokens)")
+                        .font(.caption2)
+                        .foregroundStyle(.secondary)
                         .monospacedDigit()
                 }
                 if let remaining = quota?.remainingRatio {

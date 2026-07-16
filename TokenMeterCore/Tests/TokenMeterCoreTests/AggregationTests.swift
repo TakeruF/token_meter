@@ -98,8 +98,8 @@ final class AggregationTests: XCTestCase {
         let breakdown = UsageAggregator().modelBreakdown(events)
 
         XCTAssertEqual(breakdown.map(\.model), ["claude-sonnet-5", "claude-opus-4-8"])
-        XCTAssertEqual(breakdown[0].totalTokens, 300)
-        XCTAssertEqual(breakdown[1].totalTokens, 150)
+        XCTAssertEqual(breakdown[0].workingTokens, 300)
+        XCTAssertEqual(breakdown[1].workingTokens, 150)
     }
 
     func testStoreRetentionPrunesOldEventsOnly() throws {
@@ -173,6 +173,64 @@ final class AggregationTests: XCTestCase {
         XCTAssertEqual(a.workingTokens, 40 + 500 + 700)
         XCTAssertEqual(a.cachedInputTokens, 201_000)
         XCTAssertEqual(a.totalTokens, 100_500 + 101_740)
+    }
+
+    /// Codex reports `input_tokens` inclusive of `cached_input_tokens` and
+    /// `output_tokens` inclusive of `reasoning_output_tokens` — so `total_tokens` is
+    /// input + output. Summing the parts would count reasoning twice and never drop
+    /// the cached context, putting "work" *above* the total it is a subset of.
+    func testWorkingTokensDoNotDoubleCountCodexReasoning() {
+        let event = makeEvent(
+            id: "c", provider: .codex, at: Date(),
+            input: 10, cached: 8, output: 5, reasoning: 2, total: 15
+        )
+        XCTAssertEqual(event.workingTokens, 7, "fresh input (10-8) plus output (5)")
+        XCTAssertLessThanOrEqual(event.workingTokens, event.totalTokens)
+    }
+
+    /// Copilot also folds its cache counts into `inputTokens` (total = input + output).
+    func testWorkingTokensExcludeCopilotCachedInputHeldInsideInput() {
+        let event = makeEvent(
+            id: "g", provider: .copilotCli, at: Date(),
+            input: 10, cached: 6, cacheCreation: 3, output: 4, total: 14
+        )
+        XCTAssertEqual(event.workingTokens, 8, "fresh input (10-6, cache writes included) plus output (4)")
+        XCTAssertLessThanOrEqual(event.workingTokens, event.totalTokens)
+    }
+
+    /// Every window the UI draws carries both counts, and the work can never exceed
+    /// the total it is part of — the invariant that "5-hour: 26.23M of 26.20M" broke.
+    func testWindowUsageCarriesBothCountsAndWorkNeverExceedsTotal() throws {
+        let aggregator = UsageAggregator(calendar: tokyo)
+        let now = try date("2026-07-15T05:00:00.000Z")
+        let events = [
+            makeEvent(id: "a", at: try date("2026-07-15T02:00:00.000Z"),
+                      input: 40, cached: 100_000, cacheCreation: 900, output: 700,
+                      total: 40 + 100_000 + 900 + 700),
+            makeEvent(id: "b", at: try date("2026-07-15T03:00:00.000Z"),
+                      input: 10, cached: 50_000, output: 300, total: 10 + 50_000 + 300),
+        ]
+
+        let rolling = try XCTUnwrap(
+            aggregator.rollingWindowUsage(events, provider: .claudeCode, days: 7, now: now)
+        )
+        XCTAssertEqual(rolling.tokens, 151_950)
+        XCTAssertEqual(rolling.workingTokens, 1_950, "everything but the 150_000 of cache reads")
+
+        let block = try XCTUnwrap(aggregator.sessionBlock(events, provider: .claudeCode, now: now))
+        XCTAssertEqual(block.tokens, 151_950)
+        XCTAssertEqual(block.workingTokens, 1_950)
+        XCTAssertLessThanOrEqual(block.workingTokens, block.tokens)
+    }
+
+    /// Claude Code reports four disjoint counts, so only the cache *reads* come off.
+    func testWorkingTokensKeepClaudeCacheWritesAsRealWork() {
+        let event = makeEvent(
+            id: "a", provider: .claudeCode, at: Date(),
+            input: 40, cached: 201_000, cacheCreation: 900, output: 700,
+            total: 40 + 201_000 + 900 + 700
+        )
+        XCTAssertEqual(event.workingTokens, 40 + 900 + 700)
     }
 
     func testRecentSessionsWithoutSessionIDStayDistinct() throws {
