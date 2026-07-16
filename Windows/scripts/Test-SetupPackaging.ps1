@@ -38,7 +38,7 @@ try {
         -FilePath $cerPath | Out-Null
     $trustedCertificate = Import-Certificate `
         -FilePath $cerPath `
-        -CertStoreLocation 'Cert:\CurrentUser\TrustedPeople'
+        -CertStoreLocation 'Cert:\CurrentUser\Root'
 
     $publishArguments = @(
         'restore',
