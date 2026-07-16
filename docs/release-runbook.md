@@ -27,9 +27,16 @@
 3. `docs/releases.html` の `versions` 配列の先頭に `'v<version>'` を追加する。この配列に載っていないバージョンはリリースノート一覧に表示されない。
 4. 公開サイト（About ページ）を更新する。
    - `docs/index.html` の 3 つの ZIP URL と日本語の表示バージョン
+   - `docs/releases.html` の nav にある `header-download` の ZIP URL（index.html と同じ更新が必要。忘れやすい）
    - `docs/localization.js` の全言語（ja/en/zh-CN/ko）の `downloadVersion`
    - `docs/index.html` と `docs/releases.html` の両方にある `localization.js?v=<version>` のキャッシュバスター用クエリを新バージョンに更新する
    - ZIP の URL は `https://github.com/TakeruF/token_meter/releases/download/v<version>/TokenMeter-<version>.zip`
+
+   バージョン参照の残りがないことを確認する（出力が空になること）:
+
+   ```zsh
+   rg -n "1\.1\.9" docs/index.html docs/releases.html docs/localization.js
+   ```
 
 まだ Release は存在しないため、この時点で About ページとリリースノートのリンクは一時的に未公開の URL を指します。後の Release 作成で有効になります。
 
