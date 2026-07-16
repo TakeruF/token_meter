@@ -593,6 +593,10 @@ figure {
   color: #d4d4d8;
 }
 
+.footer-copyright {
+  margin: 0;
+}
+
 @media (max-width: 800px) {
   .hero {
     height: calc(100svh - 32px);

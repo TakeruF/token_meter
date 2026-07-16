@@ -1,0 +1,14 @@
+Token Meter
+Copyright 2026 Takeru Fujii
+
+This product is licensed under the Apache License, Version 2.0.
+You may obtain a copy of the License in the LICENSE file distributed
+with this work, or at http://www.apache.org/licenses/LICENSE-2.0
+
+"Token Meter" is a trademark of Takeru Fujii. Section 6 of the License
+does not grant permission to use it. Forks and derivative works must
+use a different name.
+
+Third-party components redistributed in the binary builds of this
+product are listed in THIRD-PARTY-NOTICES.md, together with their
+respective copyright notices and licenses.

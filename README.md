@@ -336,3 +336,32 @@ docs/data-sources.md     データソース調査結果
   Widgetのデスクトップ上での最終描画は別Macでの配布テストが必要
 - 目視確認済み: メニューバー項目・ポップオーバー・ダッシュボード・Setup 画面（ライト/ダーク両モード）。
   ただし時間枠の行（5時間枠・週次）はダークモードでのみ実機確認しており、ライトモードは未確認
+
+## ライセンス
+
+Apache License 2.0。全文は [LICENSE](LICENSE) を参照。
+
+```
+Copyright 2026 Takeru Fujii
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+```
+
+「Token Meter」は Takeru Fujii の商標であり、Apache License 2.0 第6条により本ライセンスは
+商標の使用を許諾しない。フォークや派生物は別の名前を使用すること。
+
+バイナリに同梱している第三者コンポーネント（Sparkle ほか）の著作権表示とライセンスは
+[THIRD-PARTY-NOTICES.md](THIRD-PARTY-NOTICES.md) にある。再配布時は [NOTICE](NOTICE) を
+同梱すること（Apache License 2.0 第4条(d)）。
+
+Token Meter は Anthropic、OpenAI、GitHub、Microsoft と提携しておらず、これらによる承認も受けていない。
