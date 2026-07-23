@@ -521,6 +521,11 @@ private struct ConnectionStatusCard: View {
 
     private var isConnected: Bool { availability?.isAvailable == true }
 
+    private var showsClaudeSignIn: Bool {
+        guard providerID == .claudeCode, case .notLoggedIn = availability else { return false }
+        return true
+    }
+
     /// The concrete next action for the current state. `nil` while availability is
     /// still being determined.
     private var instruction: LocalizedStringKey? {
@@ -596,6 +601,8 @@ private struct ConnectionStatusCard: View {
                 Text(instruction)
                     .font(.callout)
                     .fixedSize(horizontal: false, vertical: true)
+
+                if showsClaudeSignIn { ClaudeSignInButton() }
 
                 HStack(spacing: 8) {
                     if let command {

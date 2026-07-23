@@ -328,5 +328,8 @@
 "Not connected yet. Follow the steps in Setup, then Re-check." = "아직 연결되지 않았습니다. 설정의 단계를 따른 후 다시 확인을 누르세요.";
 "Open Claude Code and run /login to refresh the sign-in, then re-check" = "Claude Code를 열고 /login으로 로그인을 갱신한 후 다시 확인하세요";
 "Claude Code's sign-in has expired, so plan usage can't be loaded. Open Claude Code and run /login to sign in again, then re-check." = "Claude Code 로그인이 만료되어 플랜 사용량을 불러올 수 없습니다. Claude Code를 열고 /login으로 다시 로그인한 후 다시 확인하세요.";
+"Sign in to Claude Code" = "Claude Code에 로그인";
+"Opens Terminal and runs `claude` — type /login once it starts." = "터미널을 열고 `claude`를 실행합니다 — 시작되면 /login을 입력하세요.";
+"Could not open Terminal. Use the command below instead." = "터미널을 열 수 없습니다. 아래 명령어를 사용하세요.";
 "Number format" = "숫자 표기";
 "Token number format" = "토큰 숫자 표기";

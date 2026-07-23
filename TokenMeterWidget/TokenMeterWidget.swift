@@ -66,6 +66,10 @@ struct ProviderRow: View {
     let providerID: UsageProviderID
     var showProgress = true
     var showReset = false
+    /// When set alongside `showReset`, the row shows the weekly reset stacked under
+    /// the 5-hour one (each on its own compact line so neither is truncated). Used by
+    /// the small widget, which has no room for progress bars but wants both limits.
+    var showWeeklyReset = false
     var showTokens = false
 
     @Environment(\.tokenFormatter) private var tokens
@@ -106,7 +110,13 @@ struct ProviderRow: View {
                 }
             }
 
-            if showReset { resetLine }
+            if showReset {
+                if showWeeklyReset {
+                    dualResetLine
+                } else {
+                    resetLine
+                }
+            }
 
             if showTokens {
                 if let tokens = provider?.todayWorkingTokens, tokens > 0 {
@@ -123,6 +133,57 @@ struct ProviderRow: View {
         }
         .accessibilityElement(children: .combine)
         .accessibilityLabel("\(name): \(accessibilityValue)")
+    }
+
+    /// The 5-hour reset time, and whether it is our own derivation. Prefers the
+    /// provider-reported quota window; falls back to the locally counted 5-hour
+    /// window (which is `.inferred` for Claude Code and must be flagged "est.").
+    private var fiveHourReset: (date: Date, isEstimate: Bool)? {
+        if let resetsAt = provider?.fiveHourQuota?.resetsAt { return (resetsAt, false) }
+        if let five = provider?.fiveHourWindow, let resetsAt = five.resetsAt {
+            return (resetsAt, five.boundary == .inferred)
+        }
+        return nil
+    }
+
+    /// The weekly reset time. Prefers the reported quota window; the locally counted
+    /// weekly window is a rolling lookback with no reset (`resetsAt == nil`), so it
+    /// only ever contributes a time when the provider actually anchored one.
+    private var weeklyReset: (date: Date, isEstimate: Bool)? {
+        if let resetsAt = provider?.weeklyQuota?.resetsAt { return (resetsAt, false) }
+        if let weekly = provider?.weeklyWindow, let resetsAt = weekly.resetsAt {
+            return (resetsAt, weekly.boundary == .inferred)
+        }
+        return nil
+    }
+
+    /// 5-hour and weekly resets stacked, one compact line each. Kept vertical (not
+    /// joined on one line) so that on the narrow small widget neither reset is
+    /// truncated away. Renders nothing when the provider anchors no reset at all.
+    @ViewBuilder
+    private var dualResetLine: some View {
+        VStack(alignment: .leading, spacing: 1) {
+            if let five = fiveHourReset {
+                resetChip(label: "5h", resetsAt: five.date, isEstimate: five.isEstimate)
+            }
+            if let weekly = weeklyReset {
+                resetChip(label: "7d", resetsAt: weekly.date, isEstimate: weekly.isEstimate)
+            }
+        }
+        .font(.caption2)
+        .foregroundStyle(.secondary)
+    }
+
+    /// One "5h in 12m" / "7d in 3d" reset line. `label` is a short unit shown
+    /// verbatim (as in `CompactQuotaStrip`), so no per-language string is needed.
+    @ViewBuilder
+    private func resetChip(label: String, resetsAt: Date, isEstimate: Bool) -> some View {
+        HStack(spacing: 3) {
+            Text(verbatim: label).foregroundStyle(.tertiary)
+            Text(resetsAt, style: .relative)
+            if isEstimate { Text("est.").italic() }
+        }
+        .lineLimit(1)
     }
 
     /// The next 5-hour reset, which both providers now have — Codex because it
@@ -259,14 +320,21 @@ struct SmallWidgetView: View {
         if entry.snapshot == nil {
             EmptyStateView()
         } else {
-            VStack(alignment: .leading, spacing: 8) {
+            VStack(alignment: .leading, spacing: 6) {
                 ProviderRow(
                     provider: entry.snapshot?.claudeCode,
                     providerID: .claudeCode,
                     showProgress: false,
-                    showReset: true
+                    showReset: true,
+                    showWeeklyReset: true
                 )
-                ProviderRow(provider: entry.snapshot?.codex, providerID: .codex, showProgress: false)
+                ProviderRow(
+                    provider: entry.snapshot?.codex,
+                    providerID: .codex,
+                    showProgress: false,
+                    showReset: true,
+                    showWeeklyReset: true
+                )
                 Spacer(minLength: 0)
                 UpdatedFooter(updatedAt: entry.snapshot?.updatedAt)
             }
