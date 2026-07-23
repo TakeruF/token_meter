@@ -16,6 +16,12 @@ struct ProviderCard: View {
     private var window: UsageWindow? { snapshot?.primaryWindow }
 
     private var isAvailable: Bool { state?.availability.isAvailable == true }
+    private var needsClaudeSignIn: Bool {
+        switch snapshot?.quotaError {
+        case .sessionExpired, .unauthorized, .forbidden: return true
+        default: return false
+        }
+    }
     private var fiveHour: TokenWindowUsage? {
         settings.showFiveHourWindow ? snapshot?.shortWindowUsage : nil
     }
@@ -152,19 +158,23 @@ struct ProviderCard: View {
                 )
             }
         } else {
-            Label {
-                VStack(alignment: .leading, spacing: 1) {
-                    Text("Unavailable").font(.callout.weight(.medium))
-                    Text(AppLocalization.string(
-                        snapshot?.quotaError?.errorDescription ?? "Claude usage has not been loaded yet."
-                    ))
-                        .font(.caption2)
-                        .foregroundStyle(.secondary)
-                        .fixedSize(horizontal: false, vertical: true)
+            VStack(alignment: .leading, spacing: 6) {
+                Label {
+                    VStack(alignment: .leading, spacing: 1) {
+                        Text("Unavailable").font(.callout.weight(.medium))
+                        Text(AppLocalization.string(
+                            snapshot?.quotaError?.errorDescription ?? "Claude usage has not been loaded yet."
+                        ))
+                            .font(.caption2)
+                            .foregroundStyle(.secondary)
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
+                } icon: {
+                    Image(systemName: "exclamationmark.triangle")
+                        .foregroundStyle(.orange)
                 }
-            } icon: {
-                Image(systemName: "exclamationmark.triangle")
-                    .foregroundStyle(.orange)
+
+                if needsClaudeSignIn { ClaudeSignInButton() }
             }
         }
     }
