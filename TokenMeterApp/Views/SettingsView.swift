@@ -72,6 +72,16 @@ struct SettingsView: View {
                     .font(.caption)
                     .foregroundStyle(.secondary)
                     .fixedSize(horizontal: false, vertical: true)
+
+                // Until a deliberate read has succeeded, macOS will raise its
+                // Keychain dialog from whichever background refresh gets there
+                // first. Offering the same read as a button puts the user in front
+                // of it instead.
+                if needsKeychainGrant {
+                    ClaudeConnectButton(blocker: .keychainAccess) {
+                        Task { await monitor.refresh(reason: .manual) }
+                    }
+                }
             }
 
             Section("Time windows") {
@@ -181,6 +191,15 @@ struct SettingsView: View {
         } message: {
             Text("This cannot be undone.")
         }
+    }
+
+    /// Offer the Keychain step until one deliberate read has worked — and again if
+    /// a later refresh was denied, since the approval can be withdrawn in Keychain
+    /// Access, or lost when the app is replaced by a differently signed build.
+    private var needsKeychainGrant: Bool {
+        guard settings.claudeOAuthUsageEnabled else { return false }
+        if monitor.states[.claudeCode]?.snapshot?.quotaError == .keychainAccessDenied { return true }
+        return !settings.claudeKeychainGranted
     }
 
     private func intervalLabel(_ seconds: TimeInterval) -> String {

@@ -168,6 +168,14 @@ struct OnboardingView: View {
                         .font(.caption)
                         .foregroundStyle(.secondary)
                         .fixedSize(horizontal: false, vertical: true)
+
+                    // Offer the Keychain approval as a click here, before a refresh
+                    // makes macOS ask on its own. The same dialog is far less
+                    // alarming when the user asked for it a second earlier.
+                    if settings.claudeOAuthUsageEnabled, !settings.claudeKeychainGranted {
+                        Divider()
+                        ClaudeConnectButton(blocker: .keychainAccess, onCompleted: recheck)
+                    }
                 }
                 .padding(14)
                 .frame(maxWidth: 650, alignment: .leading)
@@ -209,7 +217,11 @@ struct OnboardingView: View {
 
             VStack(spacing: 14) {
                 ForEach(selectedProviders) { id in
-                    ConnectionStatusCard(providerID: id, availability: monitor.states[id]?.availability)
+                    ConnectionStatusCard(
+                        providerID: id,
+                        availability: monitor.states[id]?.availability,
+                        onRecheck: recheck
+                    )
                 }
             }
             .frame(maxWidth: 620)
@@ -516,14 +528,23 @@ private struct ProviderChoiceCard: View {
 private struct ConnectionStatusCard: View {
     let providerID: UsageProviderID
     let availability: ProviderAvailability?
+    var onRecheck: () -> Void = {}
 
     @State private var copied = false
 
     private var isConnected: Bool { availability?.isAvailable == true }
 
-    private var showsClaudeSignIn: Bool {
-        guard providerID == .claudeCode, case .notLoggedIn = availability else { return false }
-        return true
+    /// The one-click fix for the state Claude Code is actually in. Every case here
+    /// is a real dead end for the user otherwise: a missing install, an expired
+    /// sign-in, or a Keychain item macOS is refusing.
+    private var claudeBlocker: ClaudeConnectionBlocker? {
+        guard providerID == .claudeCode else { return nil }
+        switch availability {
+        case .notLoggedIn: return .signedOut
+        case .notInstalled: return .notInstalled
+        case .permissionDenied(let path) where path.contains("Keychain"): return .keychainAccess
+        default: return nil
+        }
     }
 
     /// The concrete next action for the current state. `nil` while availability is
@@ -602,7 +623,9 @@ private struct ConnectionStatusCard: View {
                     .font(.callout)
                     .fixedSize(horizontal: false, vertical: true)
 
-                if showsClaudeSignIn { ClaudeSignInButton() }
+                if let claudeBlocker {
+                    ClaudeConnectButton(blocker: claudeBlocker, onCompleted: onRecheck)
+                }
 
                 HStack(spacing: 8) {
                     if let command {

@@ -83,6 +83,7 @@ final class AppSettings {
         static let appLanguage = "appLanguage"
         static let showClaude = "showClaudeCode"
         static let claudeOAuthUsage = "claudeOAuthUsageEnabled"
+        static let claudeKeychainGranted = "claudeKeychainGranted"
         static let showCodex = "showCodex"
         static let showCopilotCli = "showCopilotCli"
         static let refreshInterval = "refreshIntervalSeconds"
@@ -133,6 +134,12 @@ final class AppSettings {
     /// solely to request usage data from Anthropic.
     var claudeOAuthUsageEnabled: Bool {
         didSet { defaults.set(claudeOAuthUsageEnabled, forKey: Key.claudeOAuthUsage) }
+    }
+    /// Set once a deliberate, user-initiated Keychain read has succeeded. It exists
+    /// only to stop offering the "Allow Keychain access" button after it worked —
+    /// macOS, not this flag, decides what the app may actually read.
+    var claudeKeychainGranted: Bool {
+        didSet { defaults.set(claudeKeychainGranted, forKey: Key.claudeKeychainGranted) }
     }
     var showCodex: Bool { didSet { defaults.set(showCodex, forKey: Key.showCodex) } }
     /// Opt-in: GitHub Copilot CLI is off by default. It is a secondary provider
@@ -207,6 +214,7 @@ final class AppSettings {
             Key.tokenNotation: TokenNotation.metric.rawValue,
             Key.showClaude: true,
             Key.claudeOAuthUsage: false,
+            Key.claudeKeychainGranted: false,
             Key.showCodex: true,
             Key.showCopilotCli: false,
             Key.refreshInterval: 300.0,
@@ -236,6 +244,7 @@ final class AppSettings {
         tokenNotation = TokenNotation(rawValue: defaults.string(forKey: Key.tokenNotation) ?? "") ?? .metric
         showClaudeCode = defaults.bool(forKey: Key.showClaude)
         claudeOAuthUsageEnabled = defaults.bool(forKey: Key.claudeOAuthUsage)
+        claudeKeychainGranted = defaults.bool(forKey: Key.claudeKeychainGranted)
         showCodex = defaults.bool(forKey: Key.showCodex)
         showCopilotCli = defaults.bool(forKey: Key.showCopilotCli)
         refreshInterval = defaults.double(forKey: Key.refreshInterval)
