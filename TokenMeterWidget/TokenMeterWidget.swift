@@ -33,7 +33,12 @@ struct Provider: TimelineProvider {
     private let store = SharedSnapshotStore(appGroupID: TokenMeterPaths.appGroupID)
 
     func placeholder(in context: Context) -> Entry {
-        Entry(date: Date(), snapshot: nil, isPlaceholder: true)
+        // Read the last good snapshot here too. macOS renders the placeholder while a
+        // newly added or *resized* widget waits for its first timeline — returning nil
+        // made every such transition flash the "No data" empty state, which then stuck
+        // whenever the follow-up reload was throttled. A genuine first run still shows
+        // empty, because readResilient returns nil when nothing has ever been written.
+        Entry(date: Date(), snapshot: store.readResilient(), isPlaceholder: true)
     }
 
     func getSnapshot(in context: Context, completion: @escaping (Entry) -> Void) {
@@ -625,16 +630,21 @@ struct TokenMeterWidgetEntryView: View {
 }
 
 private extension View {
-    /// Fills the widget container per the user's chosen style. Clear renders as
-    /// Liquid Glass, which only exists on macOS 26+; on anything older — and for
-    /// `.solid` — it falls back to the opaque `.fill.tertiary` the widget has
-    /// always used, so the widget looks right on every system it can run on.
+    /// Fills the widget container per the user's chosen style.
+    ///
+    /// Clear uses a translucent material so the wallpaper shows through the frosted
+    /// background in every mode. The previous approach drew its own `glassEffect`,
+    /// but a widget's own render tree has no wallpaper behind it to refract, so that
+    /// glass fell back to an opaque frost in full-colour mode — the clear look only
+    /// appeared when the *system* removed the background (its "dim widgets" desktop
+    /// setting), which read as "clear only works when dimming is on". A material
+    /// composites against whatever sits behind the widget window, so it is genuinely
+    /// see-through regardless of that system setting, and works on every supported OS
+    /// (no macOS 26 gate needed). `.solid` keeps the opaque `.fill.tertiary`.
     @ViewBuilder
     func widgetContainerBackground(style: WidgetBackgroundStyle) -> some View {
-        if style == .clear, #available(macOS 26.0, *) {
-            containerBackground(for: .widget) {
-                Rectangle().fill(.clear).glassEffect(.regular, in: .rect)
-            }
+        if style == .clear {
+            containerBackground(.thinMaterial, for: .widget)
         } else {
             containerBackground(.fill.tertiary, for: .widget)
         }
@@ -672,7 +682,7 @@ extension UsageStatusLevel {
 // Canvas previews with realistic data, so the widget can be checked without the
 // main app writing a snapshot. Use the canvas's rendering-mode control to see the
 // tinted (accented) appearance, and the Solid/Clear variants below to compare the
-// two background styles. Clear renders as Liquid Glass only on macOS 26+.
+// two background styles. Clear renders as a translucent frosted material.
 #if DEBUG
 private extension SharedSnapshot {
     static func previewSample(background: WidgetBackgroundStyle) -> SharedSnapshot {
@@ -750,7 +760,7 @@ private enum PreviewSize {
 /// The macOS canvas cannot launch a widget extension ("This platform does not
 /// support previewing widgets"), so instead of `#Preview(as:)` these render the
 /// plain SwiftUI views the widget is built from — which the canvas handles fine.
-/// A stand-in wallpaper sits behind the frame so a clear (Liquid Glass) background
+/// A stand-in wallpaper sits behind the frame so a clear (frosted material) background
 /// has something to reveal. True tinted/accented rendering only happens on a real
 /// desktop widget: run the app, add the widget, and pick Tinted in Edit Widget.
 private struct WidgetFramePreview<Content: View>: View {
@@ -768,8 +778,8 @@ private struct WidgetFramePreview<Content: View>: View {
             .padding(14)
             .frame(width: size.width, height: size.height, alignment: .topLeading)
             .background {
-                if background == .clear, #available(macOS 26.0, *) {
-                    Rectangle().fill(.clear).glassEffect(.regular, in: .rect(cornerRadius: 22))
+                if background == .clear {
+                    Rectangle().fill(.thinMaterial)
                 } else {
                     Rectangle().fill(.fill.tertiary)
                 }

@@ -16,10 +16,18 @@ struct ProviderCard: View {
     private var window: UsageWindow? { snapshot?.primaryWindow }
 
     private var isAvailable: Bool { state?.availability.isAvailable == true }
-    private var needsClaudeSignIn: Bool {
+
+    /// The one-click action that would fix the Claude quota error we are showing,
+    /// if any. Keyed off the error the refresh actually saw, so the button offered
+    /// matches the problem rather than guessing.
+    private var claudeBlocker: ClaudeConnectionBlocker? {
         switch snapshot?.quotaError {
-        case .sessionExpired, .unauthorized, .forbidden: return true
-        default: return false
+        case .sessionExpired, .unauthorized, .forbidden, .credentialsNotFound, .invalidCredentials:
+            return .signedOut
+        case .keychainAccessDenied:
+            return .keychainAccess
+        default:
+            return nil
         }
     }
     private var fiveHour: TokenWindowUsage? {
@@ -174,7 +182,9 @@ struct ProviderCard: View {
                         .foregroundStyle(.orange)
                 }
 
-                if needsClaudeSignIn { ClaudeSignInButton() }
+                if let claudeBlocker {
+                    ClaudeConnectButton(blocker: claudeBlocker, onCompleted: onRefresh)
+                }
             }
         }
     }

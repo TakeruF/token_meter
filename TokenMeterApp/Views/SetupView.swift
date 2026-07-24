@@ -291,6 +291,18 @@ struct ConnectionCard: View {
         let url: URL?
     }
 
+    /// The one-click fix for Claude Code's current state, shown above the manual
+    /// command so the command is a fallback rather than the only way through.
+    private var claudeBlocker: ClaudeConnectionBlocker? {
+        guard providerID == .claudeCode else { return nil }
+        switch availability {
+        case .notLoggedIn: return .signedOut
+        case .notInstalled: return .notInstalled
+        case .permissionDenied(let path) where path.contains("Keychain"): return .keychainAccess
+        default: return nil
+        }
+    }
+
     /// Guidance is limited to things verified to exist: `codex login` is a real
     /// subcommand, the Homebrew cask is how Codex is installed here, and Claude Code
     /// needs no CLI on PATH because Token Meter only reads its logs.
@@ -367,6 +379,10 @@ struct ConnectionCard: View {
             Text(AppLocalization.string(step.text))
                 .font(.callout)
                 .fixedSize(horizontal: false, vertical: true)
+
+            if let claudeBlocker {
+                ClaudeConnectButton(blocker: claudeBlocker, onCompleted: onRecheck)
+            }
 
             HStack(spacing: 8) {
                 if let command = step.command {

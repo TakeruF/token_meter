@@ -62,6 +62,17 @@ final class UsageMonitor {
     /// Snapshot writes are small but asynchronous. Chaining them prevents an older
     /// write from finishing after a newer one and restoring a stale widget value.
     private var snapshotWriteTask: Task<Void, Never>?
+    /// When the last WidgetKit reload actually fired, and any reload deferred to the
+    /// tail of the current window. Used to rate-limit reloads (see `reloadWidgets`).
+    private var lastWidgetReload: Date?
+    private var pendingWidgetReload: Task<Void, Never>?
+    /// The shortest gap between WidgetKit reloads. Snapshots are still written every
+    /// time; only the reload is throttled. The first scan lands each provider
+    /// separately and the refresh loop publishes per provider, so an unthrottled
+    /// reload fired several times a second during launch. WidgetKit budgets reloads,
+    /// and once that budget is spent a later reload — the one after the user resizes a
+    /// widget — is dropped, leaving the widget stuck on its empty placeholder.
+    private static let minWidgetReloadInterval: TimeInterval = 8
 
     /// Generous, because the very first scan legitimately reads every existing log
     /// (hundreds of MB here). Later refreshes only read what was appended.
@@ -286,12 +297,30 @@ final class UsageMonitor {
             await previousWrite?.value
             do {
                 try store.write(snapshot)
-                await MainActor.run {
-                    WidgetCenter.shared.reloadTimelines(ofKind: "TokenMeterWidget")
-                }
+                await MainActor.run { self.reloadWidgets() }
             } catch {
                 NSLog("TokenMeter: could not write widget snapshot: \(error.localizedDescription)")
             }
+        }
+    }
+
+    /// Asks WidgetKit to reload, but no more than once per `minWidgetReloadInterval`.
+    /// A reload inside the window is coalesced into a single trailing reload so the
+    /// final state is always picked up, while a burst of writes costs one reload.
+    private func reloadWidgets() {
+        pendingWidgetReload?.cancel()
+        let now = Date()
+        if let last = lastWidgetReload, now.timeIntervalSince(last) < Self.minWidgetReloadInterval {
+            let delay = Self.minWidgetReloadInterval - now.timeIntervalSince(last)
+            pendingWidgetReload = Task { [weak self] in
+                try? await Task.sleep(for: .seconds(delay))
+                guard !Task.isCancelled else { return }
+                self?.lastWidgetReload = Date()
+                WidgetCenter.shared.reloadTimelines(ofKind: "TokenMeterWidget")
+            }
+        } else {
+            lastWidgetReload = now
+            WidgetCenter.shared.reloadTimelines(ofKind: "TokenMeterWidget")
         }
     }
 
