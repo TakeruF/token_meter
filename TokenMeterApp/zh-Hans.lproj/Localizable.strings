@@ -77,6 +77,9 @@
 "Widget" = "小组件";
 "Show token counts" = "显示 Token 数";
 "Show reset time" = "显示重置时间";
+"Widget background" = "小组件背景";
+"Solid" = "实心";
+"Clear (Liquid Glass)" = "透明（液态玻璃）";
 "Startup" = "启动";
 "Launch at login" = "登录时启动";
 "Updates" = "更新";

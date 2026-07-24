@@ -77,6 +77,9 @@
 "Widget" = "ウィジェット";
 "Show token counts" = "トークン数を表示";
 "Show reset time" = "リセット時刻を表示";
+"Widget background" = "ウィジェットの背景";
+"Solid" = "ソリッド";
+"Clear (Liquid Glass)" = "クリア（リキッドグラス）";
 "Startup" = "起動";
 "Launch at login" = "ログイン時に起動";
 "Updates" = "アップデート";
