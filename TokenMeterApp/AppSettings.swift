@@ -104,6 +104,7 @@ final class AppSettings {
         static let retentionDays = "retentionDays"
         static let widgetShowTokens = "widgetShowTokens"
         static let widgetShowReset = "widgetShowReset"
+        static let widgetBackgroundStyle = "widgetBackgroundStyle"
         static let launchAtLogin = "launchAtLogin"
         static let tokenNotation = "tokenNotation"
     }
@@ -183,6 +184,13 @@ final class AppSettings {
     var widgetShowTokens: Bool { didSet { defaults.set(widgetShowTokens, forKey: Key.widgetShowTokens) } }
     var widgetShowReset: Bool { didSet { defaults.set(widgetShowReset, forKey: Key.widgetShowReset) } }
 
+    /// The widget background: solid (the long-standing default) or clear Liquid
+    /// Glass. The clear look needs macOS 26, so the picker is only offered there —
+    /// see `SettingsView`; the widget itself falls back to solid on older systems.
+    var widgetBackgroundStyle: WidgetBackgroundStyle {
+        didSet { defaults.set(widgetBackgroundStyle.rawValue, forKey: Key.widgetBackgroundStyle) }
+    }
+
     var launchAtLogin: Bool {
         didSet {
             defaults.set(launchAtLogin, forKey: Key.launchAtLogin)
@@ -220,6 +228,7 @@ final class AppSettings {
             Key.retentionDays: 90,
             Key.widgetShowTokens: true,
             Key.widgetShowReset: true,
+            Key.widgetBackgroundStyle: WidgetBackgroundStyle.solid.rawValue,
             Key.launchAtLogin: false,
         ])
 
@@ -250,6 +259,9 @@ final class AppSettings {
         retentionDays = defaults.integer(forKey: Key.retentionDays)
         widgetShowTokens = defaults.bool(forKey: Key.widgetShowTokens)
         widgetShowReset = defaults.bool(forKey: Key.widgetShowReset)
+        widgetBackgroundStyle = WidgetBackgroundStyle(
+            rawValue: defaults.string(forKey: Key.widgetBackgroundStyle) ?? ""
+        ) ?? .solid
         launchAtLogin = defaults.bool(forKey: Key.launchAtLogin)
     }
 

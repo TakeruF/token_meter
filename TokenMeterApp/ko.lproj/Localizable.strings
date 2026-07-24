@@ -77,6 +77,9 @@
 "Widget" = "위젯";
 "Show token counts" = "토큰 수 표시";
 "Show reset time" = "재설정 시간 표시";
+"Widget background" = "위젯 배경";
+"Solid" = "솔리드";
+"Clear (Liquid Glass)" = "클리어 (리퀴드 글래스)";
 "Startup" = "시작";
 "Launch at login" = "로그인 시 실행";
 "Updates" = "업데이트";

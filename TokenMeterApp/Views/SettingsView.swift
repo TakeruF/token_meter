@@ -118,6 +118,17 @@ struct SettingsView: View {
             Section("Widget") {
                 Toggle("Show token counts", isOn: $settings.widgetShowTokens)
                 Toggle("Show reset time", isOn: $settings.widgetShowReset)
+                // Liquid Glass exists only on macOS 26+, so the choice is offered
+                // there alone; older systems stay on the solid background.
+                if #available(macOS 26.0, *) {
+                    Picker("Widget background", selection: $settings.widgetBackgroundStyle) {
+                        Text("Solid").tag(WidgetBackgroundStyle.solid)
+                        Text("Clear (Liquid Glass)").tag(WidgetBackgroundStyle.clear)
+                    }
+                    .onChange(of: settings.widgetBackgroundStyle) { _, _ in
+                        monitor.publishSnapshot()
+                    }
+                }
             }
 
             Section("Startup") {

@@ -96,9 +96,13 @@ struct ProviderRow: View {
                     GeometryReader { geo in
                         ZStack(alignment: .leading) {
                             Capsule().fill(.quaternary)
+                            // In tinted (accented) mode the fill joins the accent
+                            // group so the bar keeps contrast against the dimmed
+                            // track; the status colour only shows in full-colour mode.
                             Capsule()
                                 .fill(level.tint)
                                 .frame(width: geo.size.width * max(0, min(1, remaining)))
+                                .widgetAccentable()
                         }
                     }
                     .frame(height: 4)
@@ -234,6 +238,8 @@ struct ProviderRow: View {
                     .font(.caption.weight(.semibold))
                     .monospacedDigit()
             }
+            // The headline figure carries the accent colour in tinted mode.
+            .widgetAccentable()
         } else if let tokens = provider?.todayWorkingTokens, tokens > 0 {
             Text(self.tokens(tokens))
                 .font(.caption.weight(.semibold))
@@ -268,6 +274,8 @@ struct WidgetProviderIcon: View {
             .scaledToFit()
             .frame(width: size, height: size)
             .foregroundStyle(.primary)
+            // The brand mark reads as an accent element in tinted mode.
+            .widgetAccentable()
             .accessibilityHidden(true)
     }
 }
@@ -560,6 +568,9 @@ struct UsageLineChart: View {
                                     .position(point)
                             }
                         }
+                        // The plotted line and points take the accent colour in
+                        // tinted mode; the axes and labels stay in the dimmed group.
+                        .widgetAccentable()
                     }
                     .frame(height: plotHeight)
 
@@ -609,7 +620,24 @@ struct TokenMeterWidgetEntryView: View {
         )
         // Tapping anywhere opens the dashboard.
         .widgetURL(URL(string: "tokenmeter://dashboard"))
-        .containerBackground(.fill.tertiary, for: .widget)
+        .widgetContainerBackground(style: entry.snapshot?.widgetBackgroundStyle ?? .solid)
+    }
+}
+
+private extension View {
+    /// Fills the widget container per the user's chosen style. Clear renders as
+    /// Liquid Glass, which only exists on macOS 26+; on anything older — and for
+    /// `.solid` — it falls back to the opaque `.fill.tertiary` the widget has
+    /// always used, so the widget looks right on every system it can run on.
+    @ViewBuilder
+    func widgetContainerBackground(style: WidgetBackgroundStyle) -> some View {
+        if style == .clear, #available(macOS 26.0, *) {
+            containerBackground(for: .widget) {
+                Rectangle().fill(.clear).glassEffect(.regular, in: .rect)
+            }
+        } else {
+            containerBackground(.fill.tertiary, for: .widget)
+        }
     }
 }
 
@@ -638,3 +666,152 @@ extension UsageStatusLevel {
         }
     }
 }
+
+// MARK: - Previews
+
+// Canvas previews with realistic data, so the widget can be checked without the
+// main app writing a snapshot. Use the canvas's rendering-mode control to see the
+// tinted (accented) appearance, and the Solid/Clear variants below to compare the
+// two background styles. Clear renders as Liquid Glass only on macOS 26+.
+#if DEBUG
+private extension SharedSnapshot {
+    static func previewSample(background: WidgetBackgroundStyle) -> SharedSnapshot {
+        let now = Date()
+        let cal = Calendar.current
+        func days(_ delta: Int) -> Date { cal.date(byAdding: .day, value: delta, to: now) ?? now }
+        func hours(_ delta: Double) -> Date { now.addingTimeInterval(delta * 3600) }
+        func series(_ values: [Int]) -> [DayPoint] {
+            values.enumerated().map { index, value in
+                DayPoint(day: days(-(values.count - 1 - index)), workingTokens: value)
+            }
+        }
+
+        let claude = Provider(
+            displayName: "Claude Code",
+            todayWorkingTokens: 184_000,
+            hasQuotaInformation: true,
+            dailyTotals: series([120_000, 340_000, 90_000, 510_000, 260_000, 430_000, 184_000]),
+            fiveHourWindow: TokenWindowUsage(
+                start: hours(-2), resetsAt: hours(3),
+                tokens: 420_000, workingTokens: 384_000, boundary: .inferred
+            ),
+            weeklyWindow: TokenWindowUsage(
+                start: days(-4), resetsAt: days(3),
+                tokens: 5_800_000, workingTokens: 5_200_000, boundary: .reported
+            ),
+            fiveHourQuota: UsageWindow(usedRatio: 0.32, remainingRatio: 0.68, resetsAt: hours(3)),
+            weeklyQuota: UsageWindow(usedRatio: 0.55, remainingRatio: 0.45, resetsAt: days(3))
+        )
+
+        let codex = Provider(
+            displayName: "Codex",
+            todayWorkingTokens: 92_000,
+            hasQuotaInformation: true,
+            dailyTotals: series([80_000, 60_000, 210_000, 140_000, 60_000, 120_000, 92_000]),
+            fiveHourWindow: TokenWindowUsage(
+                start: hours(-1), resetsAt: hours(4),
+                tokens: 150_000, workingTokens: 138_000, boundary: .reported, windowMinutes: 300
+            ),
+            weeklyWindow: TokenWindowUsage(
+                start: days(-3), resetsAt: days(4),
+                tokens: 2_100_000, workingTokens: 1_900_000, boundary: .reported
+            ),
+            fiveHourQuota: UsageWindow(usedRatio: 0.58, remainingRatio: 0.42, resetsAt: hours(4), windowMinutes: 300),
+            weeklyQuota: UsageWindow(usedRatio: 0.30, remainingRatio: 0.70, resetsAt: days(4))
+        )
+
+        return SharedSnapshot(
+            updatedAt: now.addingTimeInterval(-180),
+            languageCode: "en",
+            tokenNotation: .metric,
+            widgetBackgroundStyle: background,
+            claudeCode: claude,
+            codex: codex
+        )
+    }
+}
+
+private extension Entry {
+    static func preview(_ background: WidgetBackgroundStyle) -> Entry {
+        Entry(date: Date(), snapshot: .previewSample(background: background), isPlaceholder: false)
+    }
+}
+
+/// Sizes in points that macOS uses for each desktop widget family, so the preview
+/// frame matches the real proportions closely enough to judge layout and fit.
+private enum PreviewSize {
+    static let small = CGSize(width: 170, height: 170)
+    static let medium = CGSize(width: 364, height: 170)
+    static let large = CGSize(width: 364, height: 382)
+}
+
+/// Hosts a widget size view in a simulated desktop-widget frame.
+///
+/// The macOS canvas cannot launch a widget extension ("This platform does not
+/// support previewing widgets"), so instead of `#Preview(as:)` these render the
+/// plain SwiftUI views the widget is built from — which the canvas handles fine.
+/// A stand-in wallpaper sits behind the frame so a clear (Liquid Glass) background
+/// has something to reveal. True tinted/accented rendering only happens on a real
+/// desktop widget: run the app, add the widget, and pick Tinted in Edit Widget.
+private struct WidgetFramePreview<Content: View>: View {
+    let size: CGSize
+    let background: WidgetBackgroundStyle
+    @ViewBuilder let content: () -> Content
+
+    var body: some View {
+        content()
+            .environment(\.locale, Locale(identifier: "en"))
+            .environment(
+                \.tokenFormatter,
+                TokenFormatter(notation: .metric, locale: Locale(identifier: "en"))
+            )
+            .padding(14)
+            .frame(width: size.width, height: size.height, alignment: .topLeading)
+            .background {
+                if background == .clear, #available(macOS 26.0, *) {
+                    Rectangle().fill(.clear).glassEffect(.regular, in: .rect(cornerRadius: 22))
+                } else {
+                    Rectangle().fill(.fill.tertiary)
+                }
+            }
+            .clipShape(RoundedRectangle(cornerRadius: 22))
+            .padding(28)
+            .background {
+                LinearGradient(
+                    colors: [.blue, .indigo, .purple],
+                    startPoint: .topLeading, endPoint: .bottomTrailing
+                )
+            }
+    }
+}
+
+#Preview("Small · Solid") {
+    WidgetFramePreview(size: PreviewSize.small, background: .solid) {
+        SmallWidgetView(entry: .preview(.solid))
+    }
+}
+
+#Preview("Medium · Solid") {
+    WidgetFramePreview(size: PreviewSize.medium, background: .solid) {
+        MediumWidgetView(entry: .preview(.solid))
+    }
+}
+
+#Preview("Medium · Clear (Liquid Glass)") {
+    WidgetFramePreview(size: PreviewSize.medium, background: .clear) {
+        MediumWidgetView(entry: .preview(.clear))
+    }
+}
+
+#Preview("Large · Solid") {
+    WidgetFramePreview(size: PreviewSize.large, background: .solid) {
+        LargeWidgetView(entry: .preview(.solid))
+    }
+}
+
+#Preview("Large · Clear (Liquid Glass)") {
+    WidgetFramePreview(size: PreviewSize.large, background: .clear) {
+        LargeWidgetView(entry: .preview(.clear))
+    }
+}
+#endif

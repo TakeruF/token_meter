@@ -1,5 +1,16 @@
 import Foundation
 
+/// How the widget fills its container background.
+///
+/// `.clear` renders as Liquid Glass and is only offered on macOS 26+, where that
+/// API exists; the widget falls back to `.solid` on earlier systems.
+public enum WidgetBackgroundStyle: String, Codable, Sendable, CaseIterable {
+    /// The opaque material the widget has always used (`.fill.tertiary`).
+    case solid
+    /// A translucent Liquid Glass background that lets the wallpaper show through.
+    case clear
+}
+
 /// The payload the widget reads. It contains only what we actually have: every
 /// field is optional, and the widget renders "—" rather than 0 for a missing one.
 public struct SharedSnapshot: Codable, Sendable, Equatable {
@@ -130,6 +141,9 @@ public struct SharedSnapshot: Codable, Sendable, Equatable {
     /// The token notation selected in the main app. Optional for compatibility with
     /// snapshots written by older releases, which predate the choice.
     public var tokenNotation: TokenNotation?
+    /// The widget background the user picked. Optional for compatibility with
+    /// snapshots written by older releases; the widget reads `.solid` when absent.
+    public var widgetBackgroundStyle: WidgetBackgroundStyle?
     public var claudeCode: Provider?
     public var codex: Provider?
     /// Optional for compatibility with snapshots written by older releases.
@@ -139,6 +153,7 @@ public struct SharedSnapshot: Codable, Sendable, Equatable {
         updatedAt: Date,
         languageCode: String? = nil,
         tokenNotation: TokenNotation? = nil,
+        widgetBackgroundStyle: WidgetBackgroundStyle? = nil,
         claudeCode: Provider? = nil,
         codex: Provider? = nil,
         copilotCli: Provider? = nil
@@ -146,6 +161,7 @@ public struct SharedSnapshot: Codable, Sendable, Equatable {
         self.updatedAt = updatedAt
         self.languageCode = languageCode
         self.tokenNotation = tokenNotation
+        self.widgetBackgroundStyle = widgetBackgroundStyle
         self.claudeCode = claudeCode
         self.codex = codex
         self.copilotCli = copilotCli

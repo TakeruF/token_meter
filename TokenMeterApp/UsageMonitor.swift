@@ -233,7 +233,8 @@ final class UsageMonitor {
         var snapshot = SharedSnapshot(
             updatedAt: Date(),
             languageCode: settings.appLanguage.rawValue,
-            tokenNotation: settings.effectiveTokenNotation
+            tokenNotation: settings.effectiveTokenNotation,
+            widgetBackgroundStyle: settings.widgetBackgroundStyle
         )
 
         for id in UsageProviderID.allCases {
