@@ -272,6 +272,8 @@
 "%@ left" = "剩余%@";
 "Token Meter: %@" = "Token Meter：%@";
 "Resetting now" = "正在重置";
+"Resets in <1m" = "不到1分钟后重置";
+"Resets in less than a minute." = "将在不到1分钟后重置。";
 "Resets in %dd %dh" = "%d天%d小时后重置";
 "Resets in %dh %dm" = "%d小时%d分钟后重置";
 "Resets in %dm" = "%d分钟后重置";

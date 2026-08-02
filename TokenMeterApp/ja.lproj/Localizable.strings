@@ -272,6 +272,8 @@
 "%@ left" = "残り%@";
 "Token Meter: %@" = "Token Meter：%@";
 "Resetting now" = "リセット中";
+"Resets in <1m" = "1分未満でリセット";
+"Resets in less than a minute." = "1分未満でリセットされます。";
 "Resets in %dd %dh" = "%d日%d時間後にリセット";
 "Resets in %dh %dm" = "%d時間%d分後にリセット";
 "Resets in %dm" = "%d分後にリセット";

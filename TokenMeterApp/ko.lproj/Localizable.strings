@@ -272,6 +272,8 @@
 "%@ left" = "%@ 남음";
 "Token Meter: %@" = "Token Meter: %@";
 "Resetting now" = "지금 재설정 중";
+"Resets in <1m" = "1분 이내 재설정";
+"Resets in less than a minute." = "1분 이내에 재설정됩니다.";
 "Resets in %dd %dh" = "%d일 %d시간 후 재설정";
 "Resets in %dh %dm" = "%d시간 %d분 후 재설정";
 "Resets in %dm" = "%d분 후 재설정";

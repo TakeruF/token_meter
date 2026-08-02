@@ -58,6 +58,7 @@ public extension UsageWindow {
         guard let resetsAt else { return nil }
         let interval = resetsAt.timeIntervalSince(now)
         guard interval > 0 else { return "Resetting now" }
+        if interval < 60 { return "Resets in <1m" }
 
         let hours = Int(interval) / 3600
         let minutes = (Int(interval) % 3600) / 60

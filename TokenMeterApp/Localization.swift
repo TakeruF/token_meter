@@ -54,6 +54,7 @@ enum AppLocalization {
         guard let resetsAt else { return nil }
         let interval = resetsAt.timeIntervalSince(now)
         guard interval > 0 else { return string("Resetting now") }
+        if interval < 60 { return string("Resets in <1m") }
 
         let hours = Int(interval) / 3600
         let minutes = (Int(interval) % 3600) / 60
@@ -71,6 +72,7 @@ enum AppLocalization {
         guard let resetsAt else { return nil }
         let interval = resetsAt.timeIntervalSince(now)
         guard interval > 0 else { return string("Resetting now") }
+        if interval < 60 { return string("Resets in less than a minute.") }
 
         let hours = Int(interval) / 3600
         let minutes = (Int(interval) % 3600) / 60

@@ -153,6 +153,26 @@ final class TimeWindowTests: XCTestCase {
         XCTAssertEqual(lapsed.resetDescription(now: now), "Resetting now")
     }
 
+    func testResetDescriptionUsesLessThanOneMinuteInsteadOfZeroMinutes() throws {
+        let now = try date("2026-07-15T10:00:00.000Z")
+        let resetsSoon = try date("2026-07-15T10:00:30.000Z")
+        let tokenWindow = TokenWindowUsage(
+            start: now,
+            resetsAt: resetsSoon,
+            tokens: 1,
+            workingTokens: 1,
+            boundary: .reported
+        )
+        let quotaWindow = UsageWindow(
+            usedRatio: 0.5,
+            remainingRatio: 0.5,
+            resetsAt: resetsSoon
+        )
+
+        XCTAssertEqual(tokenWindow.resetDescription(now: now), "Resets in <1m")
+        XCTAssertEqual(quotaWindow.resetDescription(now: now), "Resets in <1m")
+    }
+
     // MARK: - Widget payload
 
     /// The widget reads these across a process boundary; a reset time that arrives as
