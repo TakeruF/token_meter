@@ -1,0 +1,23 @@
+name: macOS CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+    paths:
+      - "TokenMeterCore/**"
+      - ".github/workflows/macos.yml"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: macos-ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  swift-tests:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: swift test --package-path TokenMeterCore

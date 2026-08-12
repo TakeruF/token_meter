@@ -1,0 +1,25 @@
+version: 2
+updates:
+  - package-ecosystem: swift
+    directory: /TokenMeterCore
+    schedule:
+      interval: weekly
+    groups:
+      swift-minor-and-patch:
+        update-types: [minor, patch]
+  - package-ecosystem: nuget
+    directories:
+      - /Windows/src/*
+      - /Windows/tests/*
+    schedule:
+      interval: weekly
+    groups:
+      nuget-minor-and-patch:
+        update-types: [minor, patch]
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+    groups:
+      actions:
+        patterns: ["*"]
