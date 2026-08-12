@@ -9,8 +9,12 @@ updates:
         update-types: [minor, patch]
   - package-ecosystem: nuget
     directories:
-      - /Windows/src/*
-      - /Windows/tests/*
+      - /Windows/src/TokenMeter.Windows.App
+      - /Windows/src/TokenMeter.Windows.Core
+      - /Windows/src/TokenMeter.Windows.Setup
+      - /Windows/tests/TokenMeter.Windows.App.CompileCheck
+      - /Windows/tests/TokenMeter.Windows.Core.Tests
+      - /Windows/tests/TokenMeter.Windows.Setup.Tests
     schedule:
       interval: weekly
     groups:
