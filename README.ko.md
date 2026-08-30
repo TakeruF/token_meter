@@ -4,6 +4,8 @@
 
 Claude Code, Codex, Copilot CLI 사용량을 확인하는 macOS / Windows 네이티브 앱.
 
+[<img src="https://raw.githubusercontent.com/machiav3lli/oandbackupx/main/badge_github.png" alt="GitHub에서 받기" height="60">](https://github.com/TakeruF/token_meter/releases/latest)
+
 [공식 사이트 · 다운로드](https://takeruf.github.io/token_meter/) · [GitHub Releases](https://github.com/TakeruF/token_meter/releases/latest)
 
 ## 스크린샷
