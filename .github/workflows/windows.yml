@@ -5,6 +5,7 @@ on:
     branches: [main]
     paths:
       - "Windows/**"
+      - "TokenMeterCore/Tests/TokenMeterCoreTests/Fixtures/**"
       - ".github/workflows/windows.yml"
       - "global.json"
       - "CODE_SIGNING.md"
@@ -60,7 +61,7 @@ jobs:
             exit 0
           }
 
-          $changed = @(git diff --name-only "$env:BASE_SHA" HEAD)
+          $changed = @(git diff --name-only --no-renames "$env:BASE_SHA" HEAD)
           if ($LASTEXITCODE -ne 0) {
             Write-Host "Could not diff against the base commit; running the full build."
             "run_build=true" >> $env:GITHUB_OUTPUT
@@ -72,6 +73,9 @@ jobs:
           # THIRD-PARTY-NOTICES.md are release metadata, not documentation.
           $relevant = @(
             '^Windows/',
+            # Copied into the Windows test output by
+            # Windows/tests/TokenMeter.Windows.Core.Tests/*.csproj.
+            '^TokenMeterCore/Tests/TokenMeterCoreTests/Fixtures/',
             '^\.github/workflows/windows\.yml$',
             '^global\.json$',
             '^CODE_SIGNING\.md$',
