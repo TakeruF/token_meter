@@ -283,6 +283,37 @@ h1 {
   line-height: 1.9;
 }
 
+.promo-strip {
+  display: grid;
+  gap: 48px;
+  width: min(calc(100% - 48px), var(--max));
+  margin: 0 auto;
+  padding: 0 0 100px;
+}
+
+.promo-shot {
+  overflow: hidden;
+  border: 1px solid #d7dce2;
+  border-radius: 14px;
+  background: var(--surface);
+  box-shadow: 0 24px 70px rgba(25, 35, 48, 0.12);
+}
+
+.promo-shot img {
+  width: 100%;
+  height: auto;
+}
+
+.promo-shot figcaption {
+  padding: 14px 18px;
+  color: var(--muted);
+  background: white;
+  border-top: 1px solid var(--line);
+  font-size: 13px;
+  line-height: 1.6;
+  text-align: center;
+}
+
 .showcase {
   border-top: 1px solid var(--line);
 }
@@ -663,6 +694,16 @@ figure {
   .privacy-band h2,
   .download-section h2 {
     font-size: 36px;
+  }
+
+  .promo-strip {
+    gap: 36px;
+    width: calc(100% - 40px);
+    padding-bottom: 90px;
+  }
+
+  .promo-shot figcaption {
+    font-size: 12px;
   }
 
   .feature-row,

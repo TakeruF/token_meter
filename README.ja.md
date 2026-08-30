@@ -1,8 +1,24 @@
 # Token Meter
 
+[English](README.md) · **日本語** · [简体中文](README.zh-CN.md) · [한국어](README.ko.md)
+
 Claude Code、Codex、Copilot CLIの利用状況を確認するmacOS / Windowsネイティブアプリ。
 
 [公式ページ・ダウンロード](https://takeruf.github.io/token_meter/) · [GitHub Releases](https://github.com/TakeruF/token_meter/releases/latest)
+
+## スクリーンショット
+
+**メニューバーとウィジェットで、残量をひと目で。**
+
+![メニューバーのポップオーバーと3サイズのウィジェットでClaudeとCodexの残量を表示するMac](docs/screenshots/promo-at-a-glance.jpg)
+
+**ダッシュボードで、日別・モデル別の内訳まで。**
+
+![日別の推移、トークン内訳、モデル別使用量を表示するToken Meterのダッシュボード](docs/screenshots/promo-dashboard.jpg)
+
+**日本語 / English / 中文 / 한국어に対応。**
+
+![英語・日本語・中国語・韓国語を選べるToken Meterの設定画面](docs/screenshots/promo-languages.jpg)
 
 ## Code signing policy
 
