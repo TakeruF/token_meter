@@ -1,118 +1,144 @@
 # Token Meter
 
-Claude Code、Codex、Copilot CLIの利用状況を確認するmacOS / Windowsネイティブアプリ。
+**English** · [日本語](README.ja.md) · [简体中文](README.zh-CN.md) · [한국어](README.ko.md)
 
-[公式ページ・ダウンロード](https://takeruf.github.io/token_meter/) · [GitHub Releases](https://github.com/TakeruF/token_meter/releases/latest)
+A native macOS / Windows app for keeping an eye on Claude Code, Codex, and Copilot CLI usage.
+
+[<img src="https://raw.githubusercontent.com/machiav3lli/oandbackupx/main/badge_github.png" alt="Get it on GitHub" height="60">](https://github.com/TakeruF/token_meter/releases/latest)
+
+[Website · Download](https://takeruf.github.io/token_meter/) · [GitHub Releases](https://github.com/TakeruF/token_meter/releases/latest)
+
+## Screenshots
+
+**Menu bar and widgets — usage at a glance.**
+
+![A Mac showing the Token Meter menu bar popover and widgets with Claude and Codex usage](docs/screenshots/promo-at-a-glance.jpg)
+
+**The dashboard breaks usage down by day and by model.**
+
+![The Token Meter dashboard showing daily trends, a token breakdown, and per-model usage](docs/screenshots/promo-dashboard.jpg)
+
+**Available in English, Japanese, Chinese, and Korean.**
+
+![The Token Meter settings screen with the English, Japanese, Chinese, and Korean language picker open](docs/screenshots/promo-languages.jpg)
 
 ## Code signing policy
 
-Windows直接配布版の署名元、承認手順、担当者、プライバシー条件は
-[Code signing policy](CODE_SIGNING.md)で公開しています。SignPath Foundationへの申請は準備中であり、
-承認前のバイナリをSignPath署名済みとは表示しません。
+The signing authority, approval procedure, maintainers, and privacy terms for the direct-download
+Windows build are published in the [Code signing policy](CODE_SIGNING.md). The application to the
+SignPath Foundation is still in preparation, and binaries are not presented as SignPath-signed
+before that approval.
 
-macOS版はSwift / SwiftUI / WidgetKit、Windows版はC# / .NET 10 / WinUI 3。WebViewもElectronも使っていない。
-トークン履歴はローカルで集計する。ユーザーが明示的に有効化した場合だけ、Claude Pro / Maxの
-使用量確認のためAnthropicのOAuth使用量エンドポイントへ通信する。
+macOS is Swift / SwiftUI / WidgetKit; Windows is C# / .NET 10 / WinUI 3. No WebView, no Electron.
+Token history is aggregated locally. Only when you explicitly enable it does the app talk to
+Anthropic's OAuth usage endpoint to check Claude Pro / Max usage.
 
 ---
 
-## ⚠️ 最初に読んでほしいこと（このアプリで取得できるもの・できないもの）
+## ⚠️ Read this first — what this app can and cannot show
 
-実機調査の結果（詳細は [docs/data-sources.md](docs/data-sources.md)）:
+Findings from testing against real logs (details in [docs/data-sources.md](docs/data-sources.md)):
 
 | | Claude Code | Codex | Copilot CLI |
 |---|---|---|---|
-| トークン使用量（入力 / キャッシュ / 出力） | ✅ | ✅ | ✅ セッション終了時 |
-| 推論トークン | ❌ 分離されていない | ✅ | ❌ 報告されない |
-| 使用モデル | ✅ | ✅ | ✅ |
-| 履歴・日別集計 | ✅ | ✅ | ✅ |
-| **5時間枠のトークン数** | ⚠️ 実測（枠の区切りは推定） | ✅ Codexが5h枠を報告した時のみ | ❌ 枠の概念が無い |
-| **週次のトークン数** | ⚠️ 実測（直近7日のローリング） | ✅ 実際の週次枠 | ❌ |
-| **利用率（%）** | ✅ OAuth連携有効時 | ✅ | ❌ ローカルに無い |
-| **残り利用可能量** | ✅ OAuth連携有効時 | ✅ | ❌ |
-| **利用枠のリセット時刻** | ✅ OAuth連携有効時（ローカル値は推定） | ✅ 報告値 | ❌ |
-| コンテキスト窓サイズ | ❌ 取得不可 | ✅ | ❌ |
+| Token usage (input / cache / output) | ✅ | ✅ | ✅ at session end |
+| Reasoning tokens | ❌ not separated | ✅ | ❌ not reported |
+| Model used | ✅ | ✅ | ✅ |
+| History and daily totals | ✅ | ✅ | ✅ |
+| **Tokens in the 5-hour window** | ⚠️ measured (window boundary estimated) | ✅ only when Codex reports a 5h window | ❌ no such concept |
+| **Tokens in the weekly window** | ⚠️ measured (rolling last 7 days) | ✅ the real weekly window | ❌ |
+| **Usage percentage** | ✅ when the OAuth integration is on | ✅ | ❌ not available locally |
+| **Remaining allowance** | ✅ when the OAuth integration is on | ✅ | ❌ |
+| **Window reset time** | ✅ when the OAuth integration is on (local value is an estimate) | ✅ as reported | ❌ |
+| Context window size | ❌ unavailable | ✅ | ❌ |
 
-**Claude Code は利用率・残量・リセット時刻をローカルログには書き出していない。**
-`claude` CLI に `usage` サブコマンドは存在せず（`--help` の全コマンドを確認済み）、
-`/usage` は対話セッション内のスラッシュコマンドのみ。設定ファイルにも該当する値は無い。
+**Claude Code does not write usage percentage, remaining allowance, or reset time to its local logs.**
+The `claude` CLI has no `usage` subcommand (every command in `--help` was checked), and `/usage` is
+only a slash command inside an interactive session. The configuration files hold no such values either.
 
-設定でClaude OAuth使用量チェックを有効にすると、macOS Keychainの
-`Claude Code-credentials`をSecurity Frameworkで読み、`GET https://api.anthropic.com/api/oauth/usage`
-から5時間・7日・任意のSonnet 7日枠を取得する。無効時や取得不能時に推定の割合は表示しない。
+When you turn on the Claude OAuth usage check in Settings, the app reads `Claude Code-credentials`
+from the macOS Keychain through the Security framework and calls
+`GET https://api.anthropic.com/api/oauth/usage` for the 5-hour, 7-day, and optional Sonnet 7-day
+windows. When the integration is off or the call fails, no estimated percentage is shown.
 
-### なぜ「プランを選んで%を出す」ができないのか
+### Why "pick your plan and show a percentage" is not possible
 
-Anthropic は**プランごとのトークン上限を公開していない**。
-制限は「会話の長さ・複雑さ・使用モデル・effort」で変動すると説明されており、固定の数値が無い。
-さらに (1) Opus は Sonnet の数倍のコストで数えられる（倍率は非公開）、
-(2) 利用枠は claude.ai (Web/デスクトップ/モバイル) と共有で、他のマシンの利用も同じ枠を消費する。
+Anthropic **does not publish per-plan token limits**. The limits are described as varying with
+conversation length, complexity, model, and effort, so there is no fixed number. On top of that,
+(1) Opus counts several times more than Sonnet (the multiplier is not published), and
+(2) the allowance is shared with claude.ai (web / desktop / mobile), so usage on other machines
+consumes the same budget.
 
-分母が存在せず、分子（このMacのClaude Codeログ）も不完全なので、ローカル値から割合を計算しない。
-表示する割合はAnthropicの使用量レスポンスに含まれる値だけである。
+There is no denominator, and the numerator (this Mac's Claude Code logs) is incomplete, so the app
+never computes a percentage from local values. The only percentages shown are the ones contained in
+Anthropic's usage response.
 
-### 代わりに出しているもの（すべて実測）
+### What is shown instead (all measured)
 
-| | 中身 | リセット時刻 |
+| | Contents | Reset time |
 |---|---|---|
-| Claude Code · 5時間枠 | 現在のセッションブロックのトークン数 | ⚠️ **推定**（下記） |
-| Claude Code · 直近7日 | 7日間のローリング合計 | なし（週次の起点が不明なため） |
-| Codex · 5時間枠 / 週次枠 | その枠の中で消費したトークン数 | ✅ Codex の報告値 |
-| Copilot CLI · 今日 / 履歴 | セッション終了時に確定したモデル別トークン数 | なし（利用枠を公開していないため） |
+| Claude Code · 5-hour window | Tokens in the current session block | ⚠️ **estimated** (see below) |
+| Claude Code · last 7 days | Rolling 7-day total | None (the weekly start point is unknown) |
+| Codex · 5-hour / weekly window | Tokens consumed inside that window | ✅ as reported by Codex |
+| Copilot CLI · today / history | Per-model token counts finalized at session end | None (no published allowance) |
 
-Anthropic は「5時間のセッション枠は最初のメッセージで始まり5時間続く」と説明している。
-Claude Code の5時間リセット時刻は、**この規則をローカルのログに当てはめて再現したもの**であり、
-Anthropic が出力した値ではない。UI 上では常に *estimated* と明記され、
-「このMacの Claude Code のログのみを集計」という注記が付く。
+Anthropic states that "the 5-hour session window starts with your first message and lasts 5 hours."
+Claude Code's 5-hour reset time here is **that rule reproduced against local logs**, not a value
+Anthropic emitted. The UI always labels it *estimated* and notes that it is "counted from this Mac's
+Claude logs only."
 
-Codex は `rate_limits`（`used_percent` / `resets_at` / `window_minutes`）をログに書き出しているので、
-利用率・残量・リセット時刻をすべて実データとして表示できる。
-枠の開始時刻も `resets_at - window_minutes` で確定するため、枠内のトークン数も実測値になる。
+Codex writes `rate_limits` (`used_percent` / `resets_at` / `window_minutes`) to its logs, so usage
+percentage, remaining allowance, and reset time can all be shown as real data. The window start is
+also determined as `resets_at - window_minutes`, which makes the in-window token count measured too.
 
-Copilot CLI は利用枠をローカルへ書き出していないため、割合・残量・リセット時刻はいずれも表示しない。
-トークン数は `session.shutdown` イベントのモデル別累積値から求めるので、**セッションを終了した時点で反映される**
-（実行中のセッションはまだ計上されない）。
+Copilot CLI publishes no allowance locally, so no percentage, remaining allowance, or reset time is
+shown. Token counts come from the per-model cumulative values in the `session.shutdown` event, so
+they **appear once you end a session** (a running session is not counted yet).
 
-これらの表示は **設定 > Time windows** で個別にオフにできる。
+Each of these rows can be turned off individually under **Settings > Time windows**.
 
 ---
 
-## 対応環境
+## Requirements
 
 | | |
 |---|---|
-| macOS | 14.0 以降（開発・動作確認は macOS 26.5） |
-| Xcode | 15 以降（動作確認は Xcode 26.2） |
-| Swift | 5.9 以降（動作確認は 6.2.3） |
-| 生成ツール | [XcodeGen](https://github.com/yonaskolb/XcodeGen)（`brew install xcodegen`） |
-| Windows | Windows 11 x64（Windows版v1） |
+| macOS | 14.0 or later (developed and verified on macOS 26.5) |
+| Xcode | 15 or later (verified on Xcode 26.2) |
+| Swift | 5.9 or later (verified on 6.2.3) |
+| Project generator | [XcodeGen](https://github.com/yonaskolb/XcodeGen) (`brew install xcodegen`) |
+| Windows | Windows 11 x64 (Windows v1) |
 | Windows SDK | .NET 10 LTS / Windows App SDK Stable / WinUI 3 |
 
-Windows版は`Windows/`配下の独立したsolutionです。通知領域、ダッシュボード、設定、通知、英語・日本語・簡体字中国語・韓国語、Claude Code・Codex・Copilot CLIに対応します。Microsoft StoreのMSIXに加え、信頼済み署名MSIXを内包した`TokenMeterSetup.exe`も生成できます。ビルド、署名、Store提出前の実機確認は[Windows/README.md](Windows/README.md)を参照してください。
+The Windows app is a separate solution under `Windows/`. It supports the notification area,
+dashboard, settings, notifications, English / Japanese / Simplified Chinese / Korean, and
+Claude Code / Codex / Copilot CLI. Besides the Microsoft Store MSIX, it can also produce
+`TokenMeterSetup.exe` with a Trusted Signing MSIX bundled inside. See
+[Windows/README.md](Windows/README.md) for building, signing, and pre-submission verification.
 
-Windows版の削除方法とインストール時に行うシステム変更は
-[Windows installation and uninstallation](docs/windows-uninstall.md)を参照してください。
+For how to uninstall the Windows build and what system changes the installer makes, see
+[Windows installation and uninstallation](docs/windows-uninstall.md).
 
-## ビルド
+## Building
 
 ```bash
-# 1. Xcodeプロジェクトを生成（project.yml から）
+# 1. Generate the Xcode project (from project.yml)
 xcodegen generate
 
-# 2. ビルド
-open TokenMeter.xcodeproj    # Xcode から ⌘R
+# 2. Build
+open TokenMeter.xcodeproj    # then ⌘R in Xcode
 
-# またはコマンドラインで
+# or from the command line
 xcodebuild -project TokenMeter.xcodeproj -scheme TokenMeter \
   -configuration Debug -destination 'platform=macOS' build
 ```
 
-### 署名について（Widget を使うなら必須）
+### Signing (required if you want the widget)
 
-Developer Team `B97M43J5TT` とAutomatic Signingを`project.yml`に設定している。
-両ターゲットはApp Group `group.com.tokenmeter.b97m43j5tt.shared`を使用する。
+`project.yml` sets Developer Team `B97M43J5TT` and automatic signing. Both targets use the App Group
+`group.com.tokenmeter.b97m43j5tt.shared`.
 
-初回ビルドではXcodeにApple Accountを追加したうえで、Provisioning Profileの作成を許可する:
+For the first build, add your Apple Account to Xcode and allow provisioning profiles to be created:
 
 ```bash
 xcodebuild -project TokenMeter.xcodeproj -scheme TokenMeter \
@@ -120,284 +146,315 @@ xcodebuild -project TokenMeter.xcodeproj -scheme TokenMeter \
   -allowProvisioningUpdates -allowProvisioningDeviceRegistration build
 ```
 
-署名を無効にしたローカルビルドではApp Groupを利用できず、アプリ本体だけローカルディレクトリへ
-フォールバックする。利用状況は **設定 > Diagnostics** の`App Group: Active` / `Unavailable`で確認できる。
+A local build with signing disabled cannot use the App Group; only the main app falls back to a local
+directory. You can check which is in effect under **Settings > Diagnostics**
+(`App Group: Active` / `Unavailable`).
 
-### Developer ID配布
+### Developer ID distribution
 
-Release Archive、Developer ID署名、Notarization、配布用ZIP作成をスクリプト化している。
+Release archiving, Developer ID signing, notarization, and building the distribution ZIP are scripted.
 
 ```bash
-# テスト、Archive、Developer ID署名、Notary Serviceへのアップロード
+# Test, archive, sign with Developer ID, and upload to the Notary Service
 ./scripts/release.sh prepare
 
-# AppleのNotarization承認後、チケット付きアプリとZIPを書き出す
+# After Apple approves notarization, export the stapled app and ZIP
 ./scripts/release.sh finish
 ```
 
-出力は`build/TokenMeter-<version>.zip`。ZIPを展開し、`TokenMeter.app`を`/Applications`へ移動する。
-DMGで配布する場合は、アプリだけでなく最終DMGコンテナにもDeveloper ID署名とNotarizationを行うこと。
-プライバシーポリシーは[docs/privacy.md](docs/privacy.md)を参照。
+The output is `build/TokenMeter-<version>.zip`. Unzip it and move `TokenMeter.app` to `/Applications`.
+If you distribute a DMG, sign and notarize the final DMG container as well, not just the app.
+See [docs/privacy.md](docs/privacy.md) for the privacy policy.
 
-### アプリ内アップデート
+### In-app updates
 
-Sparkle 2を使用し、起動中に更新を自動確認する。更新があれば標準の通知画面からリリースノートを確認し、
-署名済みZIPをダウンロードしてアプリを置き換えられる。Settings > Updatesまたはアプリメニューの
-`Check for Updates…`から手動確認も可能。
+Sparkle 2 checks for updates automatically while the app runs. When an update is available you can
+read the release notes in the standard update window, download the signed ZIP, and replace the app.
+Manual checks are available from Settings > Updates or `Check for Updates…` in the app menu.
 
-更新フィードはリポジトリ直下の`appcast.xml`、配布ZIPはGitHub Releasesに置く。
-`./scripts/release.sh finish`は、Keychain内のSparkle EdDSA鍵（account: `com.tokenmeter.app`）でZIPへ署名し、
-`appcast.xml`を更新する。秘密鍵はリポジトリへ保存しない。
+The update feed is `appcast.xml` at the repository root, and the distribution ZIPs live in GitHub
+Releases. `./scripts/release.sh finish` signs the ZIP with the Sparkle EdDSA key in the Keychain
+(account: `com.tokenmeter.app`) and updates `appcast.xml`. The private key is never stored in the
+repository.
 
-リリースごとに`MARKETING_VERSION`と、Sparkleが比較に使う`CURRENT_PROJECT_VERSION`を増やしてから実行する。
-完了後は次の2点を行う:
+For each release, bump `MARKETING_VERSION` and `CURRENT_PROJECT_VERSION` (the value Sparkle compares)
+before running the script. Afterwards, do two things:
 
-1. `v<version>`タグのGitHub Releaseへ`build/TokenMeter-<version>.zip`をアップロード
-2. 更新された`appcast.xml`をmainブランチへcommit/push
+1. Upload `build/TokenMeter-<version>.zip` to the GitHub Release for the `v<version>` tag
+2. Commit and push the updated `appcast.xml` to `main`
 
-## テスト
+## Tests
 
-パーサーとストアのテストは Swift Package 側にある。
+The parser and store tests live in the Swift package.
 
 ```bash
 swift test --package-path TokenMeterCore
 # 111 tests, 0 failures
 ```
 
-カバーしている内容:
+What is covered:
 
-- Claude Code / Codex / Copilot CLI パーサー（実ログから作った匿名化 fixture を使用）
-- **時間枠**（5時間ブロックの区切り、期限切れ枠は表示しない、報告された枠の開始時刻の算出、
-  ローリング枠にリセット時刻を付けない、推定/報告の区別がWidget JSONを越えても失われない）
-- **重複排除**（Claude Code の同一メッセージ重複、Codex の同値イベント）
-- **累積トークンの差分計算**（セッション再開時の二重計上防止、カウンタリセット）
-- **Claude OAuth 使用量照会**（Keychain JSONの形状変化、期限切れトークン、401/403/429/500・
-  ネットワーク断・API形式変更の分類、メモリキャッシュと同時リクエストの集約、
-  Widget JSONに資格情報が載らないこと）
-- **利用枠リセットの検出**（5時間枠のロールオーバーを週次と誤認しない、消費や初回観測をリセットとしない）
-- 不完全なJSON / 未知のフィールド / 空ファイル / 壊れたJSONL
-- 日付変更・タイムゾーン処理（UTCログ → ローカル日付）
-- Widget用JSONの読み書き（並行書き込み・破損ファイル）
-- データソース未検出時・増分読み込み
+- Claude Code / Codex / Copilot CLI parsers (using anonymized fixtures built from real logs)
+- **Time windows** (5-hour block boundaries, hiding expired windows, deriving a reported window's
+  start time, not attaching a reset time to rolling windows, and keeping the estimated/reported
+  distinction intact across the widget JSON)
+- **Deduplication** (repeated Claude Code messages, identical Codex events)
+- **Cumulative token deltas** (no double counting when a session resumes, counter resets)
+- **Claude OAuth usage lookups** (shape changes in the Keychain JSON, expired tokens, classification
+  of 401/403/429/500, network loss, and API format changes, in-memory caching and coalescing of
+  concurrent requests, and the absence of credentials in the widget JSON)
+- **Allowance reset detection** (not mistaking a 5-hour rollover for a weekly one, not treating
+  consumption or a first observation as a reset)
+- Incomplete JSON / unknown fields / empty files / corrupt JSONL
+- Date rollover and time zone handling (UTC logs → local dates)
+- Reading and writing the widget JSON (concurrent writes, corrupt files)
+- Missing data sources and incremental reads
 
-fixture は実データから生成しているが、**プロンプト本文・応答本文・認証情報・個人情報は完全に除去**してある
-（`TokenMeterCore/Tests/TokenMeterCoreTests/Fixtures/`）。
+The fixtures are generated from real data, but **prompt bodies, response bodies, credentials, and
+personal information are completely stripped**
+(`TokenMeterCore/Tests/TokenMeterCoreTests/Fixtures/`).
 
-Windows版のテストは`Windows/`配下の.NET側にあり、この匿名化 fixture を共有している。
-実行方法は[Windows/README.md](Windows/README.md)を参照。
+The Windows tests live on the .NET side under `Windows/` and share the same anonymized fixtures.
+See [Windows/README.md](Windows/README.md) for how to run them.
 
-## 初期設定
+## Getting set up
 
-初回起動時はセットアップ画面が開く（メニューバーの Token Meter → Dashboard → Setup からいつでも開ける）。
+The setup screen opens on first launch (and any time from Token Meter in the menu bar → Dashboard →
+Setup).
 
-- 各プロバイダの接続状態と、未接続時の具体的な対処（コマンドはコピーできる）
-- メニューバーに表示するかどうか、表示形式、表示項目
-- 何を読み取っているかの明示
+- Connection status for each provider, with concrete fixes when a provider is not connected
+  (commands are copyable)
+- Whether to show in the menu bar, the display style, and which items to show
+- An explicit statement of what is being read
 
-### Claude Code との接続
+### Connecting Claude Code
 
-**設定は不要。** Claude Code を1回でも使っていれば自動的に検出される。
+**No configuration needed.** If you have used Claude Code even once, it is detected automatically.
 
-- 読み取り先: `~/.claude/projects/<プロジェクト>/<セッションID>.jsonl`
-- `claude` CLI が PATH に無くても動く（ログファイルだけを読むため）
-- 何も表示されない場合は、Claude Code でセッションを1回実行する
+- Reads: `~/.claude/projects/<project>/<session-id>.jsonl`
+- Works even if the `claude` CLI is not on your PATH (only log files are read)
+- If nothing appears, run one session in Claude Code
 
-### Codex との接続
+### Connecting Codex
 
-- 読み取り先: `~/.codex/sessions/YYYY/MM/DD/rollout-*.jsonl`
-- 未インストールなら: `brew install --cask codex`
-- 未ログインなら: `codex login`
-- ログイン後、Codex を1回実行するとログが書かれ、利用率が表示される
+- Reads: `~/.codex/sessions/YYYY/MM/DD/rollout-*.jsonl`
+- If not installed: `brew install --cask codex`
+- If not signed in: `codex login`
+- After signing in, run Codex once so logs are written and the usage percentage appears
 
-**認証ファイル（`~/.codex/auth.json`）は開かない。** ログイン判定はファイルの存在確認のみ。
+**The credential file (`~/.codex/auth.json`) is never opened.** Sign-in is determined by checking
+that the file exists, nothing more.
 
-### Copilot CLI との接続
+### Connecting Copilot CLI
 
-- 読み取り先: `~/.copilot/session-state/<セッションID>/events.jsonl`
-- 未インストールなら: `npm install -g @github/copilot`
-- `copilot` CLI が PATH に無くても動く（セッションログだけを読むため）
-- トークン数は`session.shutdown`に書かれるので、**セッションを1回終了する**と表示される
-- Copilot は利用枠をローカルへ公開していないため、利用率・残量・リセット時刻は表示しない
+- Reads: `~/.copilot/session-state/<session-id>/events.jsonl`
+- If not installed: `npm install -g @github/copilot`
+- Works even if the `copilot` CLI is not on your PATH (only session logs are read)
+- Token counts are written on `session.shutdown`, so **end one session** for them to appear
+- Copilot does not publish its allowance locally, so no percentage, remaining allowance, or reset
+  time is shown
 
-### Widget の追加
+### Adding the widget
 
-1. アプリを1回起動する（スナップショットが書かれる）
-2. デスクトップを右クリック →「ウィジェットを編集」
-3. Token Meter を選び、Small / Medium / Large から選択
-4. Widget をクリックするとアプリのダッシュボードが開く
+1. Launch the app once (so a snapshot is written)
+2. Right-click the desktop → "Edit Widgets"
+3. Pick Token Meter and choose Small / Medium / Large
+4. Clicking the widget opens the app's dashboard
 
-Widget は**ログを直接読まない**。本体アプリが App Group に書いた JSON スナップショットだけを読む。
+The widget **never reads logs directly**. It only reads the JSON snapshot the main app wrote to the
+App Group.
 
-| サイズ | 表示内容 |
+| Size | Contents |
 |---|---|
-| Small | Claude / Codex の残量（またはトークン数）、最終更新時刻 |
-| Medium | プログレスバー、次の5時間リセットまでの時間、今日のトークン |
-| Large | 上記 + 5時間枠 / 今日 / 週次（または直近7日）のトークン、簡易グラフ |
+| Small | Claude / Codex remaining (or token counts) and the last update time |
+| Medium | Progress bars, time until the next 5-hour reset, today's tokens |
+| Large | The above plus 5-hour / today / weekly (or last 7 days) tokens and a compact chart |
 
-推定のリセット時刻には Widget 上でも `est.` が付く。
+Estimated reset times are marked `est.` in the widget too.
 
-## データ保存場所
+## Where data is stored
 
-| データ | 場所 |
+| Data | Location |
 |---|---|
-| 履歴DB（SQLite） | `~/Library/Application Support/TokenMeter/history.sqlite` |
-| Widget用スナップショット | `~/Library/Group Containers/group.com.tokenmeter.b97m43j5tt.shared/snapshot.json` |
-| （App Group未使用時） | `~/Library/Application Support/TokenMeter/snapshot.json` |
-| 設定 | UserDefaults |
+| History database (SQLite) | `~/Library/Application Support/TokenMeter/history.sqlite` |
+| Widget snapshot | `~/Library/Group Containers/group.com.tokenmeter.b97m43j5tt.shared/snapshot.json` |
+| (when the App Group is unavailable) | `~/Library/Application Support/TokenMeter/snapshot.json` |
+| Settings | UserDefaults |
 
-スナップショットは一時ファイルに書いてからアトミックに置換するため、書き込み中の破損は起きない。
+The snapshot is written to a temporary file and swapped in atomically, so a write in progress cannot
+corrupt it.
 
-## セキュリティ方針
+## Security policy
 
-- **認証トークンを保存しない。** DB にも UserDefaults にも書かない
-- Claude連携を有効にした場合だけ、Security Frameworkの`SecItemCopyMatching`で
-  `Claude Code-credentials`を読み、アクセストークンをAnthropicの固定エンドポイントだけへ送る
-- **CLIの認証ファイルを読まない・コピーしない。** `~/.codex/auth.json` は存在確認のみ、中身は開かない
-- **プロンプト本文・応答本文を保存しない。** パース対象は `usage` / `token_count` 相当のフィールドのみ
-- 保存するのは **トークン数・日時・モデル名・利用率・リセット時刻** だけ
-- Claude OAuth使用量照会とGitHubへのアプリ更新確認以外の外部送信は行わない。Analytics・クラッシュレポートは使用しない
-- ファイルアクセスは `~/.claude/projects`、`~/.codex/sessions`、`~/.copilot/session-state`、
-  任意連携時のKeychain項目だけ
-- ログに秘密情報を出力しない
-- Widget はサンドボックス内で動作し、App Group の JSON しか読めない
+- **No credentials are stored.** Nothing is written to the database or to UserDefaults
+- Only when the Claude integration is enabled does the app read `Claude Code-credentials` via the
+  Security framework's `SecItemCopyMatching` and send the access token to Anthropic's fixed endpoint
+  and nowhere else
+- **CLI credential files are never read or copied.** `~/.codex/auth.json` is only checked for
+  existence; its contents are never opened
+- **Prompt and response bodies are never stored.** Only fields equivalent to `usage` / `token_count`
+  are parsed
+- What is stored is **token counts, timestamps, model names, usage percentages, and reset times** —
+  nothing else
+- Nothing is sent externally other than the Claude OAuth usage lookup and the app update check
+  against GitHub. No analytics, no crash reporting
+- File access is limited to `~/.claude/projects`, `~/.codex/sessions`, `~/.copilot/session-state`,
+  and the Keychain item when the optional integration is enabled
+- No secrets are written to logs
+- The widget runs sandboxed and can only read the App Group JSON
 
-本体アプリは App Sandbox を無効にしている。`~/.claude`・`~/.codex`・`~/.copilot` はサンドボックス
-コンテナの外にあり、読み取りに必要なため。書き込みは自身の Application Support と App Group のみ。
+The main app has App Sandbox disabled. `~/.claude`, `~/.codex`, and `~/.copilot` live outside the
+sandbox container and must be readable. Writes go only to its own Application Support directory and
+the App Group.
 
-Token Meter自身はKeychainへ資格情報を書き込まない。Claude Codeが保存した項目を使用量照会中だけ読む。
+Token Meter never writes credentials to the Keychain. It reads the item Claude Code stored, and only
+for the duration of a usage lookup.
 
-### Keychain / Sandbox / 配布上の制約
+### Keychain / sandbox / distribution constraints
 
-- 現在の本体ターゲットは`ENABLE_APP_SANDBOX=NO`で、Keychain access groupは指定していない。
-  直接配布版では一般のGeneric Passwordを`SecItemCopyMatching`で照会できるが、項目のACLによって
-  初回アクセス確認が出る、または拒否される場合がある。
-- WidgetはSandbox有効だがKeychainにもネットワークにも触れず、本体が資格情報を除いて書いた
-  App Groupスナップショットだけを読む。
-- Sandboxを有効にすると、Claude Codeとは署名チーム／Keychain access groupを共有していないため、
-  Claude Codeが作成した項目を通常は読めない。勝手にSandboxを無効化するフォールバックは行わない。
-- Mac App Store版はSandboxが原則必要なうえ、現在のローカルログ読み取りにも同じ制約があるため、
-  この方式のClaude連携をそのまま提供するのは現実的ではない。Anthropicが公式API／共有access group／
-  安全なIPCを提供しない限り、直接配布の非Sandbox版が実用的な構成となる。
-- トークン手入力は実装しない。Sandbox版が必要なら、ユーザーが明示的に起動する非Sandboxの
-  署名済みヘルパーまたはClaude Code側の公式ローカル連携が必要だが、現時点では採用していない。
+- The current main target uses `ENABLE_APP_SANDBOX=NO` and specifies no Keychain access group.
+  In the direct-download build, a generic password item can be queried with `SecItemCopyMatching`,
+  but depending on the item's ACL macOS may prompt on first access, or deny it.
+- The widget is sandboxed but touches neither the Keychain nor the network; it only reads the App
+  Group snapshot the main app wrote with credentials excluded.
+- With the sandbox enabled, items created by Claude Code generally cannot be read, because the app
+  shares neither a signing team nor a Keychain access group with Claude Code. The app does not
+  silently disable the sandbox as a fallback.
+- A Mac App Store build effectively requires the sandbox, and the same constraint applies to the
+  current local log reading, so shipping this style of Claude integration there is not realistic.
+  Unless Anthropic provides an official API, a shared access group, or safe IPC, a directly
+  distributed non-sandboxed build is the practical arrangement.
+- Manual token entry will not be implemented. A sandboxed build would need either a signed
+  non-sandboxed helper that the user launches explicitly, or an official local integration on the
+  Claude Code side; neither is adopted at this point.
 
-## 更新のタイミング
+## When data refreshes
 
-| 経路 | 実装 |
+| Trigger | Implementation |
 |---|---|
-| アプリ起動時 | `applicationDidFinishLaunching` |
-| CLIログ更新時 | FSEvents（3秒デバウンス） |
-| 一定間隔 | タイマー（既定5分。最短1分） |
-| 手動更新 | メニューバー / ダッシュボードの更新ボタン |
-| macOS復帰時 | `NSWorkspace.didWakeNotification` |
-| 日付変更時 | `NSCalendarDayChanged` |
+| App launch | `applicationDidFinishLaunching` |
+| CLI log changes | FSEvents (3-second debounce) |
+| On an interval | Timer (5 minutes by default, 1 minute minimum) |
+| Manual refresh | The refresh button in the menu bar / dashboard |
+| Waking from sleep | `NSWorkspace.didWakeNotification` |
+| Date change | `NSCalendarDayChanged` |
 
-更新は直列化してあり、同時実行しない。タイムアウトあり。
-ログは**追記分だけ**を読む（ファイルオフセットを永続化）ので、2回目以降は軽い。
-Claude OAuthの成功値はメモリに5分キャッシュし、失敗時も前回値とその更新時刻を維持する。
+Refreshes are serialized, never concurrent, and time out. Logs are read **append-only** (file offsets
+are persisted), so every read after the first is cheap. Successful Claude OAuth values are cached in
+memory for 5 minutes, and on failure the previous value and its timestamp are kept.
 
-## トラブルシューティング
+## Troubleshooting
 
-**メニューバーに何も出ない**
-→ まず 設定 > メニューバー >「Show Token Meter in the menu bar」を確認。
-これをオフにすると Dock アイコンに切り替わる（ウィンドウを開けなくならないように）。
+**Nothing appears in the menu bar**
+→ First check Settings > Menu bar > "Show Token Meter in the menu bar". Turning it off switches to a
+Dock icon instead (so you can never lock yourself out of the window).
 
-→ オンなのに見えない場合、**メニューバーの空きが足りずに macOS が項目を隠している**可能性が高い。
-ノッチ付きMacで、前面アプリのメニューが多いときに起きる。実機で確認した挙動として、
-このときステータス項目自体は生成されている（`NSStatusBarWindow` が画面外座標に配置される）。
-メニューバーの `•••` をクリックするか、他のメニューバー常駐アプリを減らすと表示される。
-表示形式を Compact / Icon only にすると幅が縮むので改善することがある。
+→ If it is on but still invisible, the likely cause is that **macOS is hiding the item because the
+menu bar is out of room**. This happens on notched Macs when the frontmost app has many menus. As
+verified on a real machine, the status item itself does exist in this state (`NSStatusBarWindow` is
+placed at off-screen coordinates). Click `•••` in the menu bar, or reduce the number of menu bar apps.
+Switching the display style to Compact or Icon only narrows the item and can help.
 
-**Claude Code の利用率が出ない**
-→ 設定 > Claude Pro / Max usage でOAuth使用量チェックを有効にし、Claude Codeでログイン済みか確認する。
-Keychain拒否、401/403、レート制限、オフライン、API形式変更は画面上で区別して表示する。
-連携を無効にした場合も5時間枠・直近7日のローカルトークン数は表示できる。
+**No Claude Code usage percentage**
+→ Enable the OAuth usage check under Settings > Claude Pro / Max usage and confirm you are signed in
+to Claude Code. Keychain denial, 401/403, rate limiting, being offline, and API format changes are
+reported distinctly on screen. Even with the integration off, local token counts for the 5-hour
+window and last 7 days are still shown.
 
-**Claude Code の5時間リセット時刻がずれている気がする**
-→ その可能性はある。この時刻は Anthropic が出力した値ではなく、
-「セッションは最初のメッセージで始まり5時間続く」という公開仕様を
-**このMacのログに当てはめて再現した推定値**（UI では *estimated* と表示）。
-claude.ai のブラウザ利用や他のマシンでの Claude Code 利用で枠が始まっていた場合、
-こちらの推定は実際より遅くなる。正確な値は Claude Code 内の `/usage` で確認できる。
+**The Claude Code 5-hour reset time looks wrong**
+→ It may well be. That time is not a value Anthropic emitted; it is **an estimate produced by
+applying the published rule ("a session starts with your first message and lasts 5 hours") to this
+Mac's logs** (labeled *estimated* in the UI). If the window actually started from claude.ai in a
+browser or from Claude Code on another machine, this estimate will be later than reality. For the
+accurate value, use `/usage` inside Claude Code.
 
-**Codex の5時間枠が表示されない**
-→ Codex は `rate_limits` に5時間枠を常に含めるわけではない（週次枠のみのセッションがある）。
-報告が無いときは推測せず、行ごと表示しない。
+**No Codex 5-hour window**
+→ Codex does not always include a 5-hour window in `rate_limits` (some sessions report only the
+weekly one). When it is not reported, the app does not guess — it hides the row.
 
-**Codex の利用率が出ない**
-→ `codex login` 済みか、Codex を1回でも実行したかを確認。
-Setup 画面に具体的な対処が出る。
+**No Codex usage percentage**
+→ Check that you have run `codex login` and used Codex at least once. The Setup screen shows the
+specific fix.
 
-**Copilot CLI のトークン数が出ない**
-→ セッションを1回**終了**したか確認する。Copilot は `session.shutdown` イベントでしか
-トークン数を確定させないため、実行中のセッションは反映されない。
-Copilot に利用率・リセット時刻の行が無いのは仕様（ローカルログに存在しない）。
+**No Copilot CLI token counts**
+→ Check that you have **ended** a session at least once. Copilot only finalizes token counts in the
+`session.shutdown` event, so a running session is not reflected. The absence of percentage and reset
+time rows for Copilot is by design (they do not exist in the local logs).
 
-**Widget にデータが出ない**
-→ App Group には署名が必要。設定 > Diagnostics で `App Group: Unavailable` なら、
-Xcode で開発チームを設定して再ビルドする。
+**No data in the widget**
+→ The App Group requires signing. If Settings > Diagnostics shows `App Group: Unavailable`, set a
+development team in Xcode and rebuild.
 
-**数字が古い**
-→ 更新から1時間以上経過すると「Data may be outdated」と明示される。
-古いデータを最新のように見せることはしない。
+**The numbers look stale**
+→ More than an hour after the last refresh, the app says "Data may be outdated" explicitly. Stale
+data is never presented as current.
 
-**表示がおかしい / 数字を疑うとき**
-→ 設定 > Diagnostics に、DBパス・スナップショットパス・各プロバイダの検出状態・
-読み取り元パス・最終更新時刻・直近のエラーがすべて出る。
+**Something looks off, or you doubt a number**
+→ Settings > Diagnostics lists the database path, snapshot path, detection status for each provider,
+the paths being read, the last update time, and the most recent errors.
 
-## 構成
+## Layout
 
 ```
-TokenMeterCore/          Swift Package（UI非依存・テスト対象）
-  Models/                UsageSnapshot, UsageWindow, UsageEvent, TokenWindowUsage, 可用性・エラー
-  Parsing/               ClaudeCodeLogParser, CodexLogParser, CopilotLogParser, 増分JSONLリーダー
-  Providers/             UsageProvider プロトコルと3実装 + Claude OAuth 使用量照会
-  Persistence/           UsageStore(SQLite), SharedSnapshotStore(App Group)
-  Aggregation/           日次集計・モデル別集計
-  Monitoring/            FSEvents ディレクトリ監視
-  Support/               パス定義、利用枠リセット検出、残量から求める警告レベル
-TokenMeterApp/           メニューバー・ダッシュボード・設定・通知（英・日・簡体字中国語・韓国語）
+TokenMeterCore/          Swift package (UI-independent, the tested part)
+  Models/                UsageSnapshot, UsageWindow, UsageEvent, TokenWindowUsage, availability, errors
+  Parsing/               ClaudeCodeLogParser, CodexLogParser, CopilotLogParser, incremental JSONL reader
+  Providers/             The UsageProvider protocol, three implementations, Claude OAuth usage lookup
+  Persistence/           UsageStore (SQLite), SharedSnapshotStore (App Group)
+  Aggregation/           Daily and per-model aggregation
+  Monitoring/            FSEvents directory watching
+  Support/               Path definitions, allowance reset detection, warning levels from remaining usage
+TokenMeterApp/           Menu bar, dashboard, settings, notifications (en / ja / zh-Hans / ko)
 TokenMeterWidget/        Small / Medium / Large
-Windows/                 Windows版（C# / .NET 10 / WinUI 3、独立solution）
-docs/data-sources.md     データソース調査結果
-docs/claude-sign-in.md   Claude Codeのサインイン・Keychain許可の手動手順
-docs/release-runbook.md  macOSリリース手順
+Windows/                 The Windows app (C# / .NET 10 / WinUI 3, separate solution)
+docs/data-sources.md     Data source investigation results
+docs/claude-sign-in.md   Manual Claude Code sign-in and Keychain approval steps
+docs/release-runbook.md  macOS release procedure
 ```
 
-データ取得・ログ解析・UI は分離してある。Widget は Core のモデルだけを共有し、ログには触れない。
-Windows版はmacOS版のソースに依存せず、匿名化fixtureだけを共有する。
+Data collection, log parsing, and UI are kept separate. The widget shares only Core's models and
+never touches logs. The Windows app does not depend on the macOS sources; it shares only the
+anonymized fixtures.
 
-## 既知の制限
+## Known limitations
 
-- Claude使用量は非公開OAuthエンドポイントとClaude Codeの資格情報形式に依存し、予告なく動かなくなる可能性がある
-- Keychain項目のアクセス制御によっては、Sandbox無効の直接配布版でもユーザー許可または再署名後の再許可が必要
-- Claude Code の5時間枠の区切りは**推定**であり、claude.ai や他のマシンでの利用は見えない。
-  トークン数そのものは実測だが、「このMacの Claude Code 分だけ」の合計である
-- Codex の5時間枠は、Codex が `rate_limits` に含めたセッションでのみ表示される
-- Copilot CLI はセッション終了時にしかトークン数を確定させないため、実行中のセッションは反映されない。
-  利用枠をローカルへ公開していないので、利用率・残量・リセット時刻も表示できない
-- Widget が表示するのは Claude Code と Codex だけで、Copilot CLI は本体アプリ側（メニューバー・
-  ダッシュボード）にのみ表示される
-- 初回起動時は全ログを読むため数秒かかる（実測: 約4秒 / ログ約680MB）。2回目以降は差分のみ
-- メニューバーの空きが無いと macOS が項目を隠す（上記トラブルシューティング参照）
-- Developer ID署名済み・Notarization済みアプリでApp Groupコンテナ作成とスナップショット書き込みを確認済み。
-  Widgetのデスクトップ上での最終描画は別Macでの配布テストが必要
-- 目視確認済み: メニューバー項目・ポップオーバー・ダッシュボード・Setup 画面（ライト/ダーク両モード）。
-  ただし時間枠の行（5時間枠・週次）はダークモードでのみ実機確認しており、ライトモードは未確認
+- Claude usage depends on a private OAuth endpoint and on Claude Code's credential format, and may
+  stop working without notice
+- Depending on the Keychain item's access control, even the non-sandboxed direct-download build may
+  need user approval, or re-approval after re-signing
+- Claude Code's 5-hour window boundary is an **estimate**, and usage on claude.ai or on other
+  machines is invisible. The token counts themselves are measured, but they total "this Mac's
+  Claude Code usage only"
+- The Codex 5-hour window is shown only for sessions where Codex included it in `rate_limits`
+- Copilot CLI finalizes token counts only at session end, so running sessions are not reflected.
+  Because it publishes no allowance locally, percentage, remaining allowance, and reset time cannot
+  be shown either
+- The widget shows only Claude Code and Codex; Copilot CLI appears only in the main app (menu bar
+  and dashboard)
+- The first launch reads all logs and takes a few seconds (measured: about 4 seconds for ~680 MB of
+  logs). Subsequent launches read only the delta
+- macOS hides the menu bar item when there is no room (see troubleshooting above)
+- App Group container creation and snapshot writing are verified with the Developer ID-signed,
+  notarized app. Final widget rendering on the desktop still needs a distribution test on a
+  different Mac
+- Visually verified: the menu bar item, popover, dashboard, and Setup screen (both light and dark
+  mode). The time window rows (5-hour and weekly) have been verified on a real machine in dark mode
+  only; light mode is unverified
 
-## 貢献・報告
+## Contributing and reporting
 
 | | |
 |---|---|
-| プルリクエスト | [CONTRIBUTING.md](CONTRIBUTING.md) |
-| 行動規範 | [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md) |
-| 脆弱性の報告 | [SECURITY.md](SECURITY.md)（GitHubの非公開報告を使用。公開Issueにはしない） |
+| Pull requests | [CONTRIBUTING.md](CONTRIBUTING.md) |
+| Code of conduct | [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md) |
+| Reporting vulnerabilities | [SECURITY.md](SECURITY.md) (use GitHub private reporting, not a public issue) |
 
-Issue・PR・fixtureに、プロンプト本文・応答本文・認証情報・実際のパスなどの個人情報を含めないこと。
+Do not include personal information — prompt bodies, response bodies, credentials, real paths — in
+issues, pull requests, or fixtures.
 
-## ライセンス
+## License
 
-Apache License 2.0。全文は [LICENSE](LICENSE) を参照。
+Apache License 2.0. See [LICENSE](LICENSE) for the full text.
 
 ```
 Copyright 2026 Takeru Fujii
@@ -415,11 +472,11 @@ See the License for the specific language governing permissions and
 limitations under the License.
 ```
 
-「Token Meter」は Takeru Fujii の商標であり、Apache License 2.0 第6条により本ライセンスは
-商標の使用を許諾しない。フォークや派生物は別の名前を使用すること。
+"Token Meter" is a trademark of Takeru Fujii, and under section 6 of the Apache License 2.0 this
+license does not grant permission to use it. Forks and derivative works must use a different name.
 
-バイナリに同梱している第三者コンポーネント（Sparkle ほか）の著作権表示とライセンスは
-[THIRD-PARTY-NOTICES.md](THIRD-PARTY-NOTICES.md) にある。再配布時は [NOTICE](NOTICE) を
-同梱すること（Apache License 2.0 第4条(d)）。
+Copyright notices and licenses for the third-party components bundled in the binary (Sparkle and
+others) are in [THIRD-PARTY-NOTICES.md](THIRD-PARTY-NOTICES.md). Include [NOTICE](NOTICE) when
+redistributing (Apache License 2.0, section 4(d)).
 
-Token Meter は Anthropic、OpenAI、GitHub、Microsoft と提携しておらず、これらによる承認も受けていない。
+Token Meter is not affiliated with or endorsed by Anthropic, OpenAI, GitHub, or Microsoft.
