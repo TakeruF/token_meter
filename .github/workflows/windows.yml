@@ -6,6 +6,7 @@ on:
     paths:
       - "Windows/**"
       - ".github/workflows/windows.yml"
+      - "global.json"
       - "CODE_SIGNING.md"
       - "SECURITY.md"
       - "THIRD-PARTY-NOTICES.md"
@@ -44,6 +45,51 @@ jobs:
           persist-credentials: false
           ref: ${{ github.event_name == 'workflow_dispatch' && format('refs/tags/{0}', inputs.release_tag) || github.ref }}
 
+      # build-test is a required check on main, so this job must always run and
+      # report a result. Rather than filtering the pull_request trigger (which would
+      # leave the check permanently "waiting to be reported"), the job reports
+      # success immediately when nothing that can affect the Windows build changed.
+      - name: Determine whether the Windows build must run
+        id: scope
+        shell: pwsh
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+        run: |
+          if ($env:GITHUB_EVENT_NAME -ne 'pull_request') {
+            "run_build=true" >> $env:GITHUB_OUTPUT
+            exit 0
+          }
+
+          $changed = @(git diff --name-only "$env:BASE_SHA" HEAD)
+          if ($LASTEXITCODE -ne 0) {
+            Write-Host "Could not diff against the base commit; running the full build."
+            "run_build=true" >> $env:GITHUB_OUTPUT
+            exit 0
+          }
+
+          # Mirrors the push trigger's paths filter: anything not listed here cannot
+          # affect the Windows build. Note that CODE_SIGNING.md, SECURITY.md and
+          # THIRD-PARTY-NOTICES.md are release metadata, not documentation.
+          $relevant = @(
+            '^Windows/',
+            '^\.github/workflows/windows\.yml$',
+            '^global\.json$',
+            '^CODE_SIGNING\.md$',
+            '^SECURITY\.md$',
+            '^THIRD-PARTY-NOTICES\.md$'
+          )
+
+          $hits = @($changed | Where-Object { $file = $_; @($relevant | Where-Object { $file -match $_ }).Count -gt 0 })
+          if ($hits.Count -gt 0) {
+            Write-Host "Windows-relevant changes:"
+            $hits | ForEach-Object { Write-Host "  $_" }
+            "run_build=true" >> $env:GITHUB_OUTPUT
+          } else {
+            Write-Host "No Windows-relevant changes; reporting success without building."
+            $changed | ForEach-Object { Write-Host "  (ignored) $_" }
+            "run_build=false" >> $env:GITHUB_OUTPUT
+          }
+
       - name: Verify release source and metadata
         if: github.event_name == 'workflow_dispatch'
         shell: pwsh
@@ -52,6 +98,7 @@ jobs:
         run: Windows/scripts/Test-ReleaseSource.ps1 -ReleaseTag $env:RELEASE_TAG
 
       - name: Set up .NET 10
+        if: steps.scope.outputs.run_build == 'true'
         uses: actions/setup-dotnet@26b0ec14cb23fa6904739307f278c14f94c95bf1 # v5.0.0
         with:
           global-json-file: global.json
@@ -59,41 +106,52 @@ jobs:
           cache-dependency-path: Windows/**/packages.lock.json
 
       - name: Restore core tests
+        if: steps.scope.outputs.run_build == 'true'
         run: dotnet restore Windows/tests/TokenMeter.Windows.Core.Tests/TokenMeter.Windows.Core.Tests.csproj -r win-x64 --locked-mode
 
       - name: Test core
+        if: steps.scope.outputs.run_build == 'true'
         run: dotnet test Windows/tests/TokenMeter.Windows.Core.Tests/TokenMeter.Windows.Core.Tests.csproj --configuration Release --no-restore -r win-x64 --logger "trx;LogFileName=windows-core.trx"
 
       - name: Restore setup tests
+        if: steps.scope.outputs.run_build == 'true'
         run: dotnet restore Windows/tests/TokenMeter.Windows.Setup.Tests/TokenMeter.Windows.Setup.Tests.csproj --locked-mode
 
       - name: Test setup payload
+        if: steps.scope.outputs.run_build == 'true'
         run: dotnet test Windows/tests/TokenMeter.Windows.Setup.Tests/TokenMeter.Windows.Setup.Tests.csproj --configuration Release --no-restore --logger "trx;LogFileName=windows-setup.trx"
 
       - name: Restore WinUI C# compile check
+        if: steps.scope.outputs.run_build == 'true'
         run: dotnet restore Windows/tests/TokenMeter.Windows.App.CompileCheck/TokenMeter.Windows.App.CompileCheck.csproj -p:Platform=x64 -r win-x64 --locked-mode
 
       - name: Compile WinUI C# code
+        if: steps.scope.outputs.run_build == 'true'
         run: dotnet build Windows/tests/TokenMeter.Windows.App.CompileCheck/TokenMeter.Windows.App.CompileCheck.csproj --configuration Release --no-restore -p:Platform=x64
 
       - name: Restore WinUI app
+        if: steps.scope.outputs.run_build == 'true'
         run: dotnet restore Windows/src/TokenMeter.Windows.App/TokenMeter.Windows.App.csproj -p:Platform=x64 -r win-x64 --locked-mode
 
       - name: Build WinUI app
+        if: steps.scope.outputs.run_build == 'true'
         run: dotnet build Windows/src/TokenMeter.Windows.App/TokenMeter.Windows.App.csproj --configuration Release --no-restore -p:Platform=x64 -p:AppxPackageSigningEnabled=false
 
       - name: Restore setup bootstrapper
+        if: steps.scope.outputs.run_build == 'true'
         run: dotnet restore Windows/src/TokenMeter.Windows.Setup/TokenMeter.Windows.Setup.csproj -p:Platform=x64 -r win-x64 --locked-mode
 
       - name: Compile setup bootstrapper
+        if: steps.scope.outputs.run_build == 'true'
         run: dotnet build Windows/src/TokenMeter.Windows.Setup/TokenMeter.Windows.Setup.csproj --configuration Release --no-restore -p:Platform=x64
 
       - name: Smoke test signed MSIX inside Setup.exe
+        if: steps.scope.outputs.run_build == 'true'
         shell: pwsh
         run: Windows/scripts/Test-SetupPackaging.ps1
 
       - name: Upload test results
-        if: always()
+        if: always() && steps.scope.outputs.run_build == 'true'
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: windows-test-results
