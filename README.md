@@ -4,7 +4,7 @@
 
 A native macOS / Windows app for keeping an eye on Claude Code, Codex, and Copilot CLI usage.
 
-[<img src="https://raw.githubusercontent.com/machiav3lli/oandbackupx/main/badge_github.png" alt="Get it on GitHub" height="60">](https://github.com/TakeruF/token_meter/releases/latest) [<img src="assets/badges/download-from-website.svg" alt="Download from Website" height="60">](https://takeruf.github.io/token_meter/)
+[<img src="https://raw.githubusercontent.com/machiav3lli/oandbackupx/main/badge_github.png" alt="Get it on GitHub" height="60">](https://github.com/TakeruF/token_meter/releases/latest) [<img src="assets/badges/download-from-website.png" alt="Download from Website" height="60">](https://takeruf.github.io/token_meter/)
 
 [Website · Download](https://takeruf.github.io/token_meter/) · [GitHub Releases](https://github.com/TakeruF/token_meter/releases/latest)
 
