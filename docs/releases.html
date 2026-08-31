@@ -4,13 +4,15 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="description" content="Token Meterのアップデート履歴とリリースノートです。" data-i18n-content="metaDescription">
-  <meta name="theme-color" content="#f5f7f9">
+  <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#000000" media="(prefers-color-scheme: dark)">
   <title data-i18n="releasesTitle">Token Meter - リリースノート</title>
   <link rel="icon" href="assets/token-meter-icon.png">
   <link rel="apple-touch-icon" href="assets/token-meter-icon.png">
-  <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="styles.css?v=1.2.6-3">
   <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
-  <script src="localization.js?v=1.2.6-2" defer></script>
+  <script src="localization.js?v=1.2.6-3" defer></script>
+  <script src="interactions.js?v=1.2.6-3" defer></script>
   <style>
     .releases-hero {
       background: var(--surface);
@@ -119,7 +121,7 @@
       <img src="assets/token-meter-icon.png" alt="" width="24" height="24">
       <span>Token Meter</span>
     </a>
-    <a class="header-download" href="https://github.com/TakeruF/token_meter/releases/download/v1.2.6/TokenMeter-1.2.6.zip" data-i18n="navDownload">ダウンロード</a>
+    <a class="header-download" data-press href="https://github.com/TakeruF/token_meter/releases/download/v1.2.6/TokenMeter-1.2.6.zip" data-i18n="navDownload">ダウンロード</a>
   </nav>
 
   <main>
@@ -160,10 +162,10 @@
         </a>
       </div>
       <div class="language-switcher" role="group" aria-label="言語を選択" data-i18n-aria-label="languageAria">
-        <button type="button" lang="ja" data-language="ja">日本語</button>
-        <button type="button" lang="en" data-language="en">English</button>
-        <button type="button" lang="zh-CN" data-language="zh-CN">中文</button>
-        <button type="button" lang="ko" data-language="ko">한국어</button>
+        <button type="button" data-press lang="ja" data-language="ja">日本語</button>
+        <button type="button" data-press lang="en" data-language="en">English</button>
+        <button type="button" data-press lang="zh-CN" data-language="zh-CN">中文</button>
+        <button type="button" data-press lang="ko" data-language="ko">한국어</button>
       </div>
       <p class="footer-domain">takeruf.github.io/token_meter</p>
       <p class="footer-copyright">© 2026 Takeru Fujii · Apache License 2.0</p>
