@@ -237,11 +237,36 @@
     function goTo(next, velocity = 0) {
       index = clamp(next, 0, slides.length - 1);
       spring.target = -index * step;
+      updateControls();
+      if (reduced()) {
+        // Sliding a whole viewport across is the largest spatial motion on the
+        // page. Reduced motion means it should not travel at all — land on the
+        // slide instead. Dragging stays 1:1: that is the finger, not animation.
+        spring.snap();
+        render();
+        return;
+      }
       spring.velocity = velocity;
       // Overshoot is earned by momentum: a flick bounces, a tap does not.
       spring.damping = Math.abs(velocity) > 300 ? 0.8 : 1;
-      spring.response = reduced() ? 0.15 : 0.4;
-      updateControls();
+      spring.response = 0.4;
+      startLoop();
+    }
+
+    // A gesture that never became a drag still stopped the loop on pointerdown.
+    // Put the pending motion back so the track can never be left parked between
+    // two slides while the dots claim it has arrived.
+    function resumePending() {
+      if (Math.abs(spring.value - spring.target) < 0.5) {
+        spring.snap();
+        render();
+        return;
+      }
+      if (reduced()) {
+        spring.snap();
+        render();
+        return;
+      }
       startLoop();
     }
 
@@ -300,6 +325,7 @@
           if (Math.hypot(dx, dy) < 10) return; // hysteresis before committing
           if (Math.abs(dy) > Math.abs(dx)) {
             activePointer = null; // vertical intent: leave the page alone
+            resumePending();
             return;
           }
           axis = "x";
@@ -322,7 +348,10 @@
     function endDrag(event) {
       if (event.pointerId !== activePointer) return;
       activePointer = null;
-      if (!dragging) return;
+      if (!dragging) {
+        resumePending(); // a tap that never crossed the hysteresis
+        return;
+      }
       dragging = false;
       viewport.classList.remove("is-dragging");
 
