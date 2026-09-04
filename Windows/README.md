@@ -1,6 +1,9 @@
 # Token Meter for Windows
 
-Windows 11 x64向けのToken Meter実装です。C# / .NET 10 / WinUI 3で構成し、macOS版のソースには依存しません。匿名化済みJSONL fixtureだけを両プラットフォームのテストで共有します。
+> [!WARNING]
+> **Windows版は凍結済みで、サポート対象外です。** 新規リリース、更新、保守、サポート、Microsoft Storeへの提出、直接配布は行いません。このディレクトリと以下の資料は履歴・参照用であり、ビルドや署名ができても配布可能な製品であることを意味しません。現在サポートしているのはmacOS版のみです。
+
+Windows 11 x64向けに作成されたToken Meter実装です。C# / .NET 10 / WinUI 3で構成し、macOS版のソースには依存しません。匿名化済みJSONL fixtureだけを両プラットフォームのテストで共有します。
 
 ## Code signing policy
 

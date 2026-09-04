@@ -1,5 +1,11 @@
 # Token Meter for Windows — installation and uninstallation
 
+> [!WARNING]
+> **Windows development is frozen and Windows is unsupported.** Token Meter will
+> not issue new Windows releases, updates, maintenance, support, Microsoft Store
+> submissions, or direct downloads. This page is retained solely to help remove a
+> previously installed historical build.
+
 ## Changes made during installation
 
 Both the Microsoft Store package and `TokenMeterSetup.exe` install the same type

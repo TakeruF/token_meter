@@ -2,7 +2,10 @@
 
 [English](README.md) · [日本語](README.ja.md) · **简体中文** · [한국어](README.ko.md)
 
-用于查看 Claude Code、Codex、Copilot CLI 用量的 macOS / Windows 原生应用。
+用于查看 Claude Code、Codex、Copilot CLI 用量的 macOS 原生应用。
+
+> [!IMPORTANT]
+> **Windows 版开发已冻结。** Windows 源码仅作为参考保留在本仓库中；不会再发布、更新、维护或提供支持，也不会提交 Microsoft Store 或进行直接分发。请勿将 Windows 代码或历史文档视为受支持的产品。Token Meter 当前仅支持 macOS。
 
 [<img src="https://raw.githubusercontent.com/machiav3lli/oandbackupx/main/badge_github.png" alt="在 GitHub 上获取" height="60">](https://github.com/TakeruF/token_meter/releases/latest)
 
@@ -22,14 +25,7 @@
 
 ![Token Meter 设置界面中打开的英语、日语、中文、韩语切换菜单](docs/screenshots/promo-languages.jpg)
 
-## 代码签名政策
-
-Windows 直接分发版的签名主体、审批流程、负责人和隐私条款，公开在
-[Code signing policy](CODE_SIGNING.md)。向 SignPath Foundation 的申请仍在准备中，
-在获批之前不会将二进制文件标示为已由 SignPath 签名。
-
-macOS 版使用 Swift / SwiftUI / WidgetKit，Windows 版使用 C# / .NET 10 / WinUI 3，
-既不使用 WebView 也不使用 Electron。Token 历史在本地汇总。
+macOS 版使用 Swift / SwiftUI / WidgetKit，既不使用 WebView 也不使用 Electron。Token 历史在本地汇总。
 只有在你明确启用后，应用才会为查询 Claude Pro / Max 用量而访问 Anthropic 的 OAuth 用量端点。
 
 ---
@@ -103,16 +99,9 @@ Token 数来自 `session.shutdown` 事件中各模型的累计值，
 | Xcode | 15 以上（验证环境为 Xcode 26.2） |
 | Swift | 5.9 以上（验证环境为 6.2.3） |
 | 项目生成工具 | [XcodeGen](https://github.com/yonaskolb/XcodeGen)（`brew install xcodegen`） |
-| Windows | Windows 11 x64（Windows 版 v1） |
-| Windows SDK | .NET 10 LTS / Windows App SDK Stable / WinUI 3 |
 
-Windows 版是 `Windows/` 目录下的独立 solution，支持通知区域、仪表盘、设置、通知，
-英语・日语・简体中文・韩语，以及 Claude Code・Codex・Copilot CLI。
-除 Microsoft Store 的 MSIX 外，还可生成内嵌 Trusted Signing MSIX 的 `TokenMeterSetup.exe`。
-构建、签名以及提交 Store 前的实机确认请参见 [Windows/README.md](Windows/README.md)。
-
-Windows 版的卸载方法与安装时所做的系统更改，请参见
-[Windows installation and uninstallation](docs/windows-uninstall.md)。
+`Windows/` 中保留着冻结的实现，仅供参考；不会提供支持或分发。
+其中的历史构建、签名和安装资料不应被视为发布说明。
 
 ## 构建
 

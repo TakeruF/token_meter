@@ -1,17 +1,16 @@
-# Code signing policy
+# Archived Windows code-signing policy
 
-This policy covers Windows binaries published by the Token Meter project. The
-Microsoft Store package is signed by Microsoft after certification. Direct
-downloads will be published only after a public-trust signing service has
-signed both `TokenMeterSetup.exe` and the MSIX embedded in it.
+> [!WARNING]
+> **Windows development is frozen.** Token Meter will not publish, sign, update,
+> maintain, support, submit to Microsoft Store, or directly distribute Windows
+> binaries. This document is retained only as historical reference and does not
+> authorize or describe a current release path.
 
-## Current status
+## Historical status
 
-SignPath Foundation approval is **pending**. No current Token Meter release is
-represented as being signed by SignPath Foundation. If the project is accepted,
-the following attribution will apply to direct-download Windows releases:
-
-> Free code signing provided by [SignPath.io](https://signpath.io/), certificate by [SignPath Foundation](https://signpath.org/)
+SignPath Foundation approval was never completed. No Token Meter Windows release
+is represented as being signed by SignPath Foundation. The attribution and
+procedures below are obsolete and must not be used for a future Windows release.
 
 ## Team roles
 

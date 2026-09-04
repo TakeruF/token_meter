@@ -2,7 +2,10 @@
 
 **English** · [日本語](README.ja.md) · [简体中文](README.zh-CN.md) · [한국어](README.ko.md)
 
-A native macOS / Windows app for keeping an eye on Claude Code, Codex, and Copilot CLI usage.
+A native macOS app for keeping an eye on Claude Code, Codex, and Copilot CLI usage.
+
+> [!IMPORTANT]
+> **Windows development is frozen.** The Windows source remains in this repository for reference only. There will be no new Windows releases, updates, maintenance, support, Microsoft Store submission, or direct-download distribution. Do not treat the Windows code or its historical documentation as a supported product; Token Meter is currently supported on macOS only.
 
 [<img src="https://raw.githubusercontent.com/machiav3lli/oandbackupx/main/badge_github.png" alt="Get it on GitHub" height="60">](https://github.com/TakeruF/token_meter/releases/latest) [<img src="assets/badges/download-from-website.png" alt="Download from Website" height="60">](https://takeruf.github.io/token_meter/)
 
@@ -22,14 +25,7 @@ A native macOS / Windows app for keeping an eye on Claude Code, Codex, and Copil
 
 ![The Token Meter settings screen with the English, Japanese, Chinese, and Korean language picker open](docs/screenshots/promo-languages.jpg)
 
-## Code signing policy
-
-The signing authority, approval procedure, maintainers, and privacy terms for the direct-download
-Windows build are published in the [Code signing policy](CODE_SIGNING.md). The application to the
-SignPath Foundation is still in preparation, and binaries are not presented as SignPath-signed
-before that approval.
-
-macOS is Swift / SwiftUI / WidgetKit; Windows is C# / .NET 10 / WinUI 3. No WebView, no Electron.
+macOS is Swift / SwiftUI / WidgetKit. No WebView, no Electron.
 Token history is aggregated locally. Only when you explicitly enable it does the app talk to
 Anthropic's OAuth usage endpoint to check Claude Pro / Max usage.
 
@@ -107,17 +103,9 @@ Each of these rows can be turned off individually under **Settings > Time window
 | Xcode | 15 or later (verified on Xcode 26.2) |
 | Swift | 5.9 or later (verified on 6.2.3) |
 | Project generator | [XcodeGen](https://github.com/yonaskolb/XcodeGen) (`brew install xcodegen`) |
-| Windows | Windows 11 x64 (Windows v1) |
-| Windows SDK | .NET 10 LTS / Windows App SDK Stable / WinUI 3 |
 
-The Windows app is a separate solution under `Windows/`. It supports the notification area,
-dashboard, settings, notifications, English / Japanese / Simplified Chinese / Korean, and
-Claude Code / Codex / Copilot CLI. Besides the Microsoft Store MSIX, it can also produce
-`TokenMeterSetup.exe` with a Trusted Signing MSIX bundled inside. See
-[Windows/README.md](Windows/README.md) for building, signing, and pre-submission verification.
-
-For how to uninstall the Windows build and what system changes the installer makes, see
-[Windows installation and uninstallation](docs/windows-uninstall.md).
+The archived Windows implementation remains under `Windows/`, but it is not supported or distributed.
+Its historical build, signing, and installation notes must not be read as release instructions.
 
 ## Building
 
