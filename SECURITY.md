@@ -2,13 +2,16 @@
 
 ## Supported versions
 
-Security fixes are provided for the latest published Token Meter release. The
-Windows port is supported from its first public `1.3.x` release onward.
+Security fixes are provided only for the latest published macOS Token Meter
+release. Windows development is frozen: the archived Windows source and any
+historical Windows builds are unsupported and will not receive security fixes,
+updates, maintenance, or support.
 
 | Version | Supported |
 |---|---|
-| Latest release | Yes |
-| Older releases | No; update to the latest release first |
+| Latest macOS release | Yes |
+| Older macOS releases | No; update to the latest macOS release first |
+| Any Windows version or archived Windows source | No; Windows development is frozen |
 
 ## Reporting a vulnerability
 
@@ -21,10 +24,12 @@ relevant logs after removing prompts, responses, credentials, and personal
 information. Do not open a public issue for an unpatched vulnerability and do
 not attach real CLI logs or authentication files.
 
-The maintainer will acknowledge a report within 7 days, provide a status update
-within 14 days, and coordinate disclosure after a fix is available. These are
-response targets rather than guarantees.
+For supported macOS releases, the maintainer will acknowledge a report within 7
+days, provide a status update within 14 days, and coordinate disclosure after a
+fix is available. These are response targets rather than guarantees. Windows
+reports may be submitted for awareness, but Windows is unsupported and no fix,
+update, or response commitment is made.
 
-For suspected malicious or improperly signed Windows artifacts, also include
-the file's SHA-256 hash, signature details, and download URL. Distribution will
-be paused while the artifact provenance is investigated.
+For a suspected malicious or improperly signed historical Windows artifact,
+also include its SHA-256 hash, signature details, and download URL. Token Meter
+does not distribute or support Windows artifacts.

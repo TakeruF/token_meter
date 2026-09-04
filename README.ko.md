@@ -2,7 +2,10 @@
 
 [English](README.md) · [日本語](README.ja.md) · [简体中文](README.zh-CN.md) · **한국어**
 
-Claude Code, Codex, Copilot CLI 사용량을 확인하는 macOS / Windows 네이티브 앱.
+Claude Code, Codex, Copilot CLI 사용량을 확인하는 macOS 네이티브 앱.
+
+> [!IMPORTANT]
+> **Windows 버전 개발은 동결되었습니다.** Windows 소스는 참고용으로만 이 저장소에 남아 있습니다. 새 릴리스, 업데이트, 유지보수, 지원, Microsoft Store 제출 및 직접 배포는 하지 않습니다. Windows 코드와 과거 문서를 지원되는 제품으로 받아들이지 마세요. 현재 Token Meter는 macOS만 지원합니다.
 
 [<img src="https://raw.githubusercontent.com/machiav3lli/oandbackupx/main/badge_github.png" alt="GitHub에서 받기" height="60">](https://github.com/TakeruF/token_meter/releases/latest)
 
@@ -22,14 +25,7 @@ Claude Code, Codex, Copilot CLI 사용량을 확인하는 macOS / Windows 네이
 
 ![영어, 일본어, 중국어, 한국어를 선택할 수 있는 Token Meter 설정 화면](docs/screenshots/promo-languages.jpg)
 
-## 코드 서명 정책
-
-Windows 직접 배포판의 서명 주체, 승인 절차, 담당자, 개인정보 조건은
-[Code signing policy](CODE_SIGNING.md)에 공개되어 있습니다. SignPath Foundation 신청은 아직
-준비 중이며, 승인 전의 바이너리를 SignPath 서명 완료로 표시하지 않습니다.
-
-macOS 버전은 Swift / SwiftUI / WidgetKit, Windows 버전은 C# / .NET 10 / WinUI 3으로 만들었습니다.
-WebView도 Electron도 사용하지 않습니다. 토큰 기록은 로컬에서 집계합니다.
+macOS 버전은 Swift / SwiftUI / WidgetKit으로 만들었습니다. WebView도 Electron도 사용하지 않습니다. 토큰 기록은 로컬에서 집계합니다.
 사용자가 명시적으로 활성화한 경우에만 Claude Pro / Max 사용량 확인을 위해
 Anthropic의 OAuth 사용량 엔드포인트와 통신합니다.
 
@@ -105,16 +101,9 @@ Copilot CLI는 한도를 로컬에 기록하지 않으므로 비율·잔여량·
 | Xcode | 15 이상(검증 환경은 Xcode 26.2) |
 | Swift | 5.9 이상(검증 환경은 6.2.3) |
 | 프로젝트 생성 도구 | [XcodeGen](https://github.com/yonaskolb/XcodeGen)(`brew install xcodegen`) |
-| Windows | Windows 11 x64(Windows 버전 v1) |
-| Windows SDK | .NET 10 LTS / Windows App SDK Stable / WinUI 3 |
 
-Windows 버전은 `Windows/` 아래의 독립 solution입니다. 알림 영역, 대시보드, 설정, 알림,
-영어·일본어·간체 중국어·한국어, Claude Code·Codex·Copilot CLI를 지원합니다.
-Microsoft Store용 MSIX 외에, Trusted Signing MSIX를 내장한 `TokenMeterSetup.exe`도 생성할 수 있습니다.
-빌드, 서명, Store 제출 전 실기 확인은 [Windows/README.md](Windows/README.md)를 참조하세요.
-
-Windows 버전의 제거 방법과 설치 시 이루어지는 시스템 변경은
-[Windows installation and uninstallation](docs/windows-uninstall.md)를 참조하세요.
+`Windows/` 아래에는 동결된 구현을 참고용으로 남겨 두었지만, 지원하거나 배포하지 않습니다.
+그 안의 과거 빌드, 서명 및 설치 문서는 릴리스 안내로 취급하지 마세요.
 
 ## 빌드
 

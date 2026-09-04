@@ -2,7 +2,10 @@
 
 [English](README.md) · **日本語** · [简体中文](README.zh-CN.md) · [한국어](README.ko.md)
 
-Claude Code、Codex、Copilot CLIの利用状況を確認するmacOS / Windowsネイティブアプリ。
+Claude Code、Codex、Copilot CLIの利用状況を確認するmacOSネイティブアプリ。
+
+> [!IMPORTANT]
+> **Windows版の開発は凍結しました。** Windowsのソースは参照用としてこのリポジトリに残しますが、新規リリース、更新、保守、サポート、Microsoft Storeへの提出、直接配布は行いません。Windowsのコードや過去の資料をサポート対象の製品と受け取らないでください。現在サポートしているのはmacOS版のみです。
 
 [<img src="https://raw.githubusercontent.com/machiav3lli/oandbackupx/main/badge_github.png" alt="GitHubで入手" height="60">](https://github.com/TakeruF/token_meter/releases/latest)
 
@@ -22,13 +25,7 @@ Claude Code、Codex、Copilot CLIの利用状況を確認するmacOS / Windows�
 
 ![英語・日本語・中国語・韓国語を選べるToken Meterの設定画面](docs/screenshots/promo-languages.jpg)
 
-## Code signing policy
-
-Windows直接配布版の署名元、承認手順、担当者、プライバシー条件は
-[Code signing policy](CODE_SIGNING.md)で公開しています。SignPath Foundationへの申請は準備中であり、
-承認前のバイナリをSignPath署名済みとは表示しません。
-
-macOS版はSwift / SwiftUI / WidgetKit、Windows版はC# / .NET 10 / WinUI 3。WebViewもElectronも使っていない。
+macOS版はSwift / SwiftUI / WidgetKit。WebViewもElectronも使っていない。
 トークン履歴はローカルで集計する。ユーザーが明示的に有効化した場合だけ、Claude Pro / Maxの
 使用量確認のためAnthropicのOAuth使用量エンドポイントへ通信する。
 
@@ -103,13 +100,9 @@ Copilot CLI は利用枠をローカルへ書き出していないため、割�
 | Xcode | 15 以降（動作確認は Xcode 26.2） |
 | Swift | 5.9 以降（動作確認は 6.2.3） |
 | 生成ツール | [XcodeGen](https://github.com/yonaskolb/XcodeGen)（`brew install xcodegen`） |
-| Windows | Windows 11 x64（Windows版v1） |
-| Windows SDK | .NET 10 LTS / Windows App SDK Stable / WinUI 3 |
 
-Windows版は`Windows/`配下の独立したsolutionです。通知領域、ダッシュボード、設定、通知、英語・日本語・簡体字中国語・韓国語、Claude Code・Codex・Copilot CLIに対応します。Microsoft StoreのMSIXに加え、信頼済み署名MSIXを内包した`TokenMeterSetup.exe`も生成できます。ビルド、署名、Store提出前の実機確認は[Windows/README.md](Windows/README.md)を参照してください。
-
-Windows版の削除方法とインストール時に行うシステム変更は
-[Windows installation and uninstallation](docs/windows-uninstall.md)を参照してください。
+`Windows/`配下には凍結済みの実装を参照用として残していますが、サポート・配布はしません。
+そこにある過去のビルド、署名、インストール資料は、リリース手順として扱わないでください。
 
 ## ビルド
 
