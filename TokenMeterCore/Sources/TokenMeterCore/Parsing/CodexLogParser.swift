@@ -255,10 +255,22 @@ public struct CodexLogParser: Sendable {
             // A rollout can contain general Codex and Spark readings in either
             // order. Keep each independently: assigning nil here used to let a
             // later Spark-only record erase the general value recovered above.
-            if let short = reading.shortWindow { result.shortWindow = short }
-            if let weekly = reading.weeklyWindow { result.weeklyWindow = weekly }
-            if let sparkShort = reading.sparkShortWindow { result.sparkShortWindow = sparkShort }
-            if let sparkWeekly = reading.sparkWeeklyWindow { result.sparkWeeklyWindow = sparkWeekly }
+            if let short = reading.shortWindow {
+                result.shortWindow = short
+                result.shortTimestamp = timestamp
+            }
+            if let weekly = reading.weeklyWindow {
+                result.weeklyWindow = weekly
+                result.weeklyTimestamp = timestamp
+            }
+            if let sparkShort = reading.sparkShortWindow {
+                result.sparkShortWindow = sparkShort
+                result.sparkShortTimestamp = timestamp
+            }
+            if let sparkWeekly = reading.sparkWeeklyWindow {
+                result.sparkWeeklyWindow = sparkWeekly
+                result.sparkWeeklyTimestamp = timestamp
+            }
             if let planType = reading.planType { result.planType = planType }
             result.timestamp = timestamp
         }
@@ -272,6 +284,13 @@ public struct CodexLogParser: Sendable {
         var sparkShortWindow: UsageWindow? = nil
         var sparkWeeklyWindow: UsageWindow? = nil
         var planType: String? = nil
+        /// Each bucket can appear on a different line (and, for Spark, in a
+        /// different model context), so repair code must compare their actual
+        /// log times independently rather than a file's modification time.
+        var shortTimestamp: Date? = nil
+        var weeklyTimestamp: Date? = nil
+        var sparkShortTimestamp: Date? = nil
+        var sparkWeeklyTimestamp: Date? = nil
         var timestamp: Date? = nil
 
         var hasQuota: Bool {

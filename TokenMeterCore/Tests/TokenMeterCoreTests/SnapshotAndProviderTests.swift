@@ -431,6 +431,7 @@ final class QuotaRecoveryTests: XCTestCase {
         let first = CodexUsageProvider(sessionsRoot: root, store: store)
         let firstSnapshot = try await first.fetchCurrentUsage()
         XCTAssertEqual(try XCTUnwrap(firstSnapshot.weeklyWindow?.usedRatio), 0.26, accuracy: 0.001)
+        XCTAssertEqual(store.latestLimitSample(provider: .codex, kind: "weekly")?.planType, "pro")
 
         // Second launch: a brand new provider (empty in-memory state) over the same
         // store and an unchanged log — the cursor is already at EOF, so nothing parses.
@@ -440,6 +441,7 @@ final class QuotaRecoveryTests: XCTestCase {
         XCTAssertTrue(secondSnapshot.hasQuotaInformation, "the quota must survive a restart")
         XCTAssertEqual(try XCTUnwrap(secondSnapshot.weeklyWindow?.usedRatio), 0.26, accuracy: 0.001)
         XCTAssertEqual(secondSnapshot.weeklyWindow?.remainingRatio, 0.74)
+        XCTAssertEqual(secondSnapshot.planType, "pro", "Codex Pro must retain its weekly-only menu-bar selection after restart")
     }
 
     /// But a quota whose reset time has passed is spent: reporting the old percentage

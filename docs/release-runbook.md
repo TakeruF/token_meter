@@ -100,7 +100,7 @@ git diff -- appcast.xml docs/index.html docs/releases.html docs/localization.js 
 
 - app の version/build と `project.yml` が一致する
 - `appcast.xml` の full ZIP の URL、サイズ、EdDSA 署名が新バージョンを指す
-- `appcast.xml` の新しい item に `sparkle:releaseNotesLink` があり、`https://takeruf.github.io/token_meter/releases.html?version=v<version>` を指す。Sparkle の更新ポップアップはこのページを内蔵表示する
+- `appcast.xml` の新しい item に `sparkle:releaseNotesLink` があり、`https://takeruf.github.io/token_meter/release-notes.html?version=v<version>` を指す。Sparkle の更新ポップアップはヘッダーなしのこの専用ページを内蔵表示する
 - `appcast.xml` に新 build から過去 build への delta がある
 - About ページの全 ZIP URL と全言語の表示バージョンが新バージョンになっている
 - `docs/releases.html` の `versions` 配列に新バージョンが含まれ、`docs/releases/v<version>.md` に 4 言語すべてのセクションがある
@@ -119,8 +119,11 @@ git add \
   appcast.xml \
   docs/index.html \
   docs/releases.html \
+  docs/release-notes.html \
   docs/localization.js \
+  docs/release-runbook.md \
   "docs/releases/v$VERSION.md" \
+  scripts/release.sh \
   project.yml
 git diff --cached --check
 git commit -m "Release Token Meter $VERSION"
