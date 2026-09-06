@@ -139,6 +139,32 @@ public final class UsageStore: @unchecked Sendable {
         }
     }
 
+    /// Rebuilds the derived events for one migrated session. Codex event ids before
+    /// the per-model-counter migration did not contain the model, so retaining
+    /// those rows would make the rebuilt rows look like new usage.
+    @discardableResult
+    public func deleteEvents(provider: UsageProviderID, sessionID: String) throws -> Int {
+        try queue.sync {
+            var stmt: OpaquePointer?
+            guard sqlite3_prepare_v2(
+                db,
+                "DELETE FROM usage_event WHERE provider = ? AND session_id = ?;",
+                -1,
+                &stmt,
+                nil
+            ) == SQLITE_OK else {
+                throw UsageProviderError.decodingFailed("prepare session delete failed")
+            }
+            defer { sqlite3_finalize(stmt) }
+            sqlite3_bind_text(stmt, 1, provider.rawValue, -1, SQLITE_TRANSIENT)
+            sqlite3_bind_text(stmt, 2, sessionID, -1, SQLITE_TRANSIENT)
+            guard sqlite3_step(stmt) == SQLITE_DONE else {
+                throw UsageProviderError.decodingFailed("session delete step failed")
+            }
+            return Int(sqlite3_changes(db))
+        }
+    }
+
     public func events(provider: UsageProviderID? = nil, since: Date, until: Date = .distantFuture) throws -> [UsageEvent] {
         try queue.sync {
             var sql = "SELECT id, provider, timestamp, model, session_id, input_tokens, cached_input_tokens, cache_creation_tokens, output_tokens, reasoning_tokens, total_tokens, source FROM usage_event WHERE timestamp >= ? AND timestamp < ?"
@@ -339,7 +365,7 @@ public final class UsageStore: @unchecked Sendable {
                 resetsAt: sqlite3_column_type(stmt, 3) == SQLITE_NULL
                     ? nil
                     : Date(timeIntervalSince1970: sqlite3_column_double(stmt, 3)),
-                windowMinutes: kind == "short" ? nil : 10080
+                windowMinutes: kind == "short" || kind == "spark_short" ? 300 : 10080
             )
             return (window, timestamp)
         }

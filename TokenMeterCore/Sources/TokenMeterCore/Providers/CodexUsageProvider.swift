@@ -20,6 +20,8 @@ public actor CodexUsageProvider: UsageProvider {
     /// not drop the quota we already know about.
     private var lastShortWindow: UsageWindow?
     private var lastWeeklyWindow: UsageWindow?
+    private var lastSparkShortWindow: UsageWindow?
+    private var lastSparkWeeklyWindow: UsageWindow?
     private var lastPlanType: String?
     private var lastContextWindow: Int?
     private var lastModel: String?
@@ -102,7 +104,13 @@ public actor CodexUsageProvider: UsageProvider {
 
             let path = file.path
             let sessionID = Self.sessionID(from: file)
-            let offset = store.cursor(forPath: path)
+            // Older releases stored one cumulative counter per session. Re-read
+            // that session once so the new per-model counters can be reconstructed;
+            // INSERT OR IGNORE keeps already persisted events idempotent.
+            let storedModels = storedTotalsByModel(sessionID: sessionID)
+            let needsModelMigration = storedModels.isEmpty
+                && store.sessionTotals(sessionID: sessionID) != nil
+            let offset = needsModelMigration ? 0 : store.cursor(forPath: path)
 
             let read: IncrementalReadResult
             do {
@@ -114,19 +122,27 @@ public actor CodexUsageProvider: UsageProvider {
 
             // Resume from the cumulative totals we stored, so deltas stay correct
             // across app restarts and never double count.
-            let previous = read.didReset ? CodexCumulativeTotals() : (store.sessionTotals(sessionID: sessionID) ?? CodexCumulativeTotals())
+            let previous = read.didReset || needsModelMigration ? [:] : storedModels
             let result = parser.parse(
                 lines: read.lines,
                 sessionID: sessionID,
-                previousTotals: previous,
+                previousTotalsByModel: previous,
                 // Carried over so a resumed chunk still knows which model it is using.
                 previousModel: store.latestModel(sessionID: sessionID)
             )
 
+            if needsModelMigration {
+                // Old event ids were session-wide. Replace only this derived
+                // session's rows before inserting model-aware ids; token history
+                // is reconstructed from the immutable Codex log below.
+                try store.deleteEvents(provider: .codex, sessionID: sessionID)
+            }
             if !result.events.isEmpty {
                 try store.insert(events: result.events)
             }
-            try store.setSessionTotals(sessionID: sessionID, provider: .codex, totals: result.totals)
+            for (model, totals) in result.totalsByModel {
+                try store.setSessionTotals(sessionID: "\(sessionID)|\(model)", provider: .codex, totals: totals)
+            }
             try store.setCursor(path: path, offset: read.newOffset)
 
             if let ts = result.latestTimestamp {
@@ -137,9 +153,12 @@ public actor CodexUsageProvider: UsageProvider {
                     if let w = result.contextWindowTokens { lastContextWindow = w }
                 }
             }
-            if result.shortWindow != nil || result.weeklyWindow != nil {
+            if result.shortWindow != nil || result.weeklyWindow != nil
+                || result.sparkShortWindow != nil || result.sparkWeeklyWindow != nil {
                 if let s = result.shortWindow { lastShortWindow = s }
                 if let w = result.weeklyWindow { lastWeeklyWindow = w }
+                if let s = result.sparkShortWindow { lastSparkShortWindow = s }
+                if let w = result.sparkWeeklyWindow { lastSparkWeeklyWindow = w }
                 if let p = result.planType { lastPlanType = p }
                 lastWindowUpdate = result.latestRateLimitTimestamp ?? result.latestTimestamp ?? Date()
             }
@@ -160,6 +179,12 @@ public actor CodexUsageProvider: UsageProvider {
         if let w = lastWeeklyWindow {
             try store.insertLimitSample(provider: .codex, timestamp: lastWindowUpdate ?? Date(), kind: "weekly", window: w, source: .localLog)
         }
+        if let s = lastSparkShortWindow {
+            try store.insertLimitSample(provider: .codex, timestamp: lastWindowUpdate ?? Date(), kind: "spark_short", window: s, source: .localLog)
+        }
+        if let w = lastSparkWeeklyWindow {
+            try store.insertLimitSample(provider: .codex, timestamp: lastWindowUpdate ?? Date(), kind: "spark_weekly", window: w, source: .localLog)
+        }
 
         // Rate limits only appear on lines the log appends. After a restart, an
         // incremental pass usually reads nothing new — so recover the last reading
@@ -170,6 +195,14 @@ public actor CodexUsageProvider: UsageProvider {
         }
         if lastWeeklyWindow == nil, let stored = store.latestLimitSample(provider: .codex, kind: "weekly") {
             lastWeeklyWindow = stored.window
+            lastWindowUpdate = lastWindowUpdate ?? stored.timestamp
+        }
+        if lastSparkShortWindow == nil, let stored = store.latestLimitSample(provider: .codex, kind: "spark_short") {
+            lastSparkShortWindow = stored.window
+            lastWindowUpdate = lastWindowUpdate ?? stored.timestamp
+        }
+        if lastSparkWeeklyWindow == nil, let stored = store.latestLimitSample(provider: .codex, kind: "spark_weekly") {
+            lastSparkWeeklyWindow = stored.window
             lastWindowUpdate = lastWindowUpdate ?? stored.timestamp
         }
         if lastModel == nil {
@@ -201,6 +234,8 @@ public actor CodexUsageProvider: UsageProvider {
             contextWindowTokens: lastContextWindow,
             shortWindow: short,
             weeklyWindow: weekly,
+            sparkShortWindow: expireIfReset(lastSparkShortWindow, now: now),
+            sparkWeeklyWindow: expireIfReset(lastSparkWeeklyWindow, now: now),
             shortWindowUsage: shortUsage,
             weeklyWindowUsage: weeklyUsage,
             planType: lastPlanType,
@@ -226,12 +261,24 @@ public actor CodexUsageProvider: UsageProvider {
 
             lastShortWindow = recovered.shortWindow
             lastWeeklyWindow = recovered.weeklyWindow
+            lastSparkShortWindow = recovered.sparkShortWindow
+            lastSparkWeeklyWindow = recovered.sparkWeeklyWindow
             lastPlanType = recovered.planType
             // Timestamp the repair now so it supersedes a bad sample persisted by
             // a previous app version. The window's reset time remains provider data.
             lastWindowUpdate = Date()
             return
         }
+    }
+
+    private func storedTotalsByModel(sessionID: String) -> [String: CodexCumulativeTotals] {
+        var out: [String: CodexCumulativeTotals] = [:]
+        for model in store.sessionModels(provider: .codex, sessionPrefix: "\(sessionID)|") {
+            if let totals = store.sessionTotals(sessionID: "\(sessionID)|\(model)") {
+                out[model] = totals
+            }
+        }
+        return out
     }
 
     public func startMonitoring(onUpdate: @escaping @Sendable (UsageSnapshot) -> Void) async throws {

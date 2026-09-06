@@ -45,6 +45,8 @@ struct ProviderCard: View {
                 unavailable(state.availability)
             } else if providerID == .claudeCode {
                 claudeQuotaSection
+            } else if providerID == .codex {
+                codexQuotaSection
             } else if let window, let remaining = window.remainingRatio {
                 quotaSection(window: window, remaining: remaining)
             } else {
@@ -58,6 +60,33 @@ struct ProviderCard: View {
         .padding(10)
         .frame(maxWidth: .infinity, alignment: .leading)
         .background(.quaternary.opacity(0.4), in: RoundedRectangle(cornerRadius: 8))
+    }
+
+    @ViewBuilder
+    private var codexQuotaSection: some View {
+        if let window, let remaining = window.remainingRatio {
+            quotaSection(window: window, remaining: remaining)
+            if let spark = snapshot?.sparkShortWindow {
+                QuotaWindowRow(title: AppLocalization.string("Codex Spark 5-hour"), window: spark)
+            }
+            if let spark = snapshot?.sparkWeeklyWindow {
+                QuotaWindowRow(title: AppLocalization.string("Codex Spark weekly"), window: spark)
+            }
+        } else if snapshot?.sparkShortWindow != nil || snapshot?.sparkWeeklyWindow != nil {
+            VStack(alignment: .leading, spacing: 7) {
+                Text(AppLocalization.string("Codex quota"))
+                    .font(.caption.weight(.medium))
+                    .foregroundStyle(.secondary)
+                if let spark = snapshot?.sparkShortWindow {
+                    QuotaWindowRow(title: AppLocalization.string("Codex Spark 5-hour"), window: spark)
+                }
+                if let spark = snapshot?.sparkWeeklyWindow {
+                    QuotaWindowRow(title: AppLocalization.string("Codex Spark weekly"), window: spark)
+                }
+            }
+        } else {
+            noQuotaSection
+        }
     }
 
     // MARK: Rows

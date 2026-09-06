@@ -155,6 +155,55 @@ final class CodexParserTests: XCTestCase {
         XCTAssertNil(result.weeklyWindow)
     }
 
+    func testSparkQuotaIsKeptSeparateFromGeneralCodexQuota() throws {
+        let lines = [
+            """
+            {"timestamp":"2026-07-15T01:00:00.000Z","type":"turn_context","payload":{"model":"gpt-5.6-sol"}}
+            """,
+            """
+            {"timestamp":"2026-07-15T01:00:01.000Z","type":"event_msg","payload":{"type":"token_count","info":null,"rate_limits":{"limit_id":"codex","primary":{"used_percent":54.0,"window_minutes":10080,"resets_at":1784668980},"secondary":null,"plan_type":"pro"}}}
+            """,
+            """
+            {"timestamp":"2026-07-15T02:00:00.000Z","type":"turn_context","payload":{"model":"gpt-5.3-codex-spark"}}
+            """,
+            """
+            {"timestamp":"2026-07-15T02:00:01.000Z","type":"event_msg","payload":{"type":"token_count","info":null,"rate_limits":{"limit_id":"codex","primary":{"used_percent":0.0,"window_minutes":10080,"resets_at":1784685660},"secondary":null,"plan_type":"pro"}}}
+            """,
+        ]
+
+        let result = CodexLogParser().parse(lines: lines, sessionID: "spark")
+
+        XCTAssertEqual(try XCTUnwrap(result.weeklyWindow?.usedRatio), 0.54, accuracy: 0.001)
+        XCTAssertEqual(try XCTUnwrap(result.sparkWeeklyWindow?.usedRatio), 0.0, accuracy: 0.001)
+    }
+
+    func testMixedModelSessionUsesIndependentCumulativeCounters() throws {
+        let lines = [
+            """
+            {"timestamp":"2026-07-15T01:00:00.000Z","type":"turn_context","payload":{"model":"model-a"}}
+            """,
+            """
+            {"timestamp":"2026-07-15T01:00:01.000Z","type":"event_msg","payload":{"type":"token_count","info":{"total_token_usage":{"input_tokens":10,"cached_input_tokens":0,"output_tokens":0,"reasoning_output_tokens":0,"total_tokens":10}}}}
+            """,
+            """
+            {"timestamp":"2026-07-15T02:00:00.000Z","type":"turn_context","payload":{"model":"model-b"}}
+            """,
+            """
+            {"timestamp":"2026-07-15T02:00:01.000Z","type":"event_msg","payload":{"type":"token_count","info":{"total_token_usage":{"input_tokens":4,"cached_input_tokens":0,"output_tokens":0,"reasoning_output_tokens":0,"total_tokens":4}}}}
+            """,
+            """
+            {"timestamp":"2026-07-15T03:00:01.000Z","type":"event_msg","payload":{"type":"token_count","info":{"total_token_usage":{"input_tokens":15,"cached_input_tokens":0,"output_tokens":0,"reasoning_output_tokens":0,"total_tokens":15}}}}
+            """,
+        ]
+
+        let result = CodexLogParser().parse(lines: lines, sessionID: "mixed")
+
+        XCTAssertEqual(result.events.map(\.totalTokens), [10, 4, 11])
+        XCTAssertEqual(result.events.map(\.model), ["model-a", "model-b", "model-b"])
+        XCTAssertEqual(result.totalsByModel["model-a"]?.totalTokens, 10)
+        XCTAssertEqual(result.totalsByModel["model-b"]?.totalTokens, 15)
+    }
+
     func testResetsAtIsDecodedAsUnixEpochSeconds() throws {
         let result = CodexLogParser().parse(lines: try lines("codex-two-windows"), sessionID: "sess-1")
         let resetsAt = try XCTUnwrap(result.shortWindow?.resetsAt)

@@ -69,7 +69,11 @@ public struct CopilotLogParser: Sendable {
                   let metrics = payload["modelMetrics"] as? [String: Any] else { continue }
             guard let timestamp = LogDate.parse(root["timestamp"] as? String) else { continue }
 
-            for (model, raw) in metrics {
+            // JSON objects are unordered. Sort the keys so the display model is
+            // deterministic when one shutdown record contains several models;
+            // token totals remain per-model regardless of this presentation choice.
+            for model in metrics.keys.sorted() {
+                guard let raw = metrics[model] else { continue }
                 guard let entry = raw as? [String: Any],
                       let usage = entry["usage"] as? [String: Any] else { continue }
 
@@ -100,8 +104,10 @@ public struct CopilotLogParser: Sendable {
                 )
                 totalsByModel[model] = totals
 
-                result.latestTimestamp = timestamp
-                result.latestModel = model
+                if result.latestTimestamp == nil || timestamp >= result.latestTimestamp! {
+                    result.latestTimestamp = timestamp
+                    result.latestModel = model
+                }
 
                 guard dTotal > 0 else { continue }
 

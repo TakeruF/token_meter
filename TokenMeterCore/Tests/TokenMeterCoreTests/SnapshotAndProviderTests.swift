@@ -289,6 +289,51 @@ final class ProviderAvailabilityTests: XCTestCase {
 
 final class QuotaRecoveryTests: XCTestCase {
 
+    func testCodexMigratesLegacySessionTotalsWithoutDuplicatingHistory() async throws {
+        let store = try makeTempStore()
+        let root = makeTempDirectory()
+        let dayDir = root.appendingPathComponent("2026/07/15", isDirectory: true)
+        try FileManager.default.createDirectory(at: dayDir, withIntermediateDirectories: true)
+        let sessionID = "019f5f87-eeb1-7493-96fc-7dbf947babbb"
+        let lines = [
+            """
+            {"timestamp":"2026-07-15T01:00:00.000Z","type":"turn_context","payload":{"model":"model-a"}}
+            """,
+            """
+            {"timestamp":"2026-07-15T01:00:01.000Z","type":"event_msg","payload":{"type":"token_count","info":{"total_token_usage":{"input_tokens":10,"cached_input_tokens":0,"output_tokens":0,"reasoning_output_tokens":0,"total_tokens":10}},"rate_limits":null}}
+            """,
+            """
+            {"timestamp":"2026-07-15T02:00:00.000Z","type":"turn_context","payload":{"model":"model-b"}}
+            """,
+            """
+            {"timestamp":"2026-07-15T02:00:01.000Z","type":"event_msg","payload":{"type":"token_count","info":{"total_token_usage":{"input_tokens":4,"cached_input_tokens":0,"output_tokens":0,"reasoning_output_tokens":0,"total_tokens":4}},"rate_limits":null}}
+            """,
+        ]
+        let data = Data((lines.joined(separator: "\n") + "\n").utf8)
+        let file = dayDir.appendingPathComponent("rollout-2026-07-15T01-00-00-\(sessionID).jsonl")
+        try data.write(to: file)
+
+        // Simulate the pre-migration database: one session-wide counter and ids.
+        try store.insert(events: [
+            makeEvent(id: "\(sessionID)|1", provider: .codex, at: Date(), model: "model-a", session: sessionID, input: 10),
+            makeEvent(id: "\(sessionID)|2", provider: .codex, at: Date(), model: "model-b", session: sessionID, input: 4),
+        ])
+        try store.setSessionTotals(
+            sessionID: sessionID,
+            provider: .codex,
+            totals: CodexCumulativeTotals(inputTokens: 14, totalTokens: 14, eventCount: 2)
+        )
+        try store.setCursor(path: file.path, offset: UInt64(data.count))
+
+        let provider = CodexUsageProvider(sessionsRoot: root, store: store)
+        _ = try await provider.fetchCurrentUsage()
+
+        let events = try store.events(provider: .codex, since: .distantPast)
+        XCTAssertEqual(events.count, 2)
+        XCTAssertEqual(Set(events.compactMap(\.model)), ["model-a", "model-b"])
+        XCTAssertTrue(events.allSatisfy { $0.id.contains("|model-") })
+    }
+
     func testCodexBackfillsUnseenSessionsBeyondTheRefreshLimit() async throws {
         let store = try makeTempStore()
         let root = makeTempDirectory()

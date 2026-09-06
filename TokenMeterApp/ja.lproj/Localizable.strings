@@ -363,3 +363,6 @@
 "Could not read the Claude Code sign-in (Keychain error %d)." = "Claude Code のサインインを読み取れませんでした（キーチェーンエラー %d）。";
 "Number format" = "数値表記";
 "Token number format" = "トークン数の表記";
+"Codex quota" = "Codexの利用枠";
+"Codex Spark 5-hour" = "Codex Spark 5時間枠";
+"Codex Spark weekly" = "Codex Spark週間枠";

@@ -363,3 +363,6 @@
 "Could not read the Claude Code sign-in (Keychain error %d)." = "无法读取 Claude Code 登录信息（钥匙串错误 %d）。";
 "Number format" = "数字格式";
 "Token number format" = "令牌数字格式";
+"Codex quota" = "Codex 使用限额";
+"Codex Spark 5-hour" = "Codex Spark 5 小时限额";
+"Codex Spark weekly" = "Codex Spark 每周限额";

@@ -6,6 +6,8 @@ public enum QuotaWindowKind: String, Sendable, CaseIterable {
     case short
     case weekly
     case sonnetWeekly
+    case codexSparkShort
+    case codexSparkWeekly
 
     /// Localization key naming this window, matching the UI's own row titles.
     public var label: String {
@@ -13,6 +15,8 @@ public enum QuotaWindowKind: String, Sendable, CaseIterable {
         case .short: return "5-hour"
         case .weekly: return "Weekly"
         case .sonnetWeekly: return "Sonnet weekly"
+        case .codexSparkShort: return "Codex Spark 5-hour"
+        case .codexSparkWeekly: return "Codex Spark weekly"
         }
     }
 }
@@ -24,6 +28,8 @@ public extension UsageSnapshot {
         case .short: return shortWindow
         case .weekly: return weeklyWindow
         case .sonnetWeekly: return sonnetWeeklyWindow
+        case .codexSparkShort: return sparkShortWindow
+        case .codexSparkWeekly: return sparkWeeklyWindow
         }
     }
 

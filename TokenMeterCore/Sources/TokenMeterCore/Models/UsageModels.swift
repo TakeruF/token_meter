@@ -98,6 +98,10 @@ public struct UsageSnapshot: Codable, Identifiable, Sendable, Equatable {
     public let weeklyWindow: UsageWindow?
     /// Claude Pro/Max only: a separate Sonnet weekly limit when Anthropic returns one.
     public let sonnetWeeklyWindow: UsageWindow?
+    /// Codex Spark publishes the same `limit_id` as general Codex, so its quota
+    /// must be carried separately once the parser associates it with the model.
+    public let sparkShortWindow: UsageWindow?
+    public let sparkWeeklyWindow: UsageWindow?
 
     /// Metadata for quota data fetched through the Claude Code OAuth credential.
     public let quotaUpdatedAt: Date?
@@ -132,6 +136,8 @@ public struct UsageSnapshot: Codable, Identifiable, Sendable, Equatable {
         shortWindow: UsageWindow? = nil,
         weeklyWindow: UsageWindow? = nil,
         sonnetWeeklyWindow: UsageWindow? = nil,
+        sparkShortWindow: UsageWindow? = nil,
+        sparkWeeklyWindow: UsageWindow? = nil,
         quotaUpdatedAt: Date? = nil,
         quotaIsCached: Bool = false,
         quotaError: ClaudeUsageError? = nil,
@@ -156,6 +162,8 @@ public struct UsageSnapshot: Codable, Identifiable, Sendable, Equatable {
         self.shortWindow = shortWindow
         self.weeklyWindow = weeklyWindow
         self.sonnetWeeklyWindow = sonnetWeeklyWindow
+        self.sparkShortWindow = sparkShortWindow
+        self.sparkWeeklyWindow = sparkWeeklyWindow
         self.quotaUpdatedAt = quotaUpdatedAt
         self.quotaIsCached = quotaIsCached
         self.quotaError = quotaError
@@ -181,8 +189,21 @@ public struct UsageSnapshot: Codable, Identifiable, Sendable, Equatable {
             .min { ($0.remainingRatio ?? 1) < ($1.remainingRatio ?? 1) }
     }
 
+    /// Provider-reported quota windows, including model-specific Codex Spark
+    /// windows. Local token measurements are intentionally excluded.
+    public var reportedQuotaWindows: [(kind: QuotaWindowKind, window: UsageWindow)] {
+        [
+            (QuotaWindowKind.short, shortWindow),
+            (QuotaWindowKind.weekly, weeklyWindow),
+            (QuotaWindowKind.sonnetWeekly, sonnetWeeklyWindow),
+            (QuotaWindowKind.codexSparkShort, sparkShortWindow),
+            (QuotaWindowKind.codexSparkWeekly, sparkWeeklyWindow),
+        ].compactMap { kind, window in window.map { (kind, $0) } }
+    }
+
     public var hasQuotaInformation: Bool {
         shortWindow != nil || weeklyWindow != nil || sonnetWeeklyWindow != nil
+            || sparkShortWindow != nil || sparkWeeklyWindow != nil
     }
 }
 
