@@ -56,6 +56,24 @@ final class QuotaResetDetectionTests: XCTestCase {
         XCTAssertEqual(after.windowsThatReset(since: before), [])
     }
 
+    func testHigherStaleReadingWithSameDeadlineIsNotAReset() {
+        let reset = Date(timeIntervalSince1970: 1_789_202_293)
+        let before = UsageSnapshot(
+            provider: .codex,
+            timestamp: Date(),
+            weeklyWindow: UsageWindow(usedRatio: 0.56, remainingRatio: 0.44, resetsAt: reset),
+            source: .localLog
+        )
+        let after = UsageSnapshot(
+            provider: .codex,
+            timestamp: Date(),
+            weeklyWindow: UsageWindow(usedRatio: 0.37, remainingRatio: 0.63, resetsAt: reset),
+            source: .localLog
+        )
+
+        XCTAssertEqual(after.windowsThatReset(since: before), [])
+    }
+
     func testNoPreviousSnapshotReportsNothing() {
         XCTAssertEqual(snapshot(fiveHour: 1.00, weekly: 1.00).windowsThatReset(since: nil), [])
     }

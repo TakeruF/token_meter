@@ -82,9 +82,14 @@ public final class UsageStore: @unchecked Sendable {
             remaining_ratio REAL,
             resets_at REAL,
             source TEXT NOT NULL,
+            plan_type TEXT,
             PRIMARY KEY (provider, window_kind, timestamp)
         );
         """)
+
+        // `limit_sample` predates plan metadata. Keep existing histories intact
+        // while making the account type available after an app restart.
+        try? exec("ALTER TABLE limit_sample ADD COLUMN plan_type TEXT;")
     }
 
     // MARK: - Events
@@ -318,9 +323,16 @@ public final class UsageStore: @unchecked Sendable {
 
     // MARK: - Limit samples
 
-    public func insertLimitSample(provider: UsageProviderID, timestamp: Date, kind: String, window: UsageWindow, source: UsageSource) throws {
+    public func insertLimitSample(
+        provider: UsageProviderID,
+        timestamp: Date,
+        kind: String,
+        window: UsageWindow,
+        source: UsageSource,
+        planType: String? = nil
+    ) throws {
         try queue.sync {
-            let sql = "INSERT OR REPLACE INTO limit_sample (provider, timestamp, window_kind, used_ratio, remaining_ratio, resets_at, source) VALUES (?,?,?,?,?,?,?);"
+            let sql = "INSERT OR REPLACE INTO limit_sample (provider, timestamp, window_kind, used_ratio, remaining_ratio, resets_at, source, plan_type) VALUES (?,?,?,?,?,?,?,?);"
             var stmt: OpaquePointer?
             guard sqlite3_prepare_v2(db, sql, -1, &stmt, nil) == SQLITE_OK else {
                 throw UsageProviderError.decodingFailed("prepare limit failed")
@@ -333,6 +345,7 @@ public final class UsageStore: @unchecked Sendable {
             if let r = window.remainingRatio { sqlite3_bind_double(stmt, 5, r) } else { sqlite3_bind_null(stmt, 5) }
             if let d = window.resetsAt { sqlite3_bind_double(stmt, 6, d.timeIntervalSince1970) } else { sqlite3_bind_null(stmt, 6) }
             sqlite3_bind_text(stmt, 7, source.rawValue, -1, SQLITE_TRANSIENT)
+            if let planType { sqlite3_bind_text(stmt, 8, planType, -1, SQLITE_TRANSIENT) } else { sqlite3_bind_null(stmt, 8) }
             guard sqlite3_step(stmt) == SQLITE_DONE else {
                 throw UsageProviderError.decodingFailed("limit step failed")
             }
@@ -344,10 +357,10 @@ public final class UsageStore: @unchecked Sendable {
     /// Needed because rate limits arrive only on lines the log appends. After a
     /// restart the incremental parser reads nothing new, so without this the app
     /// would report "no quota info" for a provider whose quota it actually knows.
-    public func latestLimitSample(provider: UsageProviderID, kind: String) -> (window: UsageWindow, timestamp: Date)? {
+    public func latestLimitSample(provider: UsageProviderID, kind: String) -> (window: UsageWindow, timestamp: Date, planType: String?)? {
         queue.sync {
             let sql = """
-            SELECT timestamp, used_ratio, remaining_ratio, resets_at FROM limit_sample
+            SELECT timestamp, used_ratio, remaining_ratio, resets_at, plan_type FROM limit_sample
             WHERE provider = ? AND window_kind = ?
             ORDER BY timestamp DESC LIMIT 1;
             """
@@ -367,7 +380,10 @@ public final class UsageStore: @unchecked Sendable {
                     : Date(timeIntervalSince1970: sqlite3_column_double(stmt, 3)),
                 windowMinutes: kind == "short" || kind == "spark_short" ? 300 : 10080
             )
-            return (window, timestamp)
+            let planType = sqlite3_column_type(stmt, 4) == SQLITE_NULL
+                ? nil
+                : String(cString: sqlite3_column_text(stmt, 4))
+            return (window, timestamp, planType)
         }
     }
 

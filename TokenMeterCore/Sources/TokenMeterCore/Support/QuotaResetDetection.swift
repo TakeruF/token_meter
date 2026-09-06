@@ -45,9 +45,20 @@ public extension UsageSnapshot {
     func windowsThatReset(since previous: UsageSnapshot?, minimumJump: Double = 0.05) -> [QuotaWindowKind] {
         guard let previous else { return [] }
         return QuotaWindowKind.allCases.filter { kind in
-            guard let now = window(kind)?.remainingRatio,
-                  let before = previous.window(kind)?.remainingRatio else { return false }
-            return now > before + minimumJump
+            guard let current = window(kind),
+                  let prior = previous.window(kind),
+                  let now = current.remainingRatio,
+                  let before = prior.remainingRatio,
+                  now > before + minimumJump else { return false }
+
+            // A larger remaining percentage alone is not evidence of a rollover:
+            // a stale record from a different session can be higher while retaining
+            // the very same reset deadline. When Codex supplies both deadlines, a
+            // genuine new cycle must move the deadline forward.
+            if let currentReset = current.resetsAt, let priorReset = prior.resetsAt {
+                return currentReset > priorReset
+            }
+            return true
         }
     }
 }

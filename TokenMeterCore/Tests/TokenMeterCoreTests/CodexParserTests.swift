@@ -183,6 +183,8 @@ final class CodexParserTests: XCTestCase {
         let recovered = parser.parseLatestRateLimits(lines: lines)
         XCTAssertEqual(try XCTUnwrap(recovered.weeklyWindow?.usedRatio), 0.54, accuracy: 0.001)
         XCTAssertEqual(try XCTUnwrap(recovered.sparkWeeklyWindow?.usedRatio), 0.0, accuracy: 0.001)
+        XCTAssertEqual(recovered.weeklyTimestamp, LogDate.parse("2026-07-15T01:00:01.000Z"))
+        XCTAssertEqual(recovered.sparkWeeklyTimestamp, LogDate.parse("2026-07-15T02:00:01.000Z"))
     }
 
     func testMixedModelSessionUsesIndependentCumulativeCounters() throws {

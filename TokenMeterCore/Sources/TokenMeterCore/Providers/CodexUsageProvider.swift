@@ -174,16 +174,16 @@ public actor CodexUsageProvider: UsageProvider {
 
         // Persist the quota reading for history.
         if let s = lastShortWindow {
-            try store.insertLimitSample(provider: .codex, timestamp: lastWindowUpdate ?? Date(), kind: "short", window: s, source: .localLog)
+            try store.insertLimitSample(provider: .codex, timestamp: lastWindowUpdate ?? Date(), kind: "short", window: s, source: .localLog, planType: lastPlanType)
         }
         if let w = lastWeeklyWindow {
-            try store.insertLimitSample(provider: .codex, timestamp: lastWindowUpdate ?? Date(), kind: "weekly", window: w, source: .localLog)
+            try store.insertLimitSample(provider: .codex, timestamp: lastWindowUpdate ?? Date(), kind: "weekly", window: w, source: .localLog, planType: lastPlanType)
         }
         if let s = lastSparkShortWindow {
-            try store.insertLimitSample(provider: .codex, timestamp: lastWindowUpdate ?? Date(), kind: "spark_short", window: s, source: .localLog)
+            try store.insertLimitSample(provider: .codex, timestamp: lastWindowUpdate ?? Date(), kind: "spark_short", window: s, source: .localLog, planType: lastPlanType)
         }
         if let w = lastSparkWeeklyWindow {
-            try store.insertLimitSample(provider: .codex, timestamp: lastWindowUpdate ?? Date(), kind: "spark_weekly", window: w, source: .localLog)
+            try store.insertLimitSample(provider: .codex, timestamp: lastWindowUpdate ?? Date(), kind: "spark_weekly", window: w, source: .localLog, planType: lastPlanType)
         }
 
         // Rate limits only appear on lines the log appends. After a restart, an
@@ -192,18 +192,22 @@ public actor CodexUsageProvider: UsageProvider {
         if lastShortWindow == nil, let stored = store.latestLimitSample(provider: .codex, kind: "short") {
             lastShortWindow = stored.window
             lastWindowUpdate = lastWindowUpdate ?? stored.timestamp
+            lastPlanType = lastPlanType ?? stored.planType
         }
         if lastWeeklyWindow == nil, let stored = store.latestLimitSample(provider: .codex, kind: "weekly") {
             lastWeeklyWindow = stored.window
             lastWindowUpdate = lastWindowUpdate ?? stored.timestamp
+            lastPlanType = lastPlanType ?? stored.planType
         }
         if lastSparkShortWindow == nil, let stored = store.latestLimitSample(provider: .codex, kind: "spark_short") {
             lastSparkShortWindow = stored.window
             lastWindowUpdate = lastWindowUpdate ?? stored.timestamp
+            lastPlanType = lastPlanType ?? stored.planType
         }
         if lastSparkWeeklyWindow == nil, let stored = store.latestLimitSample(provider: .codex, kind: "spark_weekly") {
             lastSparkWeeklyWindow = stored.window
             lastWindowUpdate = lastWindowUpdate ?? stored.timestamp
+            lastPlanType = lastPlanType ?? stored.planType
         }
         if lastModel == nil {
             lastModel = store.latestModel(provider: .codex)
@@ -252,20 +256,41 @@ public actor CodexUsageProvider: UsageProvider {
     }
 
     private func recoverCanonicalRateLimits(from files: [URL]) {
-        // `files` is newest first. A recent rollout can contain only Spark or only
-        // general Codex, so collect the newest reading for every distinct bucket
-        // instead of allowing a Spark-only file to blank the general menu-bar value.
+        // File modification time is not the quota timestamp: opening an older
+        // rollout updates its mtime, which previously let an old 63% record replace
+        // the current 44% weekly reading. Select each bucket by the timestamp
+        // embedded in its token_count event instead.
         var recovered = CodexLogParser.RateLimitResult()
+        var latestShort: Date?
+        var latestWeekly: Date?
+        var latestSparkShort: Date?
+        var latestSparkWeekly: Date?
         for file in files {
             guard let read = try? JSONLReader.readNewLines(at: file.path, from: 0),
                   !read.lines.isEmpty else { continue }
 
             let reading = parser.parseLatestRateLimits(lines: read.lines)
-            if recovered.shortWindow == nil { recovered.shortWindow = reading.shortWindow }
-            if recovered.weeklyWindow == nil { recovered.weeklyWindow = reading.weeklyWindow }
-            if recovered.sparkShortWindow == nil { recovered.sparkShortWindow = reading.sparkShortWindow }
-            if recovered.sparkWeeklyWindow == nil { recovered.sparkWeeklyWindow = reading.sparkWeeklyWindow }
-            if recovered.planType == nil { recovered.planType = reading.planType }
+            if let timestamp = reading.shortTimestamp,
+               latestShort == nil || timestamp > latestShort! {
+                recovered.shortWindow = reading.shortWindow
+                latestShort = timestamp
+            }
+            if let timestamp = reading.weeklyTimestamp,
+               latestWeekly == nil || timestamp > latestWeekly! {
+                recovered.weeklyWindow = reading.weeklyWindow
+                latestWeekly = timestamp
+                if let planType = reading.planType { recovered.planType = planType }
+            }
+            if let timestamp = reading.sparkShortTimestamp,
+               latestSparkShort == nil || timestamp > latestSparkShort! {
+                recovered.sparkShortWindow = reading.sparkShortWindow
+                latestSparkShort = timestamp
+            }
+            if let timestamp = reading.sparkWeeklyTimestamp,
+               latestSparkWeekly == nil || timestamp > latestSparkWeekly! {
+                recovered.sparkWeeklyWindow = reading.sparkWeeklyWindow
+                latestSparkWeekly = timestamp
+            }
         }
 
         guard recovered.hasQuota else { return }
