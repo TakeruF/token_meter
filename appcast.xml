@@ -11,7 +11,7 @@
             <link>https://github.com/TakeruF/token_meter/releases/tag/v1.2.9</link>
             <sparkle:version>22</sparkle:version>
             <sparkle:shortVersionString>1.2.9</sparkle:shortVersionString>
-            <sparkle:releaseNotesLink>https://takeruf.github.io/token_meter/release-notes.html?version=v1.2.9</sparkle:releaseNotesLink>
+            <sparkle:releaseNotesLink>https://takeruf.github.io/token_meter/release-notes/v1.2.9.html</sparkle:releaseNotesLink>
             <sparkle:minimumSystemVersion>14.0</sparkle:minimumSystemVersion>
             <enclosure url="https://github.com/TakeruF/token_meter/releases/download/v1.2.9/TokenMeter-1.2.9.zip" length="6403685" type="application/octet-stream" sparkle:edSignature="1yW8qz8vSlvukErX1ofUeN5QXFZft8xZeAykclssvEw/kUgDGwCpOsDpsx6O95ljtjUXbkOtWT/GGIALU4bbAg=="/>
             <sparkle:deltas>
