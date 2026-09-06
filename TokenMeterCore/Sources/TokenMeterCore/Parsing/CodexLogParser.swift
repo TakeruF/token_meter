@@ -39,12 +39,14 @@ public struct CodexLogParser: Sendable {
 
     public struct Result: Sendable {
         public var events: [UsageEvent]
-        public var totals: CodexCumulativeTotals
+        public var totalsByModel: [String: CodexCumulativeTotals]
         public var latestModel: String?
         public var latestContextTokens: Int?
         public var contextWindowTokens: Int?
         public var shortWindow: UsageWindow?
         public var weeklyWindow: UsageWindow?
+        public var sparkShortWindow: UsageWindow?
+        public var sparkWeeklyWindow: UsageWindow?
         public var planType: String?
         public var latestTimestamp: Date?
         var latestRateLimitTimestamp: Date?
@@ -53,6 +55,20 @@ public struct CodexLogParser: Sendable {
         /// Lines that passed the cheap pre-filter and were actually parsed.
         public var candidateLineCount: Int = 0
         public var totalLineCount: Int = 0
+
+        /// Compatibility aggregate for callers that only need the session total.
+        /// Provider persistence uses `totalsByModel` so mixed-model sessions do not
+        /// lose their per-model counters.
+        public var totals: CodexCumulativeTotals {
+            totalsByModel.values.reduce(into: CodexCumulativeTotals()) { total, value in
+                total.inputTokens += value.inputTokens
+                total.cachedInputTokens += value.cachedInputTokens
+                total.outputTokens += value.outputTokens
+                total.reasoningTokens += value.reasoningTokens
+                total.totalTokens += value.totalTokens
+                total.eventCount += value.eventCount
+            }
+        }
     }
 
     /// Anything up to a day is treated as the "short" window; a week or longer is
@@ -75,11 +91,11 @@ public struct CodexLogParser: Sendable {
     public func parse(
         lines: [String],
         sessionID: String,
-        previousTotals: CodexCumulativeTotals = CodexCumulativeTotals(),
+        previousTotalsByModel: [String: CodexCumulativeTotals] = [:],
         previousModel: String? = nil
     ) -> Result {
-        var totals = previousTotals
-        var result = Result(events: [], totals: totals)
+        var totalsByModel = previousTotalsByModel
+        var result = Result(events: [], totalsByModel: totalsByModel)
         result.totalLineCount = lines.count
 
         // turn_context precedes the token_count events of that turn, so the most
@@ -118,7 +134,7 @@ public struct CodexLogParser: Sendable {
 
             // rate_limits and info are independently nullable.
             if let limits = payload["rate_limits"] as? [String: Any],
-               let reading = rateLimitReading(from: limits) {
+               let reading = rateLimitReading(from: limits, model: currentModel) {
                 apply(reading, into: &result)
                 result.latestRateLimitTimestamp = timestamp
             }
@@ -136,6 +152,8 @@ public struct CodexLogParser: Sendable {
 
             guard let cumulative = info["total_token_usage"] as? [String: Any] else { continue }
 
+            let modelKey = Self.modelKey(currentModel)
+            let previous = totalsByModel[modelKey] ?? CodexCumulativeTotals()
             let cInput = cumulative["input_tokens"] as? Int ?? 0
             let cCached = cumulative["cached_input_tokens"] as? Int ?? 0
             let cOutput = cumulative["output_tokens"] as? Int ?? 0
@@ -145,21 +163,22 @@ public struct CodexLogParser: Sendable {
             // A decrease means the counter restarted; the current value is then the
             // whole of the new consumption. Equal values mean a repeated event and
             // yield a zero delta, which we drop.
-            let restarted = cTotal < totals.totalTokens
-            let dInput = restarted ? cInput : cInput - totals.inputTokens
-            let dCached = restarted ? cCached : cCached - totals.cachedInputTokens
-            let dOutput = restarted ? cOutput : cOutput - totals.outputTokens
-            let dReasoning = restarted ? cReasoning : cReasoning - totals.reasoningTokens
-            let dTotal = restarted ? cTotal : cTotal - totals.totalTokens
+            let restarted = cTotal < previous.totalTokens
+            let dInput = restarted ? cInput : cInput - previous.inputTokens
+            let dCached = restarted ? cCached : cCached - previous.cachedInputTokens
+            let dOutput = restarted ? cOutput : cOutput - previous.outputTokens
+            let dReasoning = restarted ? cReasoning : cReasoning - previous.reasoningTokens
+            let dTotal = restarted ? cTotal : cTotal - previous.totalTokens
 
-            totals = CodexCumulativeTotals(
+            let totals = CodexCumulativeTotals(
                 inputTokens: cInput,
                 cachedInputTokens: cCached,
                 outputTokens: cOutput,
                 reasoningTokens: cReasoning,
                 totalTokens: cTotal,
-                eventCount: totals.eventCount + 1
+                eventCount: previous.eventCount + 1
             )
+            totalsByModel[modelKey] = totals
 
             result.latestTimestamp = timestamp
             if let currentModel { result.latestModel = currentModel }
@@ -168,7 +187,7 @@ public struct CodexLogParser: Sendable {
 
             result.events.append(
                 UsageEvent(
-                    id: "\(sessionID)|\(totals.eventCount)",
+                    id: "\(sessionID)|\(modelKey)|\(totals.eventCount)",
                     provider: .codex,
                     timestamp: timestamp,
                     model: currentModel,
@@ -184,8 +203,30 @@ public struct CodexLogParser: Sendable {
             )
         }
 
-        result.totals = totals
+        result.totalsByModel = totalsByModel
         return result
+    }
+
+    /// Backwards-compatible entry point for clients that persisted one counter per
+    /// session. New callers should pass `previousTotalsByModel`.
+    public func parse(
+        lines: [String],
+        sessionID: String,
+        previousTotals: CodexCumulativeTotals,
+        previousModel: String? = nil
+    ) -> Result {
+        let key = previousModel ?? "__unattributed__"
+        return parse(
+            lines: lines,
+            sessionID: sessionID,
+            previousTotalsByModel: [key: previousTotals],
+            previousModel: previousModel
+        )
+    }
+
+    private static func modelKey(_ model: String?) -> String {
+        guard let model, !model.isEmpty else { return "__unattributed__" }
+        return model
     }
 
     /// Reads quota data without producing token events. The provider uses this once
@@ -193,20 +234,28 @@ public struct CodexLogParser: Sendable {
     /// the general `codex` limit from model-specific limit buckets.
     func parseLatestRateLimits(lines: [String]) -> RateLimitResult {
         var result = RateLimitResult()
+        var currentModel: String?
 
         for line in lines {
-            guard line.contains("token_count"), line.contains("rate_limits"),
+            guard line.contains("token_count") || line.contains("turn_context"),
                   let data = line.data(using: .utf8),
                   let root = (try? JSONSerialization.jsonObject(with: data)) as? [String: Any],
-                  root["type"] as? String == "event_msg",
-                  let payload = root["payload"] as? [String: Any],
+                  let payload = root["payload"] as? [String: Any] else { continue }
+
+            if root["type"] as? String == "turn_context" {
+                if let model = payload["model"] as? String, !model.isEmpty { currentModel = model }
+                continue
+            }
+            guard root["type"] as? String == "event_msg",
                   payload["type"] as? String == "token_count",
                   let timestamp = LogDate.parse(root["timestamp"] as? String),
                   let limits = payload["rate_limits"] as? [String: Any],
-                  let reading = rateLimitReading(from: limits) else { continue }
+                  let reading = rateLimitReading(from: limits, model: currentModel) else { continue }
 
             result.shortWindow = reading.shortWindow
             result.weeklyWindow = reading.weeklyWindow
+            result.sparkShortWindow = reading.sparkShortWindow
+            result.sparkWeeklyWindow = reading.sparkWeeklyWindow
             result.planType = reading.planType
             result.timestamp = timestamp
         }
@@ -217,23 +266,37 @@ public struct CodexLogParser: Sendable {
     struct RateLimitResult: Sendable {
         var shortWindow: UsageWindow? = nil
         var weeklyWindow: UsageWindow? = nil
+        var sparkShortWindow: UsageWindow? = nil
+        var sparkWeeklyWindow: UsageWindow? = nil
         var planType: String? = nil
         var timestamp: Date? = nil
 
-        var hasQuota: Bool { shortWindow != nil || weeklyWindow != nil }
+        var hasQuota: Bool {
+            shortWindow != nil || weeklyWindow != nil
+                || sparkShortWindow != nil || sparkWeeklyWindow != nil
+        }
     }
 
     private struct RateLimitReading {
         var shortWindow: UsageWindow? = nil
         var weeklyWindow: UsageWindow? = nil
+        var sparkShortWindow: UsageWindow? = nil
+        var sparkWeeklyWindow: UsageWindow? = nil
         var planType: String? = nil
+
+        var hasQuota: Bool {
+            shortWindow != nil || weeklyWindow != nil
+                || sparkShortWindow != nil || sparkWeeklyWindow != nil
+        }
     }
 
-    private func rateLimitReading(from limits: [String: Any]) -> RateLimitReading? {
+    private func rateLimitReading(from limits: [String: Any], model: String?) -> RateLimitReading? {
         // Codex can emit additional model-specific buckets (for example
         // `codex_bengalfox`) alongside the account's general `codex` limit. Those
         // percentages are not the value shown by Codex's usage UI.
-        if let limitID = limits["limit_id"] as? String, limitID != "codex" {
+        let limitID = limits["limit_id"] as? String
+        let isSpark = model == "gpt-5.3-codex-spark"
+        if !isSpark, let limitID, limitID != "codex" {
             return nil
         }
 
@@ -260,19 +323,23 @@ public struct CodexLogParser: Sendable {
             guard let window = UsageWindow.fromUsedPercent(percent, resetsAt: resetsAt, windowMinutes: minutes) else {
                 continue
             }
-            switch kind {
-            case .short: reading.shortWindow = window
-            case .weekly: reading.weeklyWindow = window
+            switch (isSpark, kind) {
+            case (false, .short): reading.shortWindow = window
+            case (false, .weekly): reading.weeklyWindow = window
+            case (true, .short): reading.sparkShortWindow = window
+            case (true, .weekly): reading.sparkWeeklyWindow = window
             }
         }
 
-        guard reading.shortWindow != nil || reading.weeklyWindow != nil else { return nil }
+        guard reading.hasQuota else { return nil }
         return reading
     }
 
     private func apply(_ reading: RateLimitReading, into result: inout Result) {
         if let short = reading.shortWindow { result.shortWindow = short }
         if let weekly = reading.weeklyWindow { result.weeklyWindow = weekly }
+        if let short = reading.sparkShortWindow { result.sparkShortWindow = short }
+        if let weekly = reading.sparkWeeklyWindow { result.sparkWeeklyWindow = weekly }
         if let plan = reading.planType { result.planType = plan }
     }
 }

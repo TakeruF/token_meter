@@ -66,4 +66,23 @@ final class QuotaResetDetectionTests: XCTestCase {
         let after = snapshot(fiveHour: 1.00, weekly: 0.96)
         XCTAssertEqual(after.windowsThatReset(since: before), [])
     }
+
+    func testSparkWeeklyRolloverIsIndependentFromGeneralWeekly() {
+        let before = UsageSnapshot(
+            provider: .codex,
+            timestamp: Date(),
+            weeklyWindow: UsageWindow(usedRatio: 0.54, remainingRatio: 0.46, resetsAt: nil),
+            sparkWeeklyWindow: UsageWindow(usedRatio: 1.00, remainingRatio: 0.00, resetsAt: nil),
+            source: .localLog
+        )
+        let after = UsageSnapshot(
+            provider: .codex,
+            timestamp: Date(),
+            weeklyWindow: UsageWindow(usedRatio: 0.54, remainingRatio: 0.46, resetsAt: nil),
+            sparkWeeklyWindow: UsageWindow(usedRatio: 0.00, remainingRatio: 1.00, resetsAt: nil),
+            source: .localLog
+        )
+
+        XCTAssertEqual(after.windowsThatReset(since: before), [.codexSparkWeekly])
+    }
 }

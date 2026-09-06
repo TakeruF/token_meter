@@ -8,7 +8,7 @@ actor NotificationManager {
 
     /// The lowest threshold already announced for a provider. Cleared when the quota
     /// recovers (a reset), so the next cycle can warn again.
-    private var announcedThreshold: [UsageProviderID: Double] = [:]
+    private var announcedThreshold: [UsageProviderID: [QuotaWindowKind: Double]] = [:]
     /// Keyed by window as well as provider: the 5-hour and weekly limits roll over on
     /// their own schedules, and one must never suppress the other's notice.
     private var announcedResetAt: [UsageProviderID: [QuotaWindowKind: Date]] = [:]
@@ -40,7 +40,7 @@ actor NotificationManager {
         // Each window is checked against its own previous reading, so the notice names
         // the limit that actually rolled over rather than whichever one is now tightest.
         for kind in snapshot.windowsThatReset(since: previous) {
-            announcedThreshold[provider] = nil
+            announcedThreshold[provider]?[kind] = nil
             guard notifyOnReset, let resetWindow = snapshot.window(kind) else { continue }
 
             // Guard against announcing the same reset twice — per window, since the
@@ -61,36 +61,36 @@ actor NotificationManager {
             )
         }
 
-        // No provider-reported quota -> nothing to threshold on.
-        guard let window = snapshot.primaryWindow, let remaining = window.remainingRatio else { return }
+        // Threshold state is also per window. Spark and regular Codex can have
+        // different remaining percentages, and one must not suppress the other.
+        for (kind, window) in snapshot.reportedQuotaWindows {
+            guard let remaining = window.remainingRatio else { continue }
+            guard let crossed = thresholds.filter({ remaining <= $0 }).min() else {
+                announcedThreshold[provider]?[kind] = nil
+                continue
+            }
+            if let already = announcedThreshold[provider]?[kind], already <= crossed { continue }
 
-        // Fire only for the lowest threshold now crossed, and only if we have not
-        // already announced that one (or a lower one) for this cycle.
-        guard let crossed = thresholds.filter({ remaining <= $0 }).min() else {
-            // Back above every threshold: allow future warnings again.
-            announcedThreshold[provider] = nil
-            return
+            announcedThreshold[provider, default: [:]][kind] = crossed
+            let level = UsageStatusLevel.from(remainingRatio: remaining)
+            var body = AppLocalization.format(
+                "%d%% remaining.",
+                Int((remaining * 100).rounded())
+            )
+            if let reset = AppLocalization.resetSentence(resetsAt: window.resetsAt) {
+                body += " \(reset)"
+            }
+
+            await send(
+                title: AppLocalization.format(
+                    "%@ %@: %@",
+                    provider.displayName,
+                    AppLocalization.string(kind.label),
+                    AppLocalization.string(level.label)
+                ),
+                body: body
+            )
         }
-        if let already = announcedThreshold[provider], already <= crossed { return }
-
-        announcedThreshold[provider] = crossed
-        let level = UsageStatusLevel.from(remainingRatio: remaining)
-        var body = AppLocalization.format(
-            "%d%% remaining.",
-            Int((remaining * 100).rounded())
-        )
-        if let reset = AppLocalization.resetSentence(resetsAt: window.resetsAt) {
-            body += " \(reset)"
-        }
-
-        await send(
-            title: AppLocalization.format(
-                "%@: %@",
-                provider.displayName,
-                AppLocalization.string(level.label)
-            ),
-            body: body
-        )
     }
 
     func notifyError(provider: UsageProviderID, message: String) async {
