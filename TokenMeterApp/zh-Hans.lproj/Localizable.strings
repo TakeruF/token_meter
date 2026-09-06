@@ -42,6 +42,7 @@
 "Token Meter will detect local session logs and start updating automatically." = "Token Meter 将检测本地会话日志并开始自动更新。";
 "Tracking" = "跟踪";
 "Menu bar" = "菜单栏";
+"Connections" = "连接";
 "Shown" = "显示";
 "Hidden — Dock icon stays available" = "隐藏 — Dock 图标仍可使用";
 "Privacy" = "隐私";
@@ -62,6 +63,7 @@
 "Time windows" = "时间窗口";
 "Show the 5-hour window" = "显示5小时窗口";
 "Show the weekly window" = "显示每周窗口";
+"Show Codex Spark quotas" = "显示 Codex Spark 限额";
 "Token window rows are counted from local logs. Claude Pro / Max percentages and resets are shown separately and come from Anthropic when OAuth usage checks are enabled." = "Token 窗口根据本地日志统计。启用 OAuth 用量检查后，Claude Pro / Max 百分比和重置时间将从 Anthropic 获取并单独显示。";
 "Interval" = "间隔";
 "%@ minutes" = "%@分钟";
@@ -164,6 +166,7 @@
 "With the menu bar item hidden, Token Meter keeps a Dock icon so you can still open this window." = "隐藏菜单栏项目时，Token Meter 会保留 Dock 图标，确保你仍可打开此窗口。";
 "Show in the menu bar" = "在菜单栏中显示";
 "Remaining usage percentage" = "剩余用量百分比";
+"This selection applies to Claude Code and Codex. Codex Pro always shows its weekly limit because it has no account-wide 5-hour limit." = "此选择同时适用于 Claude Code 和 Codex。Codex Pro 没有帐户级 5 小时限额，因此始终显示每周限额。";
 "Today's token count" = "今日 Token 数";
 "Countdown to the next 5-hour reset" = "距离下次5小时重置的时间";
 "What Token Meter reads" = "Token Meter 读取的内容";
@@ -289,9 +292,6 @@
 "Step %d of %d" = "步骤 %d／%d";
 "5-hour limit" = "5 小时限额";
 "Weekly limit" = "每周限额";
-"Percentage window" = "剩余用量基准";
-"Codex 5-hour limit" = "Codex 5 小时限额";
-"Codex is not currently reporting a 5-hour limit. The menu bar falls back to the weekly limit automatically. This option will become available if Codex reports it again." = "Codex 当前未提供 5 小时限额，菜单栏会自动改用每周限额。Codex 恢复提供 5 小时限额后，即可选择此项。";
 "Countdown to the selected limit reset" = "所选限额的重置倒计时";
 
 /* Widget / accessibility strings that previously fell back to English */
@@ -366,3 +366,4 @@
 "Codex quota" = "Codex 使用限额";
 "Codex Spark 5-hour" = "Codex Spark 5 小时限额";
 "Codex Spark weekly" = "Codex Spark 每周限额";
+"Percentage window" = "剩余用量基准";

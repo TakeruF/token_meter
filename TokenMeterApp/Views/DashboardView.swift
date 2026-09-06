@@ -93,13 +93,14 @@ struct DashboardView: View {
         HStack(spacing: 12) {
             ForEach(providers) { id in
                 let all = events(id)
+                let hasCurrentReadableValues = monitor.states[id]?.hasCurrentReadableValues == true
                 // Headline is real work; total (cache-inflated) is the context.
                 let work = all.reduce(0) { $0 + $1.workingTokens }
                 let total = all.reduce(0) { $0 + $1.totalTokens }
                 SummaryCard(
                     providerID: id,
-                    value: work > 0 ? work.displayTokens : nil,
-                    total: total > 0 ? total.displayTokens : nil,
+                    value: hasCurrentReadableValues && work > 0 ? work.displayTokens : nil,
+                    total: hasCurrentReadableValues && total > 0 ? total.displayTokens : nil,
                     caption: AppLocalization.format("tokens · %@", range.label),
                     trend: trend(id, currentWork: work)
                 )
@@ -135,6 +136,7 @@ struct DashboardView: View {
         let showFive = settings.showFiveHourWindow
         let showWeekly = settings.showWeeklyWindow
         let showing = providers.filter { id in
+            guard monitor.states[id]?.hasCurrentReadableValues == true else { return false }
             let s = monitor.states[id]?.snapshot
             let hasFive = showFive && (s?.shortWindowUsage != nil || s?.shortWindow != nil)
             let hasWeekly = showWeekly

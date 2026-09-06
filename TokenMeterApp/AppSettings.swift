@@ -96,6 +96,7 @@ final class AppSettings {
         static let menuBarLimitWindow = "menuBarLimitWindow"
         static let showFiveHourWindow = "showFiveHourWindow"
         static let showWeeklyWindow = "showWeeklyWindow"
+        static let showCodexSparkQuota = "showCodexSparkQuota"
         static let hasCompletedSetup = "hasCompletedSetup"
         static let notify20 = "notifyAt20"
         static let notify10 = "notifyAt10"
@@ -175,6 +176,9 @@ final class AppSettings {
     /// not quota percentages, so some people will not want them — hence the toggles.
     var showFiveHourWindow: Bool { didSet { defaults.set(showFiveHourWindow, forKey: Key.showFiveHourWindow) } }
     var showWeeklyWindow: Bool { didSet { defaults.set(showWeeklyWindow, forKey: Key.showWeeklyWindow) } }
+    /// Spark quotas are independent from standard Codex quotas and can be hidden
+    /// without losing their collection, history, or reset notifications.
+    var showCodexSparkQuota: Bool { didSet { defaults.set(showCodexSparkQuota, forKey: Key.showCodexSparkQuota) } }
 
     /// Set once the user has seen Setup, so it only leads on first launch.
     var hasCompletedSetup: Bool { didSet { defaults.set(hasCompletedSetup, forKey: Key.hasCompletedSetup) } }
@@ -227,6 +231,7 @@ final class AppSettings {
             Key.menuBarLimitWindow: MenuBarLimitWindow.fiveHour.rawValue,
             Key.showFiveHourWindow: true,
             Key.showWeeklyWindow: true,
+            Key.showCodexSparkQuota: true,
             Key.hasCompletedSetup: false,
             Key.notify20: true,
             Key.notify10: true,
@@ -259,6 +264,7 @@ final class AppSettings {
         ) ?? .fiveHour
         showFiveHourWindow = defaults.bool(forKey: Key.showFiveHourWindow)
         showWeeklyWindow = defaults.bool(forKey: Key.showWeeklyWindow)
+        showCodexSparkQuota = defaults.bool(forKey: Key.showCodexSparkQuota)
         hasCompletedSetup = defaults.bool(forKey: Key.hasCompletedSetup)
         notifyAt20 = defaults.bool(forKey: Key.notify20)
         notifyAt10 = defaults.bool(forKey: Key.notify10)

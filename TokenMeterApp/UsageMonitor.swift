@@ -14,6 +14,12 @@ struct ProviderState: Identifiable {
     /// Token totals for the last 7 days, oldest first.
     var weekSeries: [DailyUsage] = []
 
+    /// A stored snapshot remains useful as history after a failed refresh, but it
+    /// must never be presented as the provider's current token reading.
+    var hasCurrentReadableValues: Bool {
+        availability.isAvailable && lastError == nil
+    }
+
     var freshness: DataFreshness? {
         guard let lastSuccessfulUpdate else { return nil }
         return DataFreshness.evaluate(age: Date().timeIntervalSince(lastSuccessfulUpdate))
@@ -125,6 +131,13 @@ final class UsageMonitor {
 
     enum RefreshReason: String {
         case launch, manual, logChange, interval, wake, dayChange
+
+        /// A person explicitly asked to see the newest reading, so a corrected
+        /// historical rate-limit sample must not be presented back as an alert.
+        /// Automatic refreshes remain responsible for announcing real rollovers.
+        var notifiesQuotaResets: Bool {
+            self != .manual
+        }
     }
 
     /// Re-runs availability detection for every provider (Settings > "Re-detect").
@@ -170,7 +183,7 @@ final class UsageMonitor {
                     }
                 }
                 for await (id, result) in group {
-                    await apply(result: result, for: id)
+                    await apply(result: result, for: id, refreshReason: reason)
                     // Publish as each provider lands: the first run has to chew
                     // through hundreds of MB of logs, and there is no reason to make
                     // the menu bar and widget wait for the slower provider.
@@ -187,7 +200,11 @@ final class UsageMonitor {
         refreshTask = nil
     }
 
-    private func apply(result: Result<UsageSnapshot, Error>, for id: UsageProviderID) async {
+    private func apply(
+        result: Result<UsageSnapshot, Error>,
+        for id: UsageProviderID,
+        refreshReason: RefreshReason
+    ) async {
         guard let provider = providers[id] else { return }
         let availability = await provider.checkAvailability()
         var state = states[id] ?? ProviderState(id: id, availability: availability)
@@ -207,7 +224,7 @@ final class UsageMonitor {
                 snapshot: snapshot,
                 previous: previous,
                 thresholds: settings.enabledThresholds(),
-                notifyOnReset: settings.notifyOnReset
+                notifyOnReset: settings.notifyOnReset && refreshReason.notifiesQuotaResets
             )
 
         case .failure(let error):
@@ -251,7 +268,8 @@ final class UsageMonitor {
         for id in UsageProviderID.allCases {
             guard settings.enabledProviders().contains(id), let state = states[id] else { continue }
 
-            let window = state.snapshot?.primaryWindow
+            let readable = state.hasCurrentReadableValues
+            let window = readable ? state.snapshot?.primaryWindow : nil
             let weekTotal = state.weekSeries.reduce(0) { $0 + $1.totalTokens }
             let weekWorking = state.weekSeries.reduce(0) { $0 + $1.workingTokens }
 
@@ -260,10 +278,10 @@ final class UsageMonitor {
                 remainingRatio: window?.remainingRatio,
                 usedRatio: window?.usedRatio,
                 resetsAt: settings.widgetShowReset ? window?.resetsAt : nil,
-                todayWorkingTokens: settings.widgetShowTokens ? state.snapshot?.workingTokens : nil,
-                todayTotalTokens: settings.widgetShowTokens ? state.snapshot?.totalTokens : nil,
-                last7DaysWorkingTokens: settings.widgetShowTokens ? weekWorking : nil,
-                last7DaysTotalTokens: settings.widgetShowTokens ? weekTotal : nil,
+                todayWorkingTokens: settings.widgetShowTokens && readable ? state.snapshot?.workingTokens : nil,
+                todayTotalTokens: settings.widgetShowTokens && readable ? state.snapshot?.totalTokens : nil,
+                last7DaysWorkingTokens: settings.widgetShowTokens && readable ? weekWorking : nil,
+                last7DaysTotalTokens: settings.widgetShowTokens && readable ? weekTotal : nil,
                 modelName: state.snapshot?.modelName,
                 lastUpdated: state.lastSuccessfulUpdate,
                 statusHeadline: state.availability.isAvailable || state.snapshot?.hasQuotaInformation == true
@@ -395,7 +413,7 @@ final class UsageMonitor {
         return visible.compactMap { id in
             guard let state = states[id] else { return nil }
 
-            guard state.availability.isAvailable else {
+            guard state.hasCurrentReadableValues else {
                 return MenuBarProviderValue(providerID: id, value: "—", compactValue: "—")
             }
 
@@ -457,13 +475,17 @@ final class UsageMonitor {
         return hours > 0 ? "↻\(hours)h\(minutes)m" : "↻\(minutes)m"
     }
 
-    /// The preferred window wins when present. A provider that temporarily omits
-    /// it falls back to the other reported quota instead of showing a false 100% or
-    /// dropping to token counts. This currently covers Codex's missing 5-hour limit.
+    /// The selected window wins when present. Codex Pro has a weekly account
+    /// allowance, so its menu-bar value stays on that allowance even if a log
+    /// happens to contain a short-lived model-specific slot.
     private func menuBarWindow(for snapshot: UsageSnapshot?) -> UsageWindow? {
         guard let snapshot else { return nil }
         switch settings.menuBarLimitWindow {
         case .fiveHour:
+            if snapshot.provider == .codex,
+               snapshot.planType?.caseInsensitiveCompare("pro") == .orderedSame {
+                return snapshot.weeklyWindow
+            }
             return snapshot.shortWindow ?? snapshot.weeklyWindow
         case .weekly:
             return snapshot.weeklyWindow ?? snapshot.shortWindow

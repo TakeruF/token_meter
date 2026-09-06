@@ -171,10 +171,18 @@ final class CodexParserTests: XCTestCase {
             """,
         ]
 
-        let result = CodexLogParser().parse(lines: lines, sessionID: "spark")
+        let parser = CodexLogParser()
+        let result = parser.parse(lines: lines, sessionID: "spark")
 
         XCTAssertEqual(try XCTUnwrap(result.weeklyWindow?.usedRatio), 0.54, accuracy: 0.001)
         XCTAssertEqual(try XCTUnwrap(result.sparkWeeklyWindow?.usedRatio), 0.0, accuracy: 0.001)
+
+        // Launch-time repair reads the same mixed-model transcript without token
+        // parsing. A Spark record after a general one must not erase the general
+        // reading that the menu bar uses.
+        let recovered = parser.parseLatestRateLimits(lines: lines)
+        XCTAssertEqual(try XCTUnwrap(recovered.weeklyWindow?.usedRatio), 0.54, accuracy: 0.001)
+        XCTAssertEqual(try XCTUnwrap(recovered.sparkWeeklyWindow?.usedRatio), 0.0, accuracy: 0.001)
     }
 
     func testMixedModelSessionUsesIndependentCumulativeCounters() throws {
