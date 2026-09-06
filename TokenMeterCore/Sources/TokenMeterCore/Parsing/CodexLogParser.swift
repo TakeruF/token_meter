@@ -252,11 +252,14 @@ public struct CodexLogParser: Sendable {
                   let limits = payload["rate_limits"] as? [String: Any],
                   let reading = rateLimitReading(from: limits, model: currentModel) else { continue }
 
-            result.shortWindow = reading.shortWindow
-            result.weeklyWindow = reading.weeklyWindow
-            result.sparkShortWindow = reading.sparkShortWindow
-            result.sparkWeeklyWindow = reading.sparkWeeklyWindow
-            result.planType = reading.planType
+            // A rollout can contain general Codex and Spark readings in either
+            // order. Keep each independently: assigning nil here used to let a
+            // later Spark-only record erase the general value recovered above.
+            if let short = reading.shortWindow { result.shortWindow = short }
+            if let weekly = reading.weeklyWindow { result.weeklyWindow = weekly }
+            if let sparkShort = reading.sparkShortWindow { result.sparkShortWindow = sparkShort }
+            if let sparkWeekly = reading.sparkWeeklyWindow { result.sparkWeeklyWindow = sparkWeekly }
+            if let planType = reading.planType { result.planType = planType }
             result.timestamp = timestamp
         }
 

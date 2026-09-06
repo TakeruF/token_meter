@@ -42,6 +42,7 @@
 "Token Meter will detect local session logs and start updating automatically." = "Token Meterがローカルのセッションログを検出し、自動更新を開始します。";
 "Tracking" = "表示対象";
 "Menu bar" = "メニューバー";
+"Connections" = "接続";
 "Shown" = "表示";
 "Hidden — Dock icon stays available" = "非表示 — Dockアイコンは利用できます";
 "Privacy" = "プライバシー";
@@ -62,6 +63,7 @@
 "Time windows" = "時間枠";
 "Show the 5-hour window" = "5時間枠を表示";
 "Show the weekly window" = "週間枠を表示";
+"Show Codex Spark quotas" = "Codex Sparkの利用枠を表示";
 "Token window rows are counted from local logs. Claude Pro / Max percentages and resets are shown separately and come from Anthropic when OAuth usage checks are enabled." = "時間枠の行はローカルログから集計します。Claude Pro / Maxの割合とリセット時刻は、OAuth利用状況確認を有効にした場合にAnthropicから取得して別に表示します。";
 "Interval" = "間隔";
 "%@ minutes" = "%@分";
@@ -164,6 +166,7 @@
 "With the menu bar item hidden, Token Meter keeps a Dock icon so you can still open this window." = "メニューバー項目を非表示にすると、この画面を開けるようToken MeterはDockアイコンを表示します。";
 "Show in the menu bar" = "メニューバーに表示";
 "Remaining usage percentage" = "利用可能な残量の割合";
+"This selection applies to Claude Code and Codex. Codex Pro always shows its weekly limit because it has no account-wide 5-hour limit." = "この選択はClaude CodeとCodexの両方に適用されます。Codex Proにはアカウント全体の5時間枠がないため、常に週次枠を表示します。";
 "Today's token count" = "今日のトークン数";
 "Countdown to the next 5-hour reset" = "次の5時間枠リセットまでの時間";
 "What Token Meter reads" = "Token Meterが読み取る情報";
@@ -289,9 +292,6 @@
 "Step %d of %d" = "ステップ %d／%d";
 "5-hour limit" = "5時間枠";
 "Weekly limit" = "週次枠";
-"Percentage window" = "残量の基準";
-"Codex 5-hour limit" = "Codexの5時間枠";
-"Codex is not currently reporting a 5-hour limit. The menu bar falls back to the weekly limit automatically. This option will become available if Codex reports it again." = "現在、Codexから5時間枠が提供されていないため、メニューバーでは週次枠を自動的に表示します。Codexが5時間枠の提供を再開すると、この項目を選択できるようになります。";
 "Countdown to the selected limit reset" = "選択した利用枠のリセットまで";
 
 /* Widget / accessibility strings that previously fell back to English */
@@ -366,3 +366,4 @@
 "Codex quota" = "Codexの利用枠";
 "Codex Spark 5-hour" = "Codex Spark 5時間枠";
 "Codex Spark weekly" = "Codex Spark週間枠";
+"Percentage window" = "残量の基準";

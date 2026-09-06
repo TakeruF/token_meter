@@ -42,6 +42,7 @@
 "Token Meter will detect local session logs and start updating automatically." = "Token Meter가 로컬 세션 로그를 감지하고 자동 업데이트를 시작합니다.";
 "Tracking" = "추적 대상";
 "Menu bar" = "메뉴 막대";
+"Connections" = "연결";
 "Shown" = "표시";
 "Hidden — Dock icon stays available" = "숨김 — Dock 아이콘은 계속 사용 가능";
 "Privacy" = "개인정보 보호";
@@ -62,6 +63,7 @@
 "Time windows" = "시간 창";
 "Show the 5-hour window" = "5시간 창 표시";
 "Show the weekly window" = "주간 창 표시";
+"Show Codex Spark quotas" = "Codex Spark 한도 표시";
 "Token window rows are counted from local logs. Claude Pro / Max percentages and resets are shown separately and come from Anthropic when OAuth usage checks are enabled." = "토큰 시간 창은 로컬 로그에서 계산합니다. OAuth 사용량 확인을 활성화하면 Claude Pro / Max 비율과 재설정 시간은 Anthropic에서 받아 별도로 표시합니다.";
 "Interval" = "간격";
 "%@ minutes" = "%@분";
@@ -164,6 +166,7 @@
 "With the menu bar item hidden, Token Meter keeps a Dock icon so you can still open this window." = "메뉴 막대 항목을 숨기면 이 창을 다시 열 수 있도록 Token Meter가 Dock 아이콘을 유지합니다.";
 "Show in the menu bar" = "메뉴 막대에 표시";
 "Remaining usage percentage" = "잔여 사용량 비율";
+"This selection applies to Claude Code and Codex. Codex Pro always shows its weekly limit because it has no account-wide 5-hour limit." = "이 선택은 Claude Code와 Codex 모두에 적용됩니다. Codex Pro에는 계정 전체 5시간 한도가 없으므로 항상 주간 한도를 표시합니다.";
 "Today's token count" = "오늘의 토큰 수";
 "Countdown to the next 5-hour reset" = "다음 5시간 재설정까지 남은 시간";
 "What Token Meter reads" = "Token Meter가 읽는 정보";
@@ -289,9 +292,6 @@
 "Step %d of %d" = "단계 %d／%d";
 "5-hour limit" = "5시간 한도";
 "Weekly limit" = "주간 한도";
-"Percentage window" = "잔여량 기준";
-"Codex 5-hour limit" = "Codex 5시간 한도";
-"Codex is not currently reporting a 5-hour limit. The menu bar falls back to the weekly limit automatically. This option will become available if Codex reports it again." = "현재 Codex에서 5시간 한도를 제공하지 않아 메뉴 막대에는 주간 한도가 자동으로 표시됩니다. Codex에서 5시간 한도를 다시 제공하면 이 항목을 선택할 수 있습니다.";
 "Countdown to the selected limit reset" = "선택한 한도 초기화까지";
 
 /* Widget / accessibility strings that previously fell back to English */
@@ -366,3 +366,4 @@
 "Codex quota" = "Codex 사용 한도";
 "Codex Spark 5-hour" = "Codex Spark 5시간 한도";
 "Codex Spark weekly" = "Codex Spark 주간 한도";
+"Percentage window" = "잔여량 기준";

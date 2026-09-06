@@ -95,6 +95,15 @@ generate_update_feed() {
         sed -E -i '' \
             's#(releases/download/)v[^/]+/(TokenMeter-([0-9]+\.[0-9]+\.[0-9]+)\.zip)#\1v\3/\2#g' \
             "$updates_dir/appcast.xml"
+
+        # Sparkle renders this linked page inside its standard update alert. The
+        # page narrows itself to this version while retaining language selection.
+        sed -E -i '' \
+            "/<item>/,/<\\/item>/ {
+/<sparkle:shortVersionString>${version}<\\/sparkle:shortVersionString>/a\\
+            <sparkle:releaseNotesLink>https://takeruf.github.io/token_meter/releases.html?version=v${version}</sparkle:releaseNotesLink>
+}" \
+            "$updates_dir/appcast.xml"
     } always {
         rm -rf "$key_dir"
     }

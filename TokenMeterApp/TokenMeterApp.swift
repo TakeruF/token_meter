@@ -97,14 +97,6 @@ enum AppLaunchOptions {
         #endif
     }
 
-    static var scrollSetupToMenuBar: Bool {
-        #if DEBUG
-        ProcessInfo.processInfo.arguments.contains("--scroll-setup-to-menu-bar")
-        #else
-        false
-        #endif
-    }
-
     private static func value(after prefix: String) -> String? {
         ProcessInfo.processInfo.arguments
             .first { $0.hasPrefix(prefix) }
@@ -224,8 +216,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         guard let path = AppLaunchOptions.captureUIPath else { return }
         window.setContentSize(NSSize(width: 760, height: 540))
 
-        let captureDelay = AppLaunchOptions.scrollSetupToMenuBar ? 5.0 : 1.0
-        DispatchQueue.main.asyncAfter(deadline: .now() + captureDelay) {
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
             guard let view = window.contentView,
                   let bitmap = view.bitmapImageRepForCachingDisplay(in: view.bounds) else { return }
             view.cacheDisplay(in: view.bounds, to: bitmap)
@@ -260,7 +251,7 @@ struct MainWindowView: View {
                         .tag(MainWindowTab.dashboard)
 
                     SetupView(monitor: monitor)
-                        .tabItem { Label("Setup", systemImage: "checklist") }
+                        .tabItem { Label("Connections", systemImage: "checklist") }
                         .tag(MainWindowTab.setup)
                         .badge(needsAttentionCount)
 

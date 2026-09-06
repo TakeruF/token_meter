@@ -13,9 +13,22 @@ struct ProviderCard: View {
     @State private var settings = AppSettings.shared
 
     private var snapshot: UsageSnapshot? { state?.snapshot }
-    private var window: UsageWindow? { snapshot?.primaryWindow }
+    /// Codex's headline must match the limit selected for the menu bar. Its
+    /// tightest quota is not necessarily the limit the user chose to monitor.
+    private var window: UsageWindow? {
+        guard let snapshot else { return nil }
+        guard providerID == .codex else { return snapshot.primaryWindow }
+        switch settings.menuBarLimitWindow {
+        case .fiveHour:
+            if snapshot.planType?.caseInsensitiveCompare("pro") == .orderedSame {
+                return snapshot.weeklyWindow
+            }
+            return snapshot.shortWindow ?? snapshot.weeklyWindow
+        case .weekly: return snapshot.weeklyWindow ?? snapshot.shortWindow
+        }
+    }
 
-    private var isAvailable: Bool { state?.availability.isAvailable == true }
+    private var hasCurrentReadableValues: Bool { state?.hasCurrentReadableValues == true }
 
     /// The one-click action that would fix the Claude quota error we are showing,
     /// if any. Keyed off the error the refresh actually saw, so the button offered
@@ -66,13 +79,14 @@ struct ProviderCard: View {
     private var codexQuotaSection: some View {
         if let window, let remaining = window.remainingRatio {
             quotaSection(window: window, remaining: remaining)
-            if let spark = snapshot?.sparkShortWindow {
+            if settings.showCodexSparkQuota, let spark = snapshot?.sparkShortWindow {
                 QuotaWindowRow(title: AppLocalization.string("Codex Spark 5-hour"), window: spark)
             }
-            if let spark = snapshot?.sparkWeeklyWindow {
+            if settings.showCodexSparkQuota, let spark = snapshot?.sparkWeeklyWindow {
                 QuotaWindowRow(title: AppLocalization.string("Codex Spark weekly"), window: spark)
             }
-        } else if snapshot?.sparkShortWindow != nil || snapshot?.sparkWeeklyWindow != nil {
+        } else if settings.showCodexSparkQuota,
+                  (snapshot?.sparkShortWindow != nil || snapshot?.sparkWeeklyWindow != nil) {
             VStack(alignment: .leading, spacing: 7) {
                 Text(AppLocalization.string("Codex quota"))
                     .font(.caption.weight(.medium))
@@ -245,7 +259,7 @@ struct ProviderCard: View {
     /// state where the window's edges are, so a derived edge is labelled as derived.
     @ViewBuilder
     private var windowsSection: some View {
-        if isAvailable, fiveHour != nil || weekly != nil {
+        if hasCurrentReadableValues, fiveHour != nil || weekly != nil {
             Divider()
 
             if let fiveHour {
@@ -291,7 +305,8 @@ struct ProviderCard: View {
                 .font(.caption)
                 .foregroundStyle(.secondary)
             Spacer()
-            if let total = snapshot?.totalTokens, let work = snapshot?.workingTokens, total > 0 {
+            if hasCurrentReadableValues,
+               let total = snapshot?.totalTokens, let work = snapshot?.workingTokens, total > 0 {
                 // Real work leads, cache-inflated total as context — the same pair the
                 // dashboard's summary card shows, so a glance at either one agrees.
                 VStack(alignment: .trailing, spacing: 1) {
@@ -305,9 +320,7 @@ struct ProviderCard: View {
                 }
             } else {
                 // No usage recorded today is different from "we don't know".
-                Text(AppLocalization.string(
-                    state?.availability.isAvailable == true ? "No usage today" : "No data"
-                ))
+                Text(hasCurrentReadableValues ? AppLocalization.string("No usage today") : "—")
                     .font(.callout)
                     .foregroundStyle(.secondary)
             }

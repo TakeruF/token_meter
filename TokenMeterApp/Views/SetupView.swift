@@ -9,179 +9,40 @@ import TokenMeterCore
 /// invented, and no step ever asks for a token or a password.
 struct SetupView: View {
     let monitor: UsageMonitor
-    @State private var settings = AppSettings.shared
 
     var body: some View {
-        ScrollViewReader { proxy in
-            ScrollView {
-                VStack(alignment: .leading, spacing: 18) {
-                    intro
+        ScrollView {
+            VStack(alignment: .leading, spacing: 18) {
+                intro
 
-                    ForEach(UsageProviderID.allCases) { id in
-                        ConnectionCard(
-                            providerID: id,
-                            state: monitor.states[id],
-                            onRecheck: {
-                                Task {
-                                    await monitor.detectDataSources()
-                                    await monitor.refresh(reason: .manual)
-                                }
+                ForEach(UsageProviderID.allCases) { id in
+                    ConnectionCard(
+                        providerID: id,
+                        state: monitor.states[id],
+                        onRecheck: {
+                            Task {
+                                await monitor.detectDataSources()
+                                await monitor.refresh(reason: .manual)
                             }
-                        )
-                    }
-
-                    claudeUsageSection
-                    menuBarSection
-                        .id("menu-bar")
-                    privacyNote
+                        }
+                    )
                 }
-                .padding(20)
+
+                privacyNote
             }
-            .task {
-                guard AppLaunchOptions.scrollSetupToMenuBar else { return }
-                await Task.yield()
-                proxy.scrollTo("menu-bar", anchor: .top)
-            }
+            .padding(20)
         }
         .background(.background)
     }
 
     private var intro: some View {
         VStack(alignment: .leading, spacing: 6) {
-            Text("Setup").font(.title2.weight(.semibold))
-            Text("Token Meter reads local Claude Code and Codex session logs. With your explicit permission, it can also use Claude Code's Keychain sign-in to request Pro / Max usage directly from Anthropic.")
+            Text("Connections").font(.title2.weight(.semibold))
+            Text("Check that Token Meter can read your local Claude Code and Codex session logs. Use Settings to choose providers, configure the menu bar, or enable Claude Pro / Max usage.")
                 .font(.callout)
                 .foregroundStyle(.secondary)
                 .fixedSize(horizontal: false, vertical: true)
         }
-    }
-
-    private var claudeUsageSection: some View {
-        SectionBox("Claude Pro / Max usage") {
-            VStack(alignment: .leading, spacing: 8) {
-                Toggle("Enable Claude usage checks", isOn: $settings.claudeOAuthUsageEnabled)
-                    .toggleStyle(.switch)
-                    .onChange(of: settings.claudeOAuthUsageEnabled) { _, _ in
-                        Task {
-                            await monitor.detectDataSources()
-                            await monitor.refresh(reason: .manual)
-                        }
-                    }
-                Text("If enabled, Token Meter reads the Claude Code-credentials Generic Password from macOS Keychain and uses its OAuth access token only for GET https://api.anthropic.com/api/oauth/usage. It does not save or log the token.")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-                    .fixedSize(horizontal: false, vertical: true)
-                Text("You can disable this integration at any time. Local token history continues to work without it.")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-            }
-        }
-    }
-
-    private var menuBarSection: some View {
-        SectionBox("Menu bar") {
-            VStack(alignment: .leading, spacing: 10) {
-                Toggle("Show Token Meter in the menu bar", isOn: $settings.showMenuBarExtra)
-                    .toggleStyle(.switch)
-
-                if !settings.showMenuBarExtra {
-                    Label(
-                        "With the menu bar item hidden, Token Meter keeps a Dock icon so you can still open this window.",
-                        systemImage: "info.circle"
-                    )
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-                    .fixedSize(horizontal: false, vertical: true)
-                }
-
-                Divider()
-
-                Picker("Format", selection: $settings.menuBarStyle) {
-                    ForEach(MenuBarStyle.allCases) { style in
-                        Text(style.displayName).tag(style)
-                    }
-                }
-                .disabled(!settings.showMenuBarExtra)
-
-                Toggle("Show Meter icon", isOn: $settings.showMenuBarIcon)
-                    .disabled(!settings.showMenuBarExtra || settings.menuBarStyle == .iconOnly)
-
-                Text("Show in the menu bar")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-
-                Toggle("Remaining usage percentage", isOn: $settings.menuBarShowPercentage)
-                    .disabled(!settings.showMenuBarExtra || settings.menuBarStyle == .iconOnly)
-
-                if settings.menuBarShowPercentage {
-                    Picker("Percentage window", selection: $settings.menuBarLimitWindow) {
-                        ForEach(MenuBarLimitWindow.allCases) { window in
-                            Text(window.displayName).tag(window)
-                        }
-                    }
-                    .pickerStyle(.segmented)
-                    .disabled(!settings.showMenuBarExtra || settings.menuBarStyle == .iconOnly)
-
-                    if settings.showCodex {
-                        Toggle("Codex 5-hour limit", isOn: codexFiveHourSelection)
-                            .disabled(!codexHasFiveHourLimit)
-
-                        if !codexHasFiveHourLimit {
-                            Label(
-                                "Codex is not currently reporting a 5-hour limit. The menu bar falls back to the weekly limit automatically. This option will become available if Codex reports it again.",
-                                systemImage: "info.circle"
-                            )
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
-                            .fixedSize(horizontal: false, vertical: true)
-                        }
-                    }
-                }
-
-                Toggle("Today's token count", isOn: $settings.menuBarShowTokens)
-                    .disabled(!settings.showMenuBarExtra || settings.menuBarStyle == .iconOnly)
-                Toggle("Countdown to the selected limit reset", isOn: $settings.menuBarShowReset)
-                    .disabled(!settings.showMenuBarExtra || settings.menuBarStyle == .iconOnly)
-
-                Divider()
-
-                Toggle(isOn: $settings.showClaudeCode) {
-                    ProviderLabel(providerID: .claudeCode, font: .body, iconSize: 15)
-                }
-                Toggle(isOn: $settings.showCodex) {
-                    ProviderLabel(providerID: .codex, font: .body, iconSize: 15)
-                }
-                Toggle(isOn: $settings.showCopilotCli) {
-                    ProviderLabel(providerID: .copilotCli, font: .body, iconSize: 15)
-                }
-                .onChange(of: settings.showCopilotCli) { _, on in
-                    guard on else { return }
-                    Task {
-                        await monitor.detectDataSources()
-                        await monitor.refresh(reason: .manual)
-                    }
-                }
-
-                LabeledContent("Preview") {
-                    MenuBarLabel(monitor: monitor)
-                        .font(.callout)
-                        .padding(.horizontal, 8).padding(.vertical, 3)
-                        .background(.quaternary, in: RoundedRectangle(cornerRadius: 5))
-                }
-                .padding(.top, 2)
-            }
-        }
-    }
-
-    private var codexHasFiveHourLimit: Bool {
-        monitor.states[.codex]?.snapshot?.shortWindow != nil
-    }
-
-    private var codexFiveHourSelection: Binding<Bool> {
-        Binding(
-            get: { codexHasFiveHourLimit && settings.menuBarLimitWindow == .fiveHour },
-            set: { settings.menuBarLimitWindow = $0 ? .fiveHour : .weekly }
-        )
     }
 
     private var privacyNote: some View {

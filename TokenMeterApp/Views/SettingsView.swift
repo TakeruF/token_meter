@@ -26,6 +26,9 @@ struct SettingsView: View {
                 Toggle(isOn: $settings.showCodex) {
                     ProviderLabel(providerID: .codex, font: .body, iconSize: 15)
                 }
+                Toggle("Show Codex Spark quotas", isOn: $settings.showCodexSparkQuota)
+                    .padding(.leading, 28)
+                    .disabled(!settings.showCodex)
                 Toggle(isOn: $settings.showCopilotCli) {
                     ProviderLabel(providerID: .copilotCli, font: .body, iconSize: 15)
                 }
@@ -40,6 +43,63 @@ struct SettingsView: View {
                     .font(.caption)
                     .foregroundStyle(.secondary)
                     .fixedSize(horizontal: false, vertical: true)
+            }
+
+            Section("Menu bar") {
+                Toggle("Show Token Meter in the menu bar", isOn: $settings.showMenuBarExtra)
+
+                if !settings.showMenuBarExtra {
+                    Label(
+                        "With the menu bar item hidden, Token Meter keeps a Dock icon so you can still open this window.",
+                        systemImage: "info.circle"
+                    )
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
+                }
+
+                Picker("Format", selection: $settings.menuBarStyle) {
+                    ForEach(MenuBarStyle.allCases) { style in
+                        Text(style.displayName).tag(style)
+                    }
+                }
+                .disabled(!settings.showMenuBarExtra)
+
+                Toggle("Show Meter icon", isOn: $settings.showMenuBarIcon)
+                    .disabled(!settings.showMenuBarExtra || settings.menuBarStyle == .iconOnly)
+                Toggle("Remaining usage percentage", isOn: $settings.menuBarShowPercentage)
+                    .disabled(!settings.showMenuBarExtra || settings.menuBarStyle == .iconOnly)
+
+                if settings.menuBarShowPercentage {
+                    Picker("Percentage window", selection: $settings.menuBarLimitWindow) {
+                        ForEach(MenuBarLimitWindow.allCases) { window in
+                            Text(window.displayName).tag(window)
+                        }
+                    }
+                    .pickerStyle(.segmented)
+                    .disabled(!settings.showMenuBarExtra || settings.menuBarStyle == .iconOnly)
+
+                    Label(
+                        "This selection applies to Claude Code and Codex. Codex Pro always shows its weekly limit because it has no account-wide 5-hour limit.",
+                        systemImage: "info.circle"
+                    )
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
+                }
+
+                Toggle("Today's token count", isOn: $settings.menuBarShowTokens)
+                    .disabled(!settings.showMenuBarExtra || settings.menuBarStyle == .iconOnly)
+                Toggle("Countdown to the selected limit reset", isOn: $settings.menuBarShowReset)
+                    .disabled(!settings.showMenuBarExtra || settings.menuBarStyle == .iconOnly)
+
+                LabeledContent("Preview") {
+                    MenuBarLabel(monitor: monitor)
+                        .font(.callout)
+                        .padding(.horizontal, 8)
+                        .padding(.vertical, 3)
+                        .background(.quaternary, in: RoundedRectangle(cornerRadius: 5))
+                }
             }
 
             Section("Setup") {

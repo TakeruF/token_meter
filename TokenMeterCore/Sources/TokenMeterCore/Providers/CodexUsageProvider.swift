@@ -252,23 +252,31 @@ public actor CodexUsageProvider: UsageProvider {
     }
 
     private func recoverCanonicalRateLimits(from files: [URL]) {
+        // `files` is newest first. A recent rollout can contain only Spark or only
+        // general Codex, so collect the newest reading for every distinct bucket
+        // instead of allowing a Spark-only file to blank the general menu-bar value.
+        var recovered = CodexLogParser.RateLimitResult()
         for file in files {
             guard let read = try? JSONLReader.readNewLines(at: file.path, from: 0),
                   !read.lines.isEmpty else { continue }
 
-            let recovered = parser.parseLatestRateLimits(lines: read.lines)
-            guard recovered.hasQuota else { continue }
-
-            lastShortWindow = recovered.shortWindow
-            lastWeeklyWindow = recovered.weeklyWindow
-            lastSparkShortWindow = recovered.sparkShortWindow
-            lastSparkWeeklyWindow = recovered.sparkWeeklyWindow
-            lastPlanType = recovered.planType
-            // Timestamp the repair now so it supersedes a bad sample persisted by
-            // a previous app version. The window's reset time remains provider data.
-            lastWindowUpdate = Date()
-            return
+            let reading = parser.parseLatestRateLimits(lines: read.lines)
+            if recovered.shortWindow == nil { recovered.shortWindow = reading.shortWindow }
+            if recovered.weeklyWindow == nil { recovered.weeklyWindow = reading.weeklyWindow }
+            if recovered.sparkShortWindow == nil { recovered.sparkShortWindow = reading.sparkShortWindow }
+            if recovered.sparkWeeklyWindow == nil { recovered.sparkWeeklyWindow = reading.sparkWeeklyWindow }
+            if recovered.planType == nil { recovered.planType = reading.planType }
         }
+
+        guard recovered.hasQuota else { return }
+        if let short = recovered.shortWindow { lastShortWindow = short }
+        if let weekly = recovered.weeklyWindow { lastWeeklyWindow = weekly }
+        if let sparkShort = recovered.sparkShortWindow { lastSparkShortWindow = sparkShort }
+        if let sparkWeekly = recovered.sparkWeeklyWindow { lastSparkWeeklyWindow = sparkWeekly }
+        if let planType = recovered.planType { lastPlanType = planType }
+        // Timestamp the repair now so it supersedes a bad sample persisted by a
+        // previous app version. The window's reset time remains provider data.
+        lastWindowUpdate = Date()
     }
 
     private func storedTotalsByModel(sessionID: String) -> [String: CodexCumulativeTotals] {
