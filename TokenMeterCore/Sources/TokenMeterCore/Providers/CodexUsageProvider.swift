@@ -27,6 +27,10 @@ public actor CodexUsageProvider: UsageProvider {
     private var lastModel: String?
     private var lastContextTokens: Int?
     private var lastWindowUpdate: Date?
+    private var lastShortWindowTimestamp: Date?
+    private var lastWeeklyWindowTimestamp: Date?
+    private var lastSparkShortWindowTimestamp: Date?
+    private var lastSparkWeeklyWindowTimestamp: Date?
     private var didRecoverCanonicalRateLimits = false
 
     public init(sessionsRoot: URL = TokenMeterPaths.codexSessions, store: UsageStore, maxFilesPerRefresh: Int = 20) {
@@ -155,10 +159,14 @@ public actor CodexUsageProvider: UsageProvider {
             }
             if result.shortWindow != nil || result.weeklyWindow != nil
                 || result.sparkShortWindow != nil || result.sparkWeeklyWindow != nil {
-                if let s = result.shortWindow { lastShortWindow = s }
-                if let w = result.weeklyWindow { lastWeeklyWindow = w }
-                if let s = result.sparkShortWindow { lastSparkShortWindow = s }
-                if let w = result.sparkWeeklyWindow { lastSparkWeeklyWindow = w }
+                if let s = result.shortWindow, let timestamp = result.shortRateLimitTimestamp,
+                   lastShortWindowTimestamp == nil || timestamp >= lastShortWindowTimestamp! { lastShortWindow = s; lastShortWindowTimestamp = timestamp }
+                if let w = result.weeklyWindow, let timestamp = result.weeklyRateLimitTimestamp,
+                   lastWeeklyWindowTimestamp == nil || timestamp >= lastWeeklyWindowTimestamp! { lastWeeklyWindow = w; lastWeeklyWindowTimestamp = timestamp }
+                if let s = result.sparkShortWindow, let timestamp = result.sparkShortRateLimitTimestamp,
+                   lastSparkShortWindowTimestamp == nil || timestamp >= lastSparkShortWindowTimestamp! { lastSparkShortWindow = s; lastSparkShortWindowTimestamp = timestamp }
+                if let w = result.sparkWeeklyWindow, let timestamp = result.sparkWeeklyRateLimitTimestamp,
+                   lastSparkWeeklyWindowTimestamp == nil || timestamp >= lastSparkWeeklyWindowTimestamp! { lastSparkWeeklyWindow = w; lastSparkWeeklyWindowTimestamp = timestamp }
                 if let p = result.planType { lastPlanType = p }
                 lastWindowUpdate = result.latestRateLimitTimestamp ?? result.latestTimestamp ?? Date()
             }

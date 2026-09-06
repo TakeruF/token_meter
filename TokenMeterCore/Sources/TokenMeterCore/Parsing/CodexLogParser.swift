@@ -50,6 +50,10 @@ public struct CodexLogParser: Sendable {
         public var planType: String?
         public var latestTimestamp: Date?
         var latestRateLimitTimestamp: Date?
+        var shortRateLimitTimestamp: Date?
+        var weeklyRateLimitTimestamp: Date?
+        var sparkShortRateLimitTimestamp: Date?
+        var sparkWeeklyRateLimitTimestamp: Date?
         /// Lines that looked like usage records but would not decode.
         public var malformedLineCount: Int = 0
         /// Lines that passed the cheap pre-filter and were actually parsed.
@@ -135,7 +139,7 @@ public struct CodexLogParser: Sendable {
             // rate_limits and info are independently nullable.
             if let limits = payload["rate_limits"] as? [String: Any],
                let reading = rateLimitReading(from: limits, model: currentModel) {
-                apply(reading, into: &result)
+                apply(reading, timestamp: timestamp, into: &result)
                 result.latestRateLimitTimestamp = timestamp
             }
 
@@ -357,11 +361,11 @@ public struct CodexLogParser: Sendable {
         return reading
     }
 
-    private func apply(_ reading: RateLimitReading, into result: inout Result) {
-        if let short = reading.shortWindow { result.shortWindow = short }
-        if let weekly = reading.weeklyWindow { result.weeklyWindow = weekly }
-        if let short = reading.sparkShortWindow { result.sparkShortWindow = short }
-        if let weekly = reading.sparkWeeklyWindow { result.sparkWeeklyWindow = weekly }
+    private func apply(_ reading: RateLimitReading, timestamp: Date, into result: inout Result) {
+        if let short = reading.shortWindow { result.shortWindow = short; result.shortRateLimitTimestamp = timestamp }
+        if let weekly = reading.weeklyWindow { result.weeklyWindow = weekly; result.weeklyRateLimitTimestamp = timestamp }
+        if let short = reading.sparkShortWindow { result.sparkShortWindow = short; result.sparkShortRateLimitTimestamp = timestamp }
+        if let weekly = reading.sparkWeeklyWindow { result.sparkWeeklyWindow = weekly; result.sparkWeeklyRateLimitTimestamp = timestamp }
         if let plan = reading.planType { result.planType = plan }
     }
 }
