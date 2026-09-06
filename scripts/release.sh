@@ -64,10 +64,17 @@ generate_update_feed() {
     local zip_path="$1"
     local version="$2"
     local updates_dir="$ROOT_DIR/build/updates"
+    local release_notes_path="$ROOT_DIR/docs/release-notes/v$version.html"
     local generate_appcast
     local generate_keys
     local key_dir
     local key_file
+
+    if [[ ! -f "$release_notes_path" ]] || rg -qi '<script[[:space:]>]' "$release_notes_path"; then
+        echo "A self-contained static release-notes page is required: $release_notes_path" >&2
+        return 1
+    fi
+
     generate_appcast="$(find_sparkle_tool generate_appcast)"
     generate_keys="$(find_sparkle_tool generate_keys)"
     key_dir="$(mktemp -d "${TMPDIR:-/tmp}/tokenmeter-sparkle-key.XXXXXX")"
@@ -96,13 +103,13 @@ generate_update_feed() {
             's#(releases/download/)v[^/]+/(TokenMeter-([0-9]+\.[0-9]+\.[0-9]+)\.zip)#\1v\3/\2#g' \
             "$updates_dir/appcast.xml"
 
-        # Sparkle renders this linked page inside its standard update alert. It is
-        # intentionally a header-free, single-version document rather than the
-        # public release-history page.
+        # Sparkle downloads this document and converts its HTML to attributed
+        # text; it does not execute JavaScript. Therefore this must point at a
+        # self-contained, static page rather than the interactive public view.
         sed -E -i '' \
             "/<item>/,/<\\/item>/ {
 /<sparkle:shortVersionString>${version}<\\/sparkle:shortVersionString>/a\\
-            <sparkle:releaseNotesLink>https://takeruf.github.io/token_meter/release-notes.html?version=v${version}</sparkle:releaseNotesLink>
+            <sparkle:releaseNotesLink>https://takeruf.github.io/token_meter/release-notes/v${version}.html</sparkle:releaseNotesLink>
 }" \
             "$updates_dir/appcast.xml"
     } always {

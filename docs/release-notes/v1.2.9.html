@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Token Meter 1.2.9 Release Notes</title>
+  <style>
+    body { color: #252525; font: 15px -apple-system, BlinkMacSystemFont, "Helvetica Neue", sans-serif; line-height: 1.55; }
+    .notes { max-width: 44rem; margin: 0 auto; padding: 1rem 1.5rem; }
+    h1 { font-size: 1.5rem; }
+    h2 { font-size: 1.1rem; margin-top: 1.75rem; }
+    h3 { font-size: 1rem; margin-top: 1.25rem; }
+    ul { padding-left: 1.3rem; }
+  </style>
+</head>
+<body>
+  <div class="notes">
+    <h1>Token Meter 1.2.9</h1>
+
+    <h2>日本語</h2>
+    <p>Codex の週間パーセンテージを正しく維持し、更新ダイアログのリリースノート表示を読みやすくしたパッチです。</p>
+    <h3>変更内容</h3>
+    <ul>
+      <li>Codex の各クォータ枠を、ログファイルの更新日時ではなく使用イベント内の時刻で選ぶようにしました。後から開いた古いセッションが、現在の週間パーセンテージを上書きしません。</li>
+      <li>古い値と現在値のリセット期限が同じ場合は、クォータリセット通知を送らないようにしました。</li>
+      <li>更新ダイアログには、対象バージョンの本文を表示する専用ページを埋め込むようにしました。</li>
+    </ul>
+    <h3>動作環境</h3>
+    <ul><li>macOS 14.0以降</li><li>Apple Silicon / Intel Mac（Universal Binary）</li></ul>
+    <h3>インストール</h3>
+    <p>メニューの「Check for Updates…」から更新できます。<code>TokenMeter-1.2.9.zip</code> を展開し、<code>TokenMeter.app</code> を <code>/Applications</code> へ移動してもインストールできます。</p>
+    <p>アプリは Developer ID で署名し、Apple の Notary Service で公証しています。更新 ZIP は Sparkle の EdDSA 署名でも検証されます。</p>
+
+    <h2>English</h2>
+    <p>This patch makes the Codex weekly percentage reliable again and gives the update alert a focused release-notes view.</p>
+    <h3>Changes</h3>
+    <ul>
+      <li>Select each Codex quota bucket using the timestamp inside its usage event, preventing an older session opened later from replacing the current weekly percentage.</li>
+      <li>Do not announce a quota reset when a stale reading has the same reset deadline as the current quota.</li>
+      <li>The update alert now embeds a dedicated page with the offered version's notes.</li>
+    </ul>
+    <h3>System Requirements</h3>
+    <ul><li>macOS 14.0 or later</li><li>Apple Silicon / Intel Mac (Universal Binary)</li></ul>
+    <h3>Installation</h3>
+    <p>Token Meter updates from the menu with “Check for Updates…”. You can also unzip <code>TokenMeter-1.2.9.zip</code> and move <code>TokenMeter.app</code> to <code>/Applications</code>.</p>
+    <p>The app is Developer ID signed and notarized by Apple. The update ZIP is also verified by Sparkle's EdDSA signature.</p>
+
+    <h2>中文</h2>
+    <p>此补丁重新确保 Codex 每周百分比正确，并让更新提示中的发行说明更加专注易读。</p>
+    <h3>变更内容</h3>
+    <ul>
+      <li>每个 Codex 配额桶现在按照用量事件内的时间戳选择，而非日志文件修改时间；稍后打开的旧会话不会覆盖当前每周百分比。</li>
+      <li>旧读数与当前配额具有相同重置截止时间时，不再错误发送配额重置通知。</li>
+      <li>更新提示现在嵌入仅显示所提供版本说明的专用页面。</li>
+    </ul>
+    <h3>运行环境</h3>
+    <ul><li>macOS 14.0 或更高版本</li><li>Apple Silicon / Intel Mac（通用二进制）</li></ul>
+    <h3>安装方法</h3>
+    <p>可从菜单中的“Check for Updates…”更新。也可解压 <code>TokenMeter-1.2.9.zip</code>，然后将 <code>TokenMeter.app</code> 移至 <code>/Applications</code>。</p>
+    <p>应用已使用 Developer ID 签名并已通过 Apple 公证。更新 ZIP 包也通过 Sparkle 的 EdDSA 签名进行验证。</p>
+
+    <h2>한국어</h2>
+    <p>이 패치는 Codex 주간 백분율이 다시 정확하게 유지되도록 하고 업데이트 알림의 릴리스 노트 보기를 간결하게 만듭니다.</p>
+    <h3>변경 내용</h3>
+    <ul>
+      <li>각 Codex 쿼터 버킷을 로그 파일 수정 시간이 아니라 사용 이벤트 안의 타임스탬프로 선택합니다. 나중에 연 이전 세션이 현재 주간 백분율을 덮어쓰지 않습니다.</li>
+      <li>이전 읽기와 현재 쿼터의 재설정 기한이 같으면 쿼터 재설정 알림을 잘못 보내지 않습니다.</li>
+      <li>업데이트 알림은 이제 제공된 버전의 노트만 표시하는 전용 페이지를 내장합니다.</li>
+    </ul>
+    <h3>작동 환경</h3>
+    <ul><li>macOS 14.0 이상</li><li>Apple Silicon / Intel Mac (Universal Binary)</li></ul>
+    <h3>설치 방법</h3>
+    <p>메뉴의 “Check for Updates…”에서 업데이트할 수 있습니다. 또는 <code>TokenMeter-1.2.9.zip</code> 압축을 풀고 <code>TokenMeter.app</code>을 <code>/Applications</code>로 이동하십시오.</p>
+    <p>앱은 Developer ID로 서명되었으며 Apple의 공증(Notarization)을 받았습니다. 업데이트 ZIP은 Sparkle의 EdDSA 서명으로도 검증됩니다.</p>
+  </div>
+</body>
+</html>

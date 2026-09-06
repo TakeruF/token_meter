@@ -24,6 +24,7 @@
    - 先頭に `# Token Meter <version>` のタイトル行を 1 つ置く。
    - その下に `## English` / `## 日本語` / `## 中文` / `## 한국어` の 4 セクションを、この順で並べる。各セクション内の小見出しは `### ` を使う（`docs/releases.html` が描画時に 1 段繰り上げる）。
    - 各言語に変更内容、動作環境、インストール手順を記載する。`docs/releases.html` は該当言語セクションが空のときだけ English にフォールバックするため、原則すべての言語を翻訳する。
+   - `docs/release-notes/v<version>.html` も追加する。これは Sparkle 更新ダイアログ専用の自己完結した静的 HTML で、同じ 4 言語の本文を含める。JavaScript、外部スクリプト、`fetch` に依存させない（Sparkle は HTML を属性付きテキストへ変換するため、JavaScript を実行しない）。
 3. `docs/releases.html` の `versions` 配列の先頭に `'v<version>'` を追加する。この配列に載っていないバージョンはリリースノート一覧に表示されない。
 4. 公開サイト（About ページ）を更新する。
    - `docs/index.html` の 3 つの ZIP URL と日本語の表示バージョン
@@ -100,7 +101,8 @@ git diff -- appcast.xml docs/index.html docs/releases.html docs/localization.js 
 
 - app の version/build と `project.yml` が一致する
 - `appcast.xml` の full ZIP の URL、サイズ、EdDSA 署名が新バージョンを指す
-- `appcast.xml` の新しい item に `sparkle:releaseNotesLink` があり、`https://takeruf.github.io/token_meter/release-notes.html?version=v<version>` を指す。Sparkle の更新ポップアップはヘッダーなしのこの専用ページを内蔵表示する
+- `appcast.xml` の新しい item に `sparkle:releaseNotesLink` があり、`https://takeruf.github.io/token_meter/release-notes/v<version>.html` を指す。ページは JavaScript を使わない自己完結した静的 HTML である
+- `docs/release-notes/v<version>.html` が存在し、`<script>` を含まない（`scripts/release.sh finish` もこの条件を検証する）
 - `appcast.xml` に新 build から過去 build への delta がある
 - About ページの全 ZIP URL と全言語の表示バージョンが新バージョンになっている
 - `docs/releases.html` の `versions` 配列に新バージョンが含まれ、`docs/releases/v<version>.md` に 4 言語すべてのセクションがある
@@ -120,6 +122,7 @@ git add \
   docs/index.html \
   docs/releases.html \
   docs/release-notes.html \
+  "docs/release-notes/v$VERSION.html" \
   docs/localization.js \
   docs/release-runbook.md \
   "docs/releases/v$VERSION.md" \
