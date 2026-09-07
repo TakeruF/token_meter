@@ -9,7 +9,7 @@ Claude Code、Codex、Copilot CLIの利用状況を確認するmacOSネイティ
 
 [<img src="https://raw.githubusercontent.com/machiav3lli/oandbackupx/main/badge_github.png" alt="GitHubで入手" height="60">](https://github.com/TakeruF/token_meter/releases/latest)
 
-[公式ページ・ダウンロード](https://takeruf.github.io/token_meter/) · [GitHub Releases](https://github.com/TakeruF/token_meter/releases/latest)
+[公式ページ・ダウンロード](https://takeruf.com/projects/token-meter) · [GitHub Releases](https://github.com/TakeruF/token_meter/releases/latest)
 
 ## スクリーンショット
 

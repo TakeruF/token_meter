@@ -9,7 +9,7 @@
 
 [<img src="https://raw.githubusercontent.com/machiav3lli/oandbackupx/main/badge_github.png" alt="在 GitHub 上获取" height="60">](https://github.com/TakeruF/token_meter/releases/latest)
 
-[官方网站 · 下载](https://takeruf.github.io/token_meter/) · [GitHub Releases](https://github.com/TakeruF/token_meter/releases/latest)
+[官方网站 · 下载](https://takeruf.com/projects/token-meter) · [GitHub Releases](https://github.com/TakeruF/token_meter/releases/latest)
 
 ## 截图
 

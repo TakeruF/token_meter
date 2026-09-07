@@ -7,9 +7,9 @@ A native macOS app for keeping an eye on Claude Code, Codex, and Copilot CLI usa
 > [!IMPORTANT]
 > **Windows development is frozen.** The Windows source remains in this repository for reference only. There will be no new Windows releases, updates, maintenance, support, Microsoft Store submission, or direct-download distribution. Do not treat the Windows code or its historical documentation as a supported product; Token Meter is currently supported on macOS only.
 
-[<img src="https://raw.githubusercontent.com/machiav3lli/oandbackupx/main/badge_github.png" alt="Get it on GitHub" height="60">](https://github.com/TakeruF/token_meter/releases/latest) [<img src="assets/badges/download-from-website.png" alt="Download from Website" height="60">](https://takeruf.github.io/token_meter/)
+[<img src="https://raw.githubusercontent.com/machiav3lli/oandbackupx/main/badge_github.png" alt="Get it on GitHub" height="60">](https://github.com/TakeruF/token_meter/releases/latest) [<img src="assets/badges/download-from-website.png" alt="Download from Website" height="60">](https://takeruf.com/projects/token-meter)
 
-[Website · Download](https://takeruf.github.io/token_meter/) · [GitHub Releases](https://github.com/TakeruF/token_meter/releases/latest)
+[Website · Download](https://takeruf.com/projects/token-meter) · [GitHub Releases](https://github.com/TakeruF/token_meter/releases/latest)
 
 ## Screenshots
 
