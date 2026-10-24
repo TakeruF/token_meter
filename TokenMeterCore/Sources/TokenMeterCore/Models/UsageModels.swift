@@ -103,8 +103,9 @@ public struct UsageSnapshot: Codable, Identifiable, Sendable, Equatable {
     public let sparkShortWindow: UsageWindow?
     public let sparkWeeklyWindow: UsageWindow?
 
-    /// Metadata for quota data fetched through the Claude Code OAuth credential.
+    /// Time the quota was observed: the Codex log event time or Claude OAuth fetch time.
     public let quotaUpdatedAt: Date?
+    /// Metadata for quota data fetched through the Claude Code OAuth credential.
     public let quotaIsCached: Bool
     public let quotaError: ClaudeUsageError?
     public let quotaIntegrationEnabled: Bool

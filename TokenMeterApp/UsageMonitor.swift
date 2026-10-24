@@ -20,9 +20,17 @@ struct ProviderState: Identifiable {
         availability.isAvailable && lastError == nil
     }
 
+    /// Re-reading unchanged Codex logs does not refresh their quota observation.
+    var dataUpdatedAt: Date? {
+        if id == .codex, snapshot?.hasQuotaInformation == true {
+            return snapshot?.quotaUpdatedAt
+        }
+        return lastSuccessfulUpdate
+    }
+
     var freshness: DataFreshness? {
-        guard let lastSuccessfulUpdate else { return nil }
-        return DataFreshness.evaluate(age: Date().timeIntervalSince(lastSuccessfulUpdate))
+        guard let dataUpdatedAt else { return nil }
+        return DataFreshness.evaluate(age: Date().timeIntervalSince(dataUpdatedAt))
     }
 
     var displayName: String { id.displayName }
