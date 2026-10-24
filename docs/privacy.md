@@ -1,5 +1,7 @@
 # Token Meter プライバシーポリシー
 
+> 公開ページ: <https://takeruf.com/ja/projects/token-meter/privacy>（English / 中文 / 한국어 は `/en` `/zh` `/ko`）
+
 最終更新日: 2026年7月16日
 
 Token Meterは、Claude Code、CodexおよびCopilot CLIの利用状況をユーザー自身のMacまたはWindows PC上で確認するためのアプリです。

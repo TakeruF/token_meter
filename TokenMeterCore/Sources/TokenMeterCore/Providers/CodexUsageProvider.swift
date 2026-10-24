@@ -22,6 +22,7 @@ public actor CodexUsageProvider: UsageProvider {
     private var lastWeeklyWindow: UsageWindow?
     private var lastSparkShortWindow: UsageWindow?
     private var lastSparkWeeklyWindow: UsageWindow?
+    private var lastPlanTypeTimestamp: Date?
     private var lastPlanType: String?
     private var lastContextWindow: Int?
     private var lastModel: String?
@@ -167,7 +168,11 @@ public actor CodexUsageProvider: UsageProvider {
                    lastSparkShortWindowTimestamp == nil || timestamp >= lastSparkShortWindowTimestamp! { lastSparkShortWindow = s; lastSparkShortWindowTimestamp = timestamp }
                 if let w = result.sparkWeeklyWindow, let timestamp = result.sparkWeeklyRateLimitTimestamp,
                    lastSparkWeeklyWindowTimestamp == nil || timestamp >= lastSparkWeeklyWindowTimestamp! { lastSparkWeeklyWindow = w; lastSparkWeeklyWindowTimestamp = timestamp }
-                if let p = result.planType { lastPlanType = p }
+                if let p = result.planType, let timestamp = result.latestRateLimitTimestamp,
+                   lastPlanTypeTimestamp == nil || timestamp >= lastPlanTypeTimestamp! {
+                    lastPlanType = p
+                    lastPlanTypeTimestamp = timestamp
+                }
                 lastWindowUpdate = result.latestRateLimitTimestamp ?? result.latestTimestamp ?? Date()
             }
         }
@@ -199,21 +204,25 @@ public actor CodexUsageProvider: UsageProvider {
         // we stored instead of reporting "no quota info" for a quota we do know.
         if lastShortWindow == nil, let stored = store.latestLimitSample(provider: .codex, kind: "short") {
             lastShortWindow = stored.window
+            lastShortWindowTimestamp = stored.timestamp
             lastWindowUpdate = lastWindowUpdate ?? stored.timestamp
             lastPlanType = lastPlanType ?? stored.planType
         }
         if lastWeeklyWindow == nil, let stored = store.latestLimitSample(provider: .codex, kind: "weekly") {
             lastWeeklyWindow = stored.window
+            lastWeeklyWindowTimestamp = stored.timestamp
             lastWindowUpdate = lastWindowUpdate ?? stored.timestamp
             lastPlanType = lastPlanType ?? stored.planType
         }
         if lastSparkShortWindow == nil, let stored = store.latestLimitSample(provider: .codex, kind: "spark_short") {
             lastSparkShortWindow = stored.window
+            lastSparkShortWindowTimestamp = stored.timestamp
             lastWindowUpdate = lastWindowUpdate ?? stored.timestamp
             lastPlanType = lastPlanType ?? stored.planType
         }
         if lastSparkWeeklyWindow == nil, let stored = store.latestLimitSample(provider: .codex, kind: "spark_weekly") {
             lastSparkWeeklyWindow = stored.window
+            lastSparkWeeklyWindowTimestamp = stored.timestamp
             lastWindowUpdate = lastWindowUpdate ?? stored.timestamp
             lastPlanType = lastPlanType ?? stored.planType
         }
@@ -248,6 +257,12 @@ public actor CodexUsageProvider: UsageProvider {
             weeklyWindow: weekly,
             sparkShortWindow: expireIfReset(lastSparkShortWindow, now: now),
             sparkWeeklyWindow: expireIfReset(lastSparkWeeklyWindow, now: now),
+            quotaUpdatedAt: [
+                short == nil ? nil : lastShortWindowTimestamp,
+                weekly == nil ? nil : lastWeeklyWindowTimestamp,
+                expireIfReset(lastSparkShortWindow, now: now) == nil ? nil : lastSparkShortWindowTimestamp,
+                expireIfReset(lastSparkWeeklyWindow, now: now) == nil ? nil : lastSparkWeeklyWindowTimestamp,
+            ].compactMap { $0 }.min(),
             shortWindowUsage: shortUsage,
             weeklyWindowUsage: weeklyUsage,
             planType: lastPlanType,
@@ -307,6 +322,11 @@ public actor CodexUsageProvider: UsageProvider {
         if let sparkShort = recovered.sparkShortWindow { lastSparkShortWindow = sparkShort }
         if let sparkWeekly = recovered.sparkWeeklyWindow { lastSparkWeeklyWindow = sparkWeekly }
         if let planType = recovered.planType { lastPlanType = planType }
+        lastShortWindowTimestamp = latestShort
+        lastWeeklyWindowTimestamp = latestWeekly
+        lastSparkShortWindowTimestamp = latestSparkShort
+        lastSparkWeeklyWindowTimestamp = latestSparkWeekly
+        lastPlanTypeTimestamp = latestWeekly
         // Timestamp the repair now so it supersedes a bad sample persisted by a
         // previous app version. The window's reset time remains provider data.
         lastWindowUpdate = Date()

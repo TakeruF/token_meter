@@ -25,21 +25,16 @@
    - その下に `## English` / `## 日本語` / `## 中文` / `## 한국어` の 4 セクションを、この順で並べる。各セクション内の小見出しは `### ` を使う（`docs/releases.html` が描画時に 1 段繰り上げる）。
    - 各言語に変更内容、動作環境、インストール手順を記載する。`docs/releases.html` は該当言語セクションが空のときだけ English にフォールバックするため、原則すべての言語を翻訳する。
    - `docs/release-notes/v<version>.html` も追加する。これは Sparkle 更新ダイアログ専用の自己完結した静的 HTML で、同じ 4 言語の本文を含める。JavaScript、外部スクリプト、`fetch` に依存させない（Sparkle は HTML を属性付きテキストへ変換するため、JavaScript を実行しない）。
-3. `docs/releases.html` の `versions` 配列の先頭に `'v<version>'` を追加する。この配列に載っていないバージョンはリリースノート一覧に表示されない。
-4. 公開サイト（About ページ）を更新する。
-   - `docs/index.html` の 3 つの ZIP URL と日本語の表示バージョン
-   - `docs/releases.html` の nav にある `header-download` の ZIP URL（index.html と同じ更新が必要。忘れやすい）
-   - `docs/localization.js` の全言語（ja/en/zh-CN/ko）の `downloadVersion`
-   - `docs/index.html` と `docs/releases.html` の両方にある `localization.js?v=<version>` のキャッシュバスター用クエリを新バージョンに更新する
-   - ZIP の URL は `https://github.com/TakeruF/token_meter/releases/download/v<version>/TokenMeter-<version>.zip`
+3. 公開サイト（About ページ）とリリース一覧を更新する。
+   - `docs/releases/v<version>.md` を `TakeruF/me` の `src/content/token-meter/releases/` に同期する。takeruf.com の一覧はファイル名を数値順に列挙するため、手動の versions 配列は不要。
+   - `TakeruF/me/scripts/verify-export.mjs` のリリース件数を更新し、全4言語の静的出力を検証する。
+   - ダウンロード先は GitHub Releases の最新版を使う。バージョン固定の ZIP URL がある場合は新バージョンに更新する。
+   - `docs/index.html` と `docs/releases.html` は takeruf.com への転送ページとして維持する。
+   - 旧互換ページ `docs/release-notes.html` の `versions` 配列と CSS キャッシュバスター、および `docs/localization.js` の全言語の `downloadVersion` も更新する。
 
-   バージョン参照の残りがないことを確認する（出力が空になること）:
+   GitHub Pages の公開全体は停止しない。`appcast.xml` と `scripts/release.sh` が Sparkle 用の `docs/release-notes/v<version>.html` を引き続き参照している。紹介・履歴・プライバシー・サインインガイドの移行先は takeruf.com、使用データの調査記録は GitHub リポジトリに残す。
 
-   ```zsh
-   rg -n "1\.1\.9" docs/index.html docs/releases.html docs/localization.js
-   ```
-
-まだ Release は存在しないため、この時点で About ページとリリースノートのリンクは一時的に未公開の URL を指します。後の Release 作成で有効になります。
+まだ Release は存在しないため、新しいリリースノート内の ZIP 名に対応するアセットは未公開です。Release 作成後に takeruf.com 側を commit/push して配信し、公開確認します。
 
 ## 2. 事前検証する
 
@@ -105,8 +100,9 @@ git diff -- appcast.xml docs/index.html docs/releases.html docs/localization.js 
 - `docs/release-notes/v<version>.html` が存在し、`<script>` を含まない（`scripts/release.sh finish` もこの条件を検証する）
 - `appcast.xml` に新 build から過去 build への delta がある
 - About ページの全 ZIP URL と全言語の表示バージョンが新バージョンになっている
-- `docs/releases.html` の `versions` 配列に新バージョンが含まれ、`docs/releases/v<version>.md` に 4 言語すべてのセクションがある
-- `docs/index.html` と `docs/releases.html` の `localization.js?v=` クエリが新バージョンになっている
+- `docs/releases/v<version>.md` に 4 言語すべてのセクションがある
+- 紹介ページとリリースノートは takeruf.com（`TakeruF/me` リポジトリ）が配信する。`docs/index.html` と `docs/releases.html` は takeruf.com への転送ページで、更新は不要
+- `docs/releases/v<version>.md` を `TakeruF/me` の `src/content/token-meter/releases/` へ同期し、takeruf.com を再ビルドする
 
 ## 5. コミット、タグ付け、push する
 
@@ -129,9 +125,19 @@ git add \
   scripts/release.sh \
   project.yml
 git diff --cached --check
+git switch -c "release/v$VERSION"
 git commit -m "Release Token Meter $VERSION"
+git push -u origin "release/v$VERSION"
+# PR 本文をファイルに用意し、required check の成功後に main へ取り込む。
+gh pr create --base main --head "release/v$VERSION" \
+  --title "Release Token Meter $VERSION" --body-file /tmp/tokenmeter-release-pr.md
+gh pr checks --watch
+gh pr merge --merge
+# 取り込み後の main をタグ付けする。保護設定を迂回しない。
+git switch main
+git pull --ff-only
 git tag -a "v$VERSION" -m "Release Token Meter $VERSION"
-git push origin main "v$VERSION"
+git push origin "v$VERSION"
 ```
 
 プッシュ後に確認します。
@@ -164,8 +170,8 @@ Release は draft / prerelease ではなく公開状態にします。asset 数�
 ## 7. 公開後の最終確認
 
 ```zsh
-curl -fsSL --max-time 20 https://takeruf.github.io/token_meter/ \
-  | rg "releases/download/v$VERSION/TokenMeter-$VERSION.zip"
+curl -fsSL --max-time 20 https://takeruf.com/ja/projects/token-meter/releases \
+  | rg "Token Meter.*$VERSION"
 ```
 
 以下を最終報告します。

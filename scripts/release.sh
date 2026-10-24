@@ -106,12 +106,20 @@ generate_update_feed() {
         # Sparkle downloads this document and converts its HTML to attributed
         # text; it does not execute JavaScript. Therefore this must point at a
         # self-contained, static page rather than the interactive public view.
-        sed -E -i '' \
+        # The generator drops custom releaseNotesLink entries on retained items.
+        # Restore every available static page, including older published versions.
+        sed -E -i '' '/<sparkle:releaseNotesLink>/d' "$updates_dir/appcast.xml"
+        local notes_file notes_version
+        for notes_file in "$ROOT_DIR"/docs/release-notes/v*.html; do
+            notes_version="${notes_file:t:r}"
+            notes_version="${notes_version#v}"
+            sed -E -i '' \
             "/<item>/,/<\\/item>/ {
-/<sparkle:shortVersionString>${version}<\\/sparkle:shortVersionString>/a\\
-            <sparkle:releaseNotesLink>https://takeruf.github.io/token_meter/release-notes/v${version}.html</sparkle:releaseNotesLink>
+/<sparkle:shortVersionString>${notes_version}<\\/sparkle:shortVersionString>/a\\
+            <sparkle:releaseNotesLink>https://takeruf.github.io/token_meter/release-notes/v${notes_version}.html</sparkle:releaseNotesLink>
 }" \
             "$updates_dir/appcast.xml"
+        done
     } always {
         rm -rf "$key_dir"
     }

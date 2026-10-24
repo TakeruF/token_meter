@@ -289,6 +289,41 @@ final class ProviderAvailabilityTests: XCTestCase {
 
 final class QuotaRecoveryTests: XCTestCase {
 
+    func testRecoveredQuotaCannotBeOverwrittenByOlderUnreadSession() async throws {
+        let store = try makeTempStore()
+        let root = makeTempDirectory()
+        let reset = Int(Date().addingTimeInterval(6 * 86_400).timeIntervalSince1970)
+        func write(_ name: String, timestamp: String, used: Int) throws -> URL {
+            let file = root.appendingPathComponent(name + ".jsonl")
+            let line = """
+            {"timestamp":"\(timestamp)","type":"event_msg","payload":{"type":"token_count","info":null,"rate_limits":{"limit_id":"codex","primary":{"used_percent":\(used),"window_minutes":10080,"resets_at":\(reset)},"plan_type":"prolite"}}}
+            """
+            try Data((line + "\n").utf8).write(to: file)
+            return file
+        }
+        let newest = try write("newest", timestamp: "2026-10-24T08:00:00Z", used: 25)
+        _ = try write("older-unread", timestamp: "2026-10-24T07:00:00Z", used: 73)
+        // The new record is already consumed; only the old session has unread lines.
+        let path = try XCTUnwrap(TokenMeterPaths.jsonlFiles(under: root).first { $0.lastPathComponent == newest.lastPathComponent })
+        let bytes = try Data(contentsOf: newest).count
+        try store.setCursor(path: path.path, offset: UInt64(bytes))
+
+        let provider = CodexUsageProvider(sessionsRoot: root, store: store)
+        let first = try await provider.fetchCurrentUsage()
+        XCTAssertEqual(try XCTUnwrap(first.weeklyWindow?.remainingRatio), 0.75, accuracy: 0.001)
+        XCTAssertEqual(first.quotaUpdatedAt, LogDate.parse("2026-10-24T08:00:00Z"))
+        let second = try await provider.fetchCurrentUsage()
+        XCTAssertEqual(second.weeklyWindow, first.weeklyWindow)
+        XCTAssertEqual(second.quotaUpdatedAt, first.quotaUpdatedAt,
+                       "Polling an unchanged file must not make its quota look fresh")
+
+        let restarted = CodexUsageProvider(sessionsRoot: root, store: store)
+        let recovered = try await restarted.fetchCurrentUsage()
+        XCTAssertEqual(recovered.weeklyWindow, first.weeklyWindow)
+        XCTAssertEqual(recovered.quotaUpdatedAt, first.quotaUpdatedAt,
+                       "Restarting must preserve the actual observation time")
+    }
+
     func testCodexMigratesLegacySessionTotalsWithoutDuplicatingHistory() async throws {
         let store = try makeTempStore()
         let root = makeTempDirectory()

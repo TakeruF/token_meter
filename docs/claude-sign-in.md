@@ -1,5 +1,7 @@
 # Claude Code sign-in and Keychain access (manual steps)
 
+> Published at <https://takeruf.com/en/projects/token-meter/claude-sign-in> (also `/ja`, `/zh`, `/ko`).
+
 [English](#english) | [日本語](#日本語) | [中文](#中文) | [한국어](#한국어)
 
 ---

@@ -479,7 +479,7 @@ struct FreshnessLabel: View {
     let state: ProviderState?
 
     var body: some View {
-        if let updated = state?.lastSuccessfulUpdate, let freshness = state?.freshness {
+        if let updated = state?.dataUpdatedAt, let freshness = state?.freshness {
             VStack(alignment: .trailing, spacing: 0) {
                 Text(AppLocalization.format("Updated %@", AppLocalization.relativeTime(updated)))
                     .font(.caption2)
