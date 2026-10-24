@@ -132,7 +132,7 @@ git push -u origin "release/v$VERSION"
 gh pr create --base main --head "release/v$VERSION" \
   --title "Release Token Meter $VERSION" --body-file /tmp/tokenmeter-release-pr.md
 gh pr checks --watch
-gh pr merge --merge
+gh pr merge --squash
 # 取り込み後の main をタグ付けする。保護設定を迂回しない。
 git switch main
 git pull --ff-only
