@@ -54,7 +54,7 @@
   <data name="ChartEmpty.Text" xml:space="preserve"><value>이 기간의 사용 데이터가 없습니다</value></data>
   <data name="SettingsTitle.Text" xml:space="preserve"><value>설정</value></data>
   <data name="ProvidersTitle.Text" xml:space="preserve"><value>공급자</value></data>
-  <data name="ClaudeOAuthToggle.Header" xml:space="preserve"><value>Claude Pro / Max 사용 한도 표시</value></data>
+  <data name="ClaudeOAuthToggle.Header" xml:space="preserve"><value>Claude 요금제 사용 한도 표시</value></data>
   <data name="ClaudeCredentialNotice.Text" xml:space="preserve"><value>명시적으로 동의한 경우에만 Anthropic 요청을 위해 .credentials.json의 액세스 토큰을 메모리로 읽습니다. 로그나 DB에는 저장하지 않습니다.</value></data>
   <data name="DisplayTitle.Text" xml:space="preserve"><value>표시 및 새로 고침</value></data>
   <data name="FiveHourToggle.Header" xml:space="preserve"><value>5시간 창 표시</value></data>

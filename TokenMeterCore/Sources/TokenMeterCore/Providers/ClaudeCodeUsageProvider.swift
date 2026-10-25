@@ -3,7 +3,7 @@ import Foundation
 /// Claude Code, read from `~/.claude/projects/*/*.jsonl`.
 ///
 /// Local transcripts provide token counts. When the user explicitly enables the
-/// integration, the Claude Code Keychain credential is used to fetch Pro/Max quota
+/// integration, the Claude Code Keychain credential is used to fetch plan quota
 /// windows from Anthropic; credentials are never persisted by Token Meter.
 public actor ClaudeCodeUsageProvider: UsageProvider {
     public nonisolated let id: UsageProviderID = .claudeCode

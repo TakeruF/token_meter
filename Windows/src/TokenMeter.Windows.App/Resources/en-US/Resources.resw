@@ -54,7 +54,7 @@
   <data name="ChartEmpty.Text" xml:space="preserve"><value>No usage in this period</value></data>
   <data name="SettingsTitle.Text" xml:space="preserve"><value>Settings</value></data>
   <data name="ProvidersTitle.Text" xml:space="preserve"><value>Providers</value></data>
-  <data name="ClaudeOAuthToggle.Header" xml:space="preserve"><value>Show Claude Pro / Max usage limits</value></data>
+  <data name="ClaudeOAuthToggle.Header" xml:space="preserve"><value>Show Claude plan usage limits</value></data>
   <data name="ClaudeCredentialNotice.Text" xml:space="preserve"><value>Opt-in only. The access token is read from .credentials.json into memory for the Anthropic request and is never logged or stored.</value></data>
   <data name="DisplayTitle.Text" xml:space="preserve"><value>Display and refresh</value></data>
   <data name="FiveHourToggle.Header" xml:space="preserve"><value>Show 5-hour window</value></data>

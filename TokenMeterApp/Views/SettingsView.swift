@@ -80,7 +80,7 @@ struct SettingsView: View {
                     .disabled(!settings.showMenuBarExtra || settings.menuBarStyle == .iconOnly)
 
                     Label(
-                        "This selection applies to Claude Code and Codex. Codex Pro always shows its weekly limit because it has no account-wide 5-hour limit.",
+                        "This selection applies to Claude Code and Codex. Codex Pro 100 / 200 / 500 always show their weekly limit because they have no account-wide 5-hour limit.",
                         systemImage: "info.circle"
                     )
                     .font(.caption)
@@ -113,7 +113,7 @@ struct SettingsView: View {
                     .fixedSize(horizontal: false, vertical: true)
             }
 
-            Section("Claude Pro / Max usage") {
+            Section("Claude plan usage") {
                 Toggle("Use Claude Code sign-in for usage checks", isOn: $settings.claudeOAuthUsageEnabled)
                     .onChange(of: settings.claudeOAuthUsageEnabled) { _, _ in
                         Task {
@@ -148,7 +148,7 @@ struct SettingsView: View {
                 Toggle("Show the 5-hour window", isOn: $settings.showFiveHourWindow)
                 Toggle("Show the weekly window", isOn: $settings.showWeeklyWindow)
                 Label(
-                    "Token window rows are counted from local logs. Claude Pro / Max percentages and resets are shown separately and come from Anthropic when OAuth usage checks are enabled.",
+                    "Token window rows are counted from local logs. Claude plan percentages and resets are shown separately and come from Anthropic when OAuth usage checks are enabled.",
                     systemImage: "info.circle"
                 )
                 .font(.caption)

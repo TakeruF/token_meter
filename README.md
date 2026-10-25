@@ -27,7 +27,7 @@ A native macOS app for keeping an eye on Claude Code, Codex, and Copilot CLI usa
 
 macOS is Swift / SwiftUI / WidgetKit. No WebView, no Electron.
 Token history is aggregated locally. Only when you explicitly enable it does the app talk to
-Anthropic's OAuth usage endpoint to check Claude Pro / Max usage.
+Anthropic's OAuth usage endpoint to check Claude plan usage.
 
 ---
 
@@ -344,7 +344,7 @@ placed at off-screen coordinates). Click `•••` in the menu bar, or reduce 
 Switching the display style to Compact or Icon only narrows the item and can help.
 
 **No Claude Code usage percentage**
-→ Enable the OAuth usage check under Settings > Claude Pro / Max usage and confirm you are signed in
+→ Enable the OAuth usage check under Settings > Claude plan usage and confirm you are signed in
 to Claude Code. Keychain denial, 401/403, rate limiting, being offline, and API format changes are
 reported distinctly on screen. Even with the integration off, local token counts for the 5-hour
 window and last 7 days are still shown.

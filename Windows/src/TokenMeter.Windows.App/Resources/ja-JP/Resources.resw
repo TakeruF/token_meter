@@ -54,7 +54,7 @@
   <data name="ChartEmpty.Text" xml:space="preserve"><value>この期間の利用データはありません</value></data>
   <data name="SettingsTitle.Text" xml:space="preserve"><value>設定</value></data>
   <data name="ProvidersTitle.Text" xml:space="preserve"><value>プロバイダー</value></data>
-  <data name="ClaudeOAuthToggle.Header" xml:space="preserve"><value>Claude Pro / Maxの利用枠を表示</value></data>
+  <data name="ClaudeOAuthToggle.Header" xml:space="preserve"><value>Claudeプランの利用枠を表示</value></data>
   <data name="ClaudeCredentialNotice.Text" xml:space="preserve"><value>明示的に有効化した場合のみ、Anthropicへの照会用に.credentials.jsonからアクセストークンをメモリへ読み込みます。ログやDBには保存しません。</value></data>
   <data name="DisplayTitle.Text" xml:space="preserve"><value>表示と更新</value></data>
   <data name="FiveHourToggle.Header" xml:space="preserve"><value>5時間枠を表示</value></data>

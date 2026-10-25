@@ -149,7 +149,7 @@ struct OnboardingView: View {
             HStack(spacing: 16) {
                 ProviderChoiceCard(
                     providerID: .claudeCode,
-                    subtitle: "Local session tokens and optional Pro / Max usage",
+                    subtitle: "Local session tokens and optional plan usage",
                     isSelected: $settings.showClaudeCode
                 )
                 ProviderChoiceCard(
@@ -162,7 +162,7 @@ struct OnboardingView: View {
 
             if settings.showClaudeCode {
                 VStack(alignment: .leading, spacing: 6) {
-                    Toggle("Show Claude Pro / Max usage", isOn: $settings.claudeOAuthUsageEnabled)
+                    Toggle("Show Claude plan usage", isOn: $settings.claudeOAuthUsageEnabled)
                         .toggleStyle(.switch)
                     Text("Optional. Token Meter reads Claude Code's Keychain sign-in only to request usage from Anthropic. The credential is never saved or logged.")
                         .font(.caption)
@@ -266,13 +266,19 @@ struct OnboardingView: View {
                     Toggle("Show Meter icon", isOn: $settings.showMenuBarIcon)
                         .disabled(!settings.showMenuBarExtra || settings.menuBarStyle == .iconOnly)
 
-                    Picker("Menu bar format", selection: $settings.menuBarStyle) {
-                        Text("Full").tag(MenuBarStyle.full)
-                        Text("Compact").tag(MenuBarStyle.compact)
-                        Text("Icon only").tag(MenuBarStyle.iconOnly)
+                    VStack(alignment: .leading, spacing: 6) {
+                        Text("Menu bar format")
+                            .fixedSize(horizontal: true, vertical: false)
+
+                        Picker("Menu bar format", selection: $settings.menuBarStyle) {
+                            Text("Full").tag(MenuBarStyle.full)
+                            Text("Compact").tag(MenuBarStyle.compact)
+                            Text("Icon only").tag(MenuBarStyle.iconOnly)
+                        }
+                        .labelsHidden()
+                        .pickerStyle(.segmented)
+                        .disabled(!settings.showMenuBarExtra)
                     }
-                    .pickerStyle(.segmented)
-                    .disabled(!settings.showMenuBarExtra)
 
                     Text("Widgets can be added from the macOS widget gallery after setup.")
                         .font(.caption)
