@@ -21,9 +21,9 @@
 "resets in 1h 06m" = "1小时6分钟后重置";
 "What do you want to track?" = "你想跟踪什么？";
 "Choose either provider or both. You can change this anytime in Settings." = "可选择一个或两个服务商，之后可随时在设置中更改。";
-"Local session tokens and optional Pro / Max usage" = "本地会话 Token 与可选的 Pro / Max 用量";
+"Local session tokens and optional plan usage" = "本地会话 Token 与可选的套餐用量";
 "Local sessions, 5-hour usage, and weekly usage" = "本地会话、5小时用量和每周用量";
-"Show Claude Pro / Max usage" = "显示 Claude Pro / Max 用量";
+"Show Claude plan usage" = "显示 Claude 套餐用量";
 "Optional. Token Meter reads Claude Code's Keychain sign-in only to request usage from Anthropic. The credential is never saved or logged." = "可选。Token Meter 仅为向 Anthropic 查询用量而读取 Claude Code 的钥匙串登录信息，不会保存或记录凭据。";
 "Select at least one provider to continue." = "请至少选择一个服务商以继续。";
 "Make it yours" = "按你的方式使用";
@@ -56,7 +56,6 @@
 "Menu bar item hidden" = "菜单栏项目已隐藏";
 
 "Providers" = "服务商";
-"Claude Pro / Max usage" = "Claude Pro / Max 用量";
 "Use Claude Code sign-in for usage checks" = "使用 Claude Code 登录信息检查用量";
 "When enabled, Token Meter reads Claude Code-credentials from macOS Keychain and sends the access token only to api.anthropic.com/api/oauth/usage. The token is never stored, logged, or included in the widget snapshot." = "启用后，Token Meter 会从 macOS 钥匙串读取 Claude Code-credentials，并仅将访问令牌发送到 [api.anthropic.com/api/oauth/usage](https://api.anthropic.com/api/oauth/usage)。令牌不会被存储、记录或写入小组件数据。";
 "This integration uses an OAuth endpoint that Anthropic may change without notice. Turn it off here at any time to stop Keychain and network access." = "此集成使用 Anthropic 可能随时更改的 OAuth 端点。可随时在此关闭，以停止访问钥匙串和网络。";
@@ -64,7 +63,7 @@
 "Show the 5-hour window" = "显示5小时窗口";
 "Show the weekly window" = "显示每周窗口";
 "Show Codex Spark quotas" = "显示 Codex Spark 限额";
-"Token window rows are counted from local logs. Claude Pro / Max percentages and resets are shown separately and come from Anthropic when OAuth usage checks are enabled." = "Token 窗口根据本地日志统计。启用 OAuth 用量检查后，Claude Pro / Max 百分比和重置时间将从 Anthropic 获取并单独显示。";
+"Token window rows are counted from local logs. Claude plan percentages and resets are shown separately and come from Anthropic when OAuth usage checks are enabled." = "Token 窗口根据本地日志统计。启用 OAuth 用量检查后，Claude 套餐百分比和重置时间将从 Anthropic 获取并单独显示。";
 "Interval" = "间隔";
 "%@ minutes" = "%@分钟";
 "%@ hour" = "%@小时";
@@ -166,7 +165,7 @@
 "With the menu bar item hidden, Token Meter keeps a Dock icon so you can still open this window." = "隐藏菜单栏项目时，Token Meter 会保留 Dock 图标，确保你仍可打开此窗口。";
 "Show in the menu bar" = "在菜单栏中显示";
 "Remaining usage percentage" = "剩余用量百分比";
-"This selection applies to Claude Code and Codex. Codex Pro always shows its weekly limit because it has no account-wide 5-hour limit." = "此选择同时适用于 Claude Code 和 Codex。Codex Pro 没有帐户级 5 小时限额，因此始终显示每周限额。";
+"This selection applies to Claude Code and Codex. Codex Pro 100 / 200 / 500 always show their weekly limit because they have no account-wide 5-hour limit." = "此选择同时适用于 Claude Code 和 Codex。Codex Pro 100 / 200 / 500 没有帐户级 5 小时限额，因此始终显示每周限额。";
 "Today's token count" = "今日 Token 数";
 "Countdown to the next 5-hour reset" = "距离下次5小时重置的时间";
 "What Token Meter reads" = "Token Meter 读取的内容";
@@ -219,13 +218,13 @@
 "Disabled" = "已禁用";
 "Never" = "从未";
 
-"Token Meter reads local Claude Code and Codex session logs. With your explicit permission, it can also use Claude Code's Keychain sign-in to request Pro / Max usage directly from Anthropic." = "Token Meter 会读取本地 Claude Code 和 Codex 会话日志。仅在您明确授权后，才会使用 Claude Code 的钥匙串登录信息向 Anthropic 请求 Pro / Max 用量。";
+"Token Meter reads local Claude Code and Codex session logs. With your explicit permission, it can also use Claude Code's Keychain sign-in to request plan usage directly from Anthropic." = "Token Meter 会读取本地 Claude Code 和 Codex 会话日志。仅在您明确授权后，才会使用 Claude Code 的钥匙串登录信息向 Anthropic 请求套餐用量。";
 "~/.claude/projects — Claude Code session logs (token counts only)" = "~/.claude/projects — Claude Code 会话日志（仅 Token 数）";
 "~/.codex/sessions — Codex rollout logs (token counts, usage %, reset time)" = "~/.codex/sessions — Codex rollout 日志（Token 数、使用率、重置时间）";
 "macOS Keychain item Claude Code-credentials — only when Claude usage checks are enabled" = "macOS 钥匙串中的 Claude Code-credentials — 仅在启用 Claude 用量检查时读取";
 "OAuth tokens are sent only to Anthropic and are never stored by Token Meter." = "OAuth 令牌仅发送给 Anthropic，Token Meter 不会存储。";
 "Prompts and replies are never parsed or stored — only counts, times, and model names." = "不会解析或存储提示词和回复，仅保存 Token 数、时间和模型名称。";
-"Pro / Max remaining percentages and reset times when OAuth usage checks are enabled" = "启用 OAuth 用量检查时显示 Pro / Max 剩余比例和重置时间";
+"Plan remaining percentages and reset times when OAuth usage checks are enabled" = "启用 OAuth 用量检查时显示套餐剩余比例和重置时间";
 "5-hour reset time is estimated from activity on this Mac, not reported by Claude Code" = "5小时重置时间根据此 Mac 上的活动估算，并非 Claude Code 报告值";
 "Learn more" = "了解更多";
 "Connected" = "已连接";

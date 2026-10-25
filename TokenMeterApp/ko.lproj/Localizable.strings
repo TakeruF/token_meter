@@ -21,9 +21,9 @@
 "resets in 1h 06m" = "1시간 6분 후 재설정";
 "What do you want to track?" = "무엇을 추적할까요?";
 "Choose either provider or both. You can change this anytime in Settings." = "하나 또는 두 제공자를 선택할 수 있으며 설정에서 언제든 변경할 수 있습니다.";
-"Local session tokens and optional Pro / Max usage" = "로컬 세션 토큰 및 선택 가능한 Pro / Max 사용량";
+"Local session tokens and optional plan usage" = "로컬 세션 토큰 및 선택 가능한 요금제 사용량";
 "Local sessions, 5-hour usage, and weekly usage" = "로컬 세션, 5시간 사용량 및 주간 사용량";
-"Show Claude Pro / Max usage" = "Claude Pro / Max 사용량 표시";
+"Show Claude plan usage" = "Claude 요금제 사용량 표시";
 "Optional. Token Meter reads Claude Code's Keychain sign-in only to request usage from Anthropic. The credential is never saved or logged." = "선택 사항입니다. Token Meter는 Anthropic에 사용량을 요청할 때만 Claude Code의 키체인 로그인 정보를 읽습니다. 인증 정보는 저장하거나 기록하지 않습니다.";
 "Select at least one provider to continue." = "계속하려면 제공자를 하나 이상 선택하세요.";
 "Make it yours" = "나에게 맞게 설정";
@@ -56,7 +56,6 @@
 "Menu bar item hidden" = "메뉴 막대 항목 숨김";
 
 "Providers" = "제공자";
-"Claude Pro / Max usage" = "Claude Pro / Max 사용량";
 "Use Claude Code sign-in for usage checks" = "사용량 확인에 Claude Code 로그인 사용";
 "When enabled, Token Meter reads Claude Code-credentials from macOS Keychain and sends the access token only to api.anthropic.com/api/oauth/usage. The token is never stored, logged, or included in the widget snapshot." = "활성화하면 Token Meter가 macOS 키체인에서 Claude Code-credentials를 읽고 액세스 토큰을 [api.anthropic.com/api/oauth/usage](https://api.anthropic.com/api/oauth/usage)에만 전송합니다. 토큰은 저장, 기록 또는 위젯 데이터에 포함되지 않습니다.";
 "This integration uses an OAuth endpoint that Anthropic may change without notice. Turn it off here at any time to stop Keychain and network access." = "이 연동은 Anthropic이 예고 없이 변경할 수 있는 OAuth 엔드포인트를 사용합니다. 언제든 여기서 끄면 키체인 및 네트워크 접근을 중지할 수 있습니다.";
@@ -64,7 +63,7 @@
 "Show the 5-hour window" = "5시간 창 표시";
 "Show the weekly window" = "주간 창 표시";
 "Show Codex Spark quotas" = "Codex Spark 한도 표시";
-"Token window rows are counted from local logs. Claude Pro / Max percentages and resets are shown separately and come from Anthropic when OAuth usage checks are enabled." = "토큰 시간 창은 로컬 로그에서 계산합니다. OAuth 사용량 확인을 활성화하면 Claude Pro / Max 비율과 재설정 시간은 Anthropic에서 받아 별도로 표시합니다.";
+"Token window rows are counted from local logs. Claude plan percentages and resets are shown separately and come from Anthropic when OAuth usage checks are enabled." = "토큰 시간 창은 로컬 로그에서 계산합니다. OAuth 사용량 확인을 활성화하면 Claude 요금제 비율과 재설정 시간은 Anthropic에서 받아 별도로 표시합니다.";
 "Interval" = "간격";
 "%@ minutes" = "%@분";
 "%@ hour" = "%@시간";
@@ -166,7 +165,7 @@
 "With the menu bar item hidden, Token Meter keeps a Dock icon so you can still open this window." = "메뉴 막대 항목을 숨기면 이 창을 다시 열 수 있도록 Token Meter가 Dock 아이콘을 유지합니다.";
 "Show in the menu bar" = "메뉴 막대에 표시";
 "Remaining usage percentage" = "잔여 사용량 비율";
-"This selection applies to Claude Code and Codex. Codex Pro always shows its weekly limit because it has no account-wide 5-hour limit." = "이 선택은 Claude Code와 Codex 모두에 적용됩니다. Codex Pro에는 계정 전체 5시간 한도가 없으므로 항상 주간 한도를 표시합니다.";
+"This selection applies to Claude Code and Codex. Codex Pro 100 / 200 / 500 always show their weekly limit because they have no account-wide 5-hour limit." = "이 선택은 Claude Code와 Codex 모두에 적용됩니다. Codex Pro 100 / 200 / 500에는 계정 전체 5시간 한도가 없으므로 항상 주간 한도를 표시합니다.";
 "Today's token count" = "오늘의 토큰 수";
 "Countdown to the next 5-hour reset" = "다음 5시간 재설정까지 남은 시간";
 "What Token Meter reads" = "Token Meter가 읽는 정보";
@@ -219,13 +218,13 @@
 "Disabled" = "비활성화";
 "Never" = "없음";
 
-"Token Meter reads local Claude Code and Codex session logs. With your explicit permission, it can also use Claude Code's Keychain sign-in to request Pro / Max usage directly from Anthropic." = "Token Meter는 로컬 Claude Code 및 Codex 세션 로그를 읽습니다. 명시적으로 허용한 경우에만 Claude Code의 키체인 로그인으로 Anthropic에 Pro / Max 사용량을 요청합니다.";
+"Token Meter reads local Claude Code and Codex session logs. With your explicit permission, it can also use Claude Code's Keychain sign-in to request plan usage directly from Anthropic." = "Token Meter는 로컬 Claude Code 및 Codex 세션 로그를 읽습니다. 명시적으로 허용한 경우에만 Claude Code의 키체인 로그인으로 Anthropic에 요금제 사용량을 요청합니다.";
 "~/.claude/projects — Claude Code session logs (token counts only)" = "~/.claude/projects — Claude Code 세션 로그(토큰 수만)";
 "~/.codex/sessions — Codex rollout logs (token counts, usage %, reset time)" = "~/.codex/sessions — Codex rollout 로그(토큰 수, 사용률, 재설정 시간)";
 "macOS Keychain item Claude Code-credentials — only when Claude usage checks are enabled" = "macOS 키체인의 Claude Code-credentials — Claude 사용량 확인을 켠 경우에만";
 "OAuth tokens are sent only to Anthropic and are never stored by Token Meter." = "OAuth 토큰은 Anthropic에만 전송되며 Token Meter에 저장되지 않습니다.";
 "Prompts and replies are never parsed or stored — only counts, times, and model names." = "프롬프트와 응답은 분석하거나 저장하지 않으며 토큰 수, 시간, 모델 이름만 저장합니다.";
-"Pro / Max remaining percentages and reset times when OAuth usage checks are enabled" = "OAuth 사용량 확인을 켜면 Pro / Max 잔여 비율과 재설정 시간 표시";
+"Plan remaining percentages and reset times when OAuth usage checks are enabled" = "OAuth 사용량 확인을 켜면 요금제 잔여 비율과 재설정 시간 표시";
 "5-hour reset time is estimated from activity on this Mac, not reported by Claude Code" = "5시간 재설정 시간은 Claude Code 보고값이 아니라 이 Mac의 활동을 기준으로 추정";
 "Learn more" = "더 알아보기";
 "Connected" = "연결됨";

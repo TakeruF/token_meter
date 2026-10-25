@@ -96,7 +96,7 @@ public struct UsageSnapshot: Codable, Identifiable, Sendable, Equatable {
     /// (Codex). Always nil for Claude Code.
     public let shortWindow: UsageWindow?
     public let weeklyWindow: UsageWindow?
-    /// Claude Pro/Max only: a separate Sonnet weekly limit when Anthropic returns one.
+    /// A separate Sonnet weekly limit, when Anthropic returns one.
     public let sonnetWeeklyWindow: UsageWindow?
     /// Codex Spark publishes the same `limit_id` as general Codex, so its quota
     /// must be carried separately once the parser associates it with the model.
@@ -118,6 +118,41 @@ public struct UsageSnapshot: Codable, Identifiable, Sendable, Equatable {
 
     /// Codex only: `rate_limits.plan_type`.
     public let planType: String?
+
+    /// Public plan names differ from the identifiers recorded in Codex logs.
+    /// Keep the raw value for persistence and quota handling.
+    public var planDisplayName: String? {
+        guard let planType else { return nil }
+        if provider == .codex {
+            switch planType.lowercased() {
+            case "prolite": return "Pro 100"
+            case "pro": return "Pro 200"
+            case "promax": return "Pro 500"
+            case "free": return "Free"
+            case "go": return "Go"
+            case "plus": return "Plus"
+            case "team", "business", "self_serve_business_prolite", "self_serve_business_usage_based":
+                return "Business"
+            case "enterprise", "ent26", "enterprise_cbp_automation", "enterprise_cbp_usage_based":
+                return "Enterprise"
+            case "edu": return "Edu"
+            default: break
+            }
+        }
+        // Preserve unfamiliar identifiers instead of guessing a public name.
+        return planType
+    }
+
+    /// All three personal Codex Pro tiers currently use a weekly account limit.
+    /// Model-specific short windows must not replace that allowance in the header.
+    public var usesCodexWeeklyAccountLimit: Bool {
+        provider == .codex && ["prolite", "pro", "promax"].contains(planType?.lowercased() ?? "")
+    }
+
+    public func displayQuotaWindow(preferWeekly: Bool) -> UsageWindow? {
+        if usesCodexWeeklyAccountLimit { return weeklyWindow }
+        return preferWeekly ? (weeklyWindow ?? shortWindow) : (shortWindow ?? weeklyWindow)
+    }
 
     public let source: UsageSource
 

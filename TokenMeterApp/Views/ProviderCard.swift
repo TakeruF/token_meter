@@ -18,14 +18,7 @@ struct ProviderCard: View {
     private var window: UsageWindow? {
         guard let snapshot else { return nil }
         guard providerID == .codex else { return snapshot.primaryWindow }
-        switch settings.menuBarLimitWindow {
-        case .fiveHour:
-            if snapshot.planType?.caseInsensitiveCompare("pro") == .orderedSame {
-                return snapshot.weeklyWindow
-            }
-            return snapshot.shortWindow ?? snapshot.weeklyWindow
-        case .weekly: return snapshot.weeklyWindow ?? snapshot.shortWindow
-        }
+        return snapshot.displayQuotaWindow(preferWeekly: settings.menuBarLimitWindow == .weekly)
     }
 
     private var hasCurrentReadableValues: Bool { state?.hasCurrentReadableValues == true }
@@ -109,8 +102,8 @@ struct ProviderCard: View {
         HStack(spacing: 6) {
             ProviderLabel(providerID: providerID, font: .headline, iconSize: 18)
 
-            if let plan = snapshot?.planType {
-                Text(plan.uppercased())
+            if let plan = snapshot?.planDisplayName {
+                Text(plan)
                     .font(.caption2.weight(.semibold))
                     .padding(.horizontal, 5).padding(.vertical, 1)
                     .background(.secondary.opacity(0.2), in: Capsule())

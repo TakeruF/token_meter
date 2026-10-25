@@ -54,7 +54,7 @@
   <data name="ChartEmpty.Text" xml:space="preserve"><value>此期间没有使用数据</value></data>
   <data name="SettingsTitle.Text" xml:space="preserve"><value>设置</value></data>
   <data name="ProvidersTitle.Text" xml:space="preserve"><value>服务</value></data>
-  <data name="ClaudeOAuthToggle.Header" xml:space="preserve"><value>显示 Claude Pro / Max 使用限额</value></data>
+  <data name="ClaudeOAuthToggle.Header" xml:space="preserve"><value>显示 Claude 套餐使用限额</value></data>
   <data name="ClaudeCredentialNotice.Text" xml:space="preserve"><value>仅在明确选择后，从 .credentials.json 将访问令牌读入内存以请求 Anthropic；不会写入日志或数据库。</value></data>
   <data name="DisplayTitle.Text" xml:space="preserve"><value>显示与刷新</value></data>
   <data name="FiveHourToggle.Header" xml:space="preserve"><value>显示5小时窗口</value></data>

@@ -3,6 +3,26 @@
 調査日: 2026-07-14
 調査環境: macOS 26.5.2 (Darwin 25.5.0, arm64) / Xcode 26.2 / Swift 6.2.3。Windows版は同じ匿名化fixtureとWindowsネイティブCLIのパス仕様を使用する。
 
+## プラン表記・表示仕様の再確認（2026-10-26）
+
+以下は現行表示の確認結果。後続の調査時点のCLIバージョン・ログ例とは区別する。
+
+- Codexの`prolite` / `pro` / `promax`は、それぞれ**Pro 100 / Pro 200 / Pro 500**として表示する。
+  この対応はインストール済みChatGPTアプリの表記と照合した。保存値は内部識別子のまま保持する。
+- [公式料金説明](https://learn.chatgpt.com/docs/pricing)では、3つのProプランはいずれも現在5時間制限がない。
+  メニューバーとカードの主表示は週次のアカウント枠にそろえ、モデル別の短時間枠で置き換えない。
+- CodexのFree / Go / Plus / Business / Enterprise / Eduも正式な大文字・小文字で表示する。
+  旧`team`識別子はBusinessとして表示する。未知の識別子は原文を保持し、プランや価格を推測しない。
+- Claude Codeは[Pro / Max](https://support.claude.com/en/articles/11145838-use-claude-code-with-your-pro-or-max-plan)に加え、
+  [Team / Enterprise](https://support.claude.com/en/articles/11845131-use-claude-code-with-your-team-or-enterprise-plan)でも提供される。
+  設定・初期案内は「Claudeプラン利用状況」とし、Pro / Max限定の表現をやめる。
+  取得できる枠はアカウントによって異なり、レスポンスにない利用枠やプラン名は補完しない。
+- [Copilot CLI](https://docs.github.com/en/copilot/concepts/copilot-surfaces/copilot-cli)も対応するが、
+  本アプリが読むセッションログから契約プランを判定する処理はない。トークン数からプラン名や残額を推定しない。
+
+この確認でOAuthの仕様保証や全アカウントでの取得を検証したわけではない。Claudeのプランバッジも、
+現在の使用量レスポンスから契約名を取得していないため表示しない。
+
 ## Windows版のパス差分
 
 | Provider | 読み取り先 |
@@ -278,7 +298,7 @@ shutdownの値はセッション・モデル単位の累積値なので、前回
 | Provider | ソース | `UsageSource` | 取得する値 |
 |---|---|---|---|
 | Claude Code | `~/.claude/projects/*/*.jsonl` | `.localLog` | トークン内訳・モデル・コンテキスト長・履歴 |
-| Claude Pro / Max（任意） | Keychain + `api.anthropic.com/api/oauth/usage` | `.officialAPI`（ローカルログなしの場合） | **利用率・残量・リセット時刻** |
+| Claudeプラン利用状況（任意） | Keychain + `api.anthropic.com/api/oauth/usage` | `.officialAPI`（ローカルログなしの場合） | **利用率・残量・リセット時刻** |
 | Codex | `~/.codex/sessions/*/*/*/rollout-*.jsonl` | `.localLog` | 上記 + **利用率・残量・リセット時刻**・推論トークン |
 | Copilot CLI（Windows） | `%USERPROFILE%\.copilot\session-state\*\events.jsonl` | `.localLog` | トークン内訳・モデル・履歴 |
 

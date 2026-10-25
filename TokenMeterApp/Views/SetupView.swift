@@ -38,7 +38,7 @@ struct SetupView: View {
     private var intro: some View {
         VStack(alignment: .leading, spacing: 6) {
             Text("Connections").font(.title2.weight(.semibold))
-            Text("Check that Token Meter can read your local Claude Code and Codex session logs. Use Settings to choose providers, configure the menu bar, or enable Claude Pro / Max usage.")
+            Text("Check that Token Meter can read your local Claude Code and Codex session logs. Use Settings to choose providers, configure the menu bar, or enable Claude plan usage.")
                 .font(.callout)
                 .foregroundStyle(.secondary)
                 .fixedSize(horizontal: false, vertical: true)
@@ -125,9 +125,9 @@ struct ConnectionCard: View {
             if providerID == .codex {
                 Label("Usage percentage and reset time", systemImage: "checkmark.circle.fill")
                     .foregroundStyle(.green)
-            } else {
+            } else if providerID == .claudeCode {
                 Label(
-                    "Pro / Max remaining percentages and reset times when OAuth usage checks are enabled",
+                    "Plan remaining percentages and reset times when OAuth usage checks are enabled",
                     systemImage: "checkmark.circle.fill"
                 )
                 .foregroundStyle(.green)

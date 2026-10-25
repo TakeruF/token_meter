@@ -488,16 +488,7 @@ final class UsageMonitor {
     /// happens to contain a short-lived model-specific slot.
     private func menuBarWindow(for snapshot: UsageSnapshot?) -> UsageWindow? {
         guard let snapshot else { return nil }
-        switch settings.menuBarLimitWindow {
-        case .fiveHour:
-            if snapshot.provider == .codex,
-               snapshot.planType?.caseInsensitiveCompare("pro") == .orderedSame {
-                return snapshot.weeklyWindow
-            }
-            return snapshot.shortWindow ?? snapshot.weeklyWindow
-        case .weekly:
-            return snapshot.weeklyWindow ?? snapshot.shortWindow
-        }
+        return snapshot.displayQuotaWindow(preferWeekly: settings.menuBarLimitWindow == .weekly)
     }
 }
 

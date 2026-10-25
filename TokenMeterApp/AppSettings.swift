@@ -222,9 +222,9 @@ final class AppSettings {
             Key.showCodex: true,
             Key.showCopilotCli: false,
             Key.refreshInterval: 300.0,
-            Key.menuBarStyle: MenuBarStyle.full.rawValue,
+            Key.menuBarStyle: MenuBarStyle.compact.rawValue,
             Key.showMenuBarExtra: true,
-            Key.showMenuBarIcon: true,
+            Key.showMenuBarIcon: false,
             Key.menuBarShowPercentage: true,
             Key.menuBarShowTokens: true,
             Key.menuBarShowReset: false,
@@ -253,7 +253,7 @@ final class AppSettings {
         showCodex = defaults.bool(forKey: Key.showCodex)
         showCopilotCli = defaults.bool(forKey: Key.showCopilotCli)
         refreshInterval = defaults.double(forKey: Key.refreshInterval)
-        menuBarStyle = MenuBarStyle(rawValue: defaults.string(forKey: Key.menuBarStyle) ?? "") ?? .full
+        menuBarStyle = MenuBarStyle(rawValue: defaults.string(forKey: Key.menuBarStyle) ?? "") ?? .compact
         showMenuBarExtra = defaults.bool(forKey: Key.showMenuBarExtra)
         showMenuBarIcon = defaults.bool(forKey: Key.showMenuBarIcon)
         menuBarShowPercentage = defaults.bool(forKey: Key.menuBarShowPercentage)
