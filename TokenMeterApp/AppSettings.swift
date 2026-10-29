@@ -71,6 +71,21 @@ enum MenuBarLimitWindow: String, CaseIterable, Identifiable {
     }
 }
 
+/// The places a provider can be individually shown or hidden.
+enum ProviderSurface: String, CaseIterable, Identifiable {
+    case menuBar
+    case popover
+
+    var id: String { rawValue }
+
+    var displayName: String {
+        switch self {
+        case .menuBar: return AppLocalization.string("Menu bar")
+        case .popover: return AppLocalization.string("Popover")
+        }
+    }
+}
+
 /// UserDefaults-backed preferences. No credentials are ever stored here — see
 /// README > Security.
 @Observable
@@ -171,6 +186,12 @@ final class AppSettings {
     var menuBarLimitWindow: MenuBarLimitWindow {
         didSet { defaults.set(menuBarLimitWindow.rawValue, forKey: Key.menuBarLimitWindow) }
     }
+
+    /// Where each enabled provider appears, keyed by `visibilityKey(_:_:)`. Hiding a
+    /// provider here only narrows that one surface — it keeps being collected, and
+    /// Dashboard and widgets still show it — so the menu bar title can stay short
+    /// while the popover still holds every card.
+    private var providerVisibility: [String: Bool] = [:]
 
     /// The two time-window rows (5-hour and weekly). They are token *measurements*,
     /// not quota percentages, so some people will not want them — hence the toggles.
@@ -278,6 +299,14 @@ final class AppSettings {
             rawValue: defaults.string(forKey: Key.widgetBackgroundStyle) ?? ""
         ) ?? .solid
         launchAtLogin = defaults.bool(forKey: Key.launchAtLogin)
+        for id in UsageProviderID.allCases {
+            for surface in ProviderSurface.allCases {
+                let key = Self.visibilityKey(id, surface)
+                if let show = defaults.object(forKey: key) as? Bool {
+                    providerVisibility[key] = show
+                }
+            }
+        }
     }
 
     func enabledProviders() -> Set<UsageProviderID> {
@@ -286,6 +315,28 @@ final class AppSettings {
         if showCodex { set.insert(.codex) }
         if showCopilotCli { set.insert(.copilotCli) }
         return set
+    }
+
+    /// Enabled providers that also belong on `surface`, in display order.
+    func providers(on surface: ProviderSurface) -> [UsageProviderID] {
+        UsageProviderID.allCases.filter { enabledProviders().contains($0) && shows($0, on: surface) }
+    }
+
+    /// Every provider starts visible everywhere, so a missing key means shown.
+    func shows(_ id: UsageProviderID, on surface: ProviderSurface) -> Bool {
+        providerVisibility[Self.visibilityKey(id, surface)] ?? true
+    }
+
+    func setShows(_ id: UsageProviderID, on surface: ProviderSurface, _ show: Bool) {
+        let key = Self.visibilityKey(id, surface)
+        providerVisibility[key] = show
+        defaults.set(show, forKey: key)
+    }
+
+    /// e.g. "menuBarShowCodex", "popoverShowClaudeCode".
+    private static func visibilityKey(_ id: UsageProviderID, _ surface: ProviderSurface) -> String {
+        let name = id.rawValue.prefix(1).uppercased() + id.rawValue.dropFirst()
+        return "\(surface.rawValue)Show\(name)"
     }
 
     /// Thresholds the user has switched on, highest first.

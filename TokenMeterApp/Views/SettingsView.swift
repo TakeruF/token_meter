@@ -8,15 +8,36 @@ struct SettingsView: View {
     @State private var settings = AppSettings.shared
     @State private var showingDeleteConfirmation = false
 
+    private var enabledProviderIDs: [UsageProviderID] {
+        UsageProviderID.allCases.filter { settings.enabledProviders().contains($0) }
+    }
+
+    private func visibilityBinding(_ id: UsageProviderID, _ surface: ProviderSurface) -> Binding<Bool> {
+        Binding(
+            get: { settings.shows(id, on: surface) },
+            set: { settings.setShows(id, on: surface, $0) }
+        )
+    }
+
+    /// The popover only exists behind the menu bar item, and Icon-only mode has no
+    /// title for providers to appear in.
+    private func canEdit(_ surface: ProviderSurface) -> Bool {
+        switch surface {
+        case .menuBar: return settings.showMenuBarExtra && settings.menuBarStyle != .iconOnly
+        case .popover: return settings.showMenuBarExtra
+        }
+    }
+
     var body: some View {
         Form {
-            Section("Language") {
+            Section("General") {
                 AppLanguagePicker()
                 // Only where the choice means something: English has no myriad words,
                 // and an English UI formats as K/M/B whatever is stored here.
                 if settings.appLanguage.supportsMyriadNotation {
                     TokenNotationPicker()
                 }
+                Toggle("Launch at login", isOn: $settings.launchAtLogin)
             }
 
             Section("Providers") {
@@ -45,6 +66,46 @@ struct SettingsView: View {
                     .fixedSize(horizontal: false, vertical: true)
             }
 
+            Section {
+                if enabledProviderIDs.isEmpty {
+                    Text("No providers enabled")
+                        .foregroundStyle(.secondary)
+                } else {
+                    Grid(alignment: .leading, horizontalSpacing: 24, verticalSpacing: 10) {
+                        GridRow {
+                            Text("Provider")
+                            ForEach(ProviderSurface.allCases) { surface in
+                                Text(surface.displayName)
+                                    .gridColumnAlignment(.center)
+                            }
+                        }
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+
+                        ForEach(enabledProviderIDs) { id in
+                            GridRow {
+                                ProviderLabel(providerID: id, font: .body, iconSize: 15)
+                                ForEach(ProviderSurface.allCases) { surface in
+                                    Toggle(isOn: visibilityBinding(id, surface)) {
+                                        Text(verbatim: "\(id.displayName) — \(surface.displayName)")
+                                    }
+                                    .labelsHidden()
+                                    .toggleStyle(.checkbox)
+                                    .disabled(!canEdit(surface))
+                                }
+                            }
+                        }
+                    }
+                }
+            } header: {
+                Text("Show providers in")
+            } footer: {
+                Text("Hiding a provider here keeps collecting its usage. For example, show only Codex in the menu bar and still see Claude in the popover. Dashboard and widgets always include every enabled provider.")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+
             Section("Menu bar") {
                 Toggle("Show Token Meter in the menu bar", isOn: $settings.showMenuBarExtra)
 
@@ -66,9 +127,9 @@ struct SettingsView: View {
                 .disabled(!settings.showMenuBarExtra)
 
                 Toggle("Show Meter icon", isOn: $settings.showMenuBarIcon)
-                    .disabled(!settings.showMenuBarExtra || settings.menuBarStyle == .iconOnly)
+                    .disabled(!canEdit(.menuBar))
                 Toggle("Remaining usage percentage", isOn: $settings.menuBarShowPercentage)
-                    .disabled(!settings.showMenuBarExtra || settings.menuBarStyle == .iconOnly)
+                    .disabled(!canEdit(.menuBar))
 
                 if settings.menuBarShowPercentage {
                     Picker("Percentage window", selection: $settings.menuBarLimitWindow) {
@@ -77,7 +138,7 @@ struct SettingsView: View {
                         }
                     }
                     .pickerStyle(.segmented)
-                    .disabled(!settings.showMenuBarExtra || settings.menuBarStyle == .iconOnly)
+                    .disabled(!canEdit(.menuBar))
 
                     Label(
                         "This selection applies to Claude Code and Codex. Codex Pro 100 / 200 / 500 always show their weekly limit because they have no account-wide 5-hour limit.",
@@ -89,9 +150,9 @@ struct SettingsView: View {
                 }
 
                 Toggle("Today's token count", isOn: $settings.menuBarShowTokens)
-                    .disabled(!settings.showMenuBarExtra || settings.menuBarStyle == .iconOnly)
+                    .disabled(!canEdit(.menuBar))
                 Toggle("Countdown to the selected limit reset", isOn: $settings.menuBarShowReset)
-                    .disabled(!settings.showMenuBarExtra || settings.menuBarStyle == .iconOnly)
+                    .disabled(!canEdit(.menuBar))
 
                 LabeledContent("Preview") {
                     MenuBarLabel(monitor: monitor)
@@ -100,17 +161,6 @@ struct SettingsView: View {
                         .padding(.vertical, 3)
                         .background(.quaternary, in: RoundedRectangle(cornerRadius: 5))
                 }
-            }
-
-            Section("Setup") {
-                Button("Run the setup guide again") {
-                    settings.hasCompletedSetup = false
-                    MainWindowRouter.shared.selection = .dashboard
-                }
-                Text("Reopens the welcome flow, including command-line tool installation steps for any provider that isn't set up yet.")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-                    .fixedSize(horizontal: false, vertical: true)
             }
 
             Section("Claude plan usage") {
@@ -156,18 +206,20 @@ struct SettingsView: View {
                 .fixedSize(horizontal: false, vertical: true)
             }
 
-            Section("Refresh") {
-                Picker("Interval", selection: $settings.refreshInterval) {
-                    ForEach(AppSettings.refreshIntervalOptions, id: \.self) { seconds in
-                        Text(intervalLabel(seconds)).tag(seconds)
+            Section("Widget") {
+                Toggle("Show token counts", isOn: $settings.widgetShowTokens)
+                Toggle("Show reset time", isOn: $settings.widgetShowReset)
+                // Liquid Glass exists only on macOS 26+, so the choice is offered
+                // there alone; older systems stay on the solid background.
+                if #available(macOS 26.0, *) {
+                    Picker("Widget background", selection: $settings.widgetBackgroundStyle) {
+                        Text("Solid").tag(WidgetBackgroundStyle.solid)
+                        Text("Clear (Liquid Glass)").tag(WidgetBackgroundStyle.clear)
+                    }
+                    .onChange(of: settings.widgetBackgroundStyle) { _, _ in
+                        monitor.publishSnapshot()
                     }
                 }
-                .onChange(of: settings.refreshInterval) { _, _ in
-                    monitor.refreshIntervalChanged()
-                }
-                Text("Logs are also watched for changes, so this is only a backstop.")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
             }
 
             Section("Notifications") {
@@ -185,29 +237,18 @@ struct SettingsView: View {
                 .fixedSize(horizontal: false, vertical: true)
             }
 
-            Section("Widget") {
-                Toggle("Show token counts", isOn: $settings.widgetShowTokens)
-                Toggle("Show reset time", isOn: $settings.widgetShowReset)
-                // Liquid Glass exists only on macOS 26+, so the choice is offered
-                // there alone; older systems stay on the solid background.
-                if #available(macOS 26.0, *) {
-                    Picker("Widget background", selection: $settings.widgetBackgroundStyle) {
-                        Text("Solid").tag(WidgetBackgroundStyle.solid)
-                        Text("Clear (Liquid Glass)").tag(WidgetBackgroundStyle.clear)
-                    }
-                    .onChange(of: settings.widgetBackgroundStyle) { _, _ in
-                        monitor.publishSnapshot()
+            Section("Refresh") {
+                Picker("Interval", selection: $settings.refreshInterval) {
+                    ForEach(AppSettings.refreshIntervalOptions, id: \.self) { seconds in
+                        Text(intervalLabel(seconds)).tag(seconds)
                     }
                 }
-            }
-
-            Section("Startup") {
-                Toggle("Launch at login", isOn: $settings.launchAtLogin)
-            }
-
-            Section("Updates") {
-                LabeledContent("Version", value: appVersion)
-                UpdaterSettingsView(updater: AppUpdater.shared.updater)
+                .onChange(of: settings.refreshInterval) { _, _ in
+                    monitor.refreshIntervalChanged()
+                }
+                Text("Logs are also watched for changes, so this is only a backstop.")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
             }
 
             Section("Data") {
@@ -228,6 +269,22 @@ struct SettingsView: View {
                     showingDeleteConfirmation = true
                 }
                 Text("Deleting removes stored token counts only. The CLI logs on disk are untouched, so history rebuilds on the next refresh.")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+
+            Section("Updates") {
+                LabeledContent("Version", value: appVersion)
+                UpdaterSettingsView(updater: AppUpdater.shared.updater)
+            }
+
+            Section("Setup") {
+                Button("Run the setup guide again") {
+                    settings.hasCompletedSetup = false
+                    MainWindowRouter.shared.selection = .dashboard
+                }
+                Text("Reopens the welcome flow, including command-line tool installation steps for any provider that isn't set up yet.")
                     .font(.caption)
                     .foregroundStyle(.secondary)
                     .fixedSize(horizontal: false, vertical: true)

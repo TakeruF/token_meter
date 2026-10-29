@@ -7,7 +7,7 @@ struct MenuBarContentView: View {
     @Environment(\.openWindow) private var openWindow
 
     private var visibleProviders: [UsageProviderID] {
-        UsageProviderID.allCases.filter { settings.enabledProviders().contains($0) }
+        settings.providers(on: .popover)
     }
 
     var body: some View {
@@ -16,8 +16,13 @@ struct MenuBarContentView: View {
 
             if let fatal = monitor.fatalError {
                 ErrorBanner(message: fatal)
-            } else if visibleProviders.isEmpty {
+            } else if settings.enabledProviders().isEmpty {
                 Text("No providers enabled. Turn one on in Settings.")
+                    .font(.callout)
+                    .foregroundStyle(.secondary)
+                    .padding(.vertical, 8)
+            } else if visibleProviders.isEmpty {
+                Text("All providers are hidden here. Choose which to show in Settings.")
                     .font(.callout)
                     .foregroundStyle(.secondary)
                     .padding(.vertical, 8)

@@ -705,10 +705,10 @@ private struct MenuBarPreview: View {
 
     private var previewTitle: String {
         var parts: [String] = []
-        if settings.showClaudeCode {
+        if settings.showClaudeCode && settings.shows(.claudeCode, on: .menuBar) {
             parts.append("Claude 68%")
         }
-        if settings.showCodex {
+        if settings.showCodex && settings.shows(.codex, on: .menuBar) {
             parts.append("Codex 42%")
         }
         return parts.joined(separator: " · ")
@@ -716,14 +716,14 @@ private struct MenuBarPreview: View {
 
     private var compactPreview: some View {
         HStack(spacing: 6) {
-            if settings.showClaudeCode {
+            if settings.showClaudeCode && settings.shows(.claudeCode, on: .menuBar) {
                 HStack(spacing: 2) {
                     MenuBarProviderIcon(providerID: .claudeCode)
                     Text("68%")
                         .monospacedDigit()
                 }
             }
-            if settings.showCodex {
+            if settings.showCodex && settings.shows(.codex, on: .menuBar) {
                 HStack(spacing: 2) {
                     MenuBarProviderIcon(providerID: .codex)
                     Text("42%")
