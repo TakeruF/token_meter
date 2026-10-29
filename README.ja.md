@@ -26,7 +26,7 @@ Claude Code、Codex、Copilot CLIの利用状況を確認するmacOSネイティ
 ![英語・日本語・中国語・韓国語を選べるToken Meterの設定画面](docs/screenshots/promo-languages.jpg)
 
 macOS版はSwift / SwiftUI / WidgetKit。WebViewもElectronも使っていない。
-トークン履歴はローカルで集計する。ユーザーが明示的に有効化した場合だけ、Claude Pro / Maxの
+トークン履歴はローカルで集計する。ユーザーが明示的に有効化した場合だけ、Claudeプランの
 使用量確認のためAnthropicのOAuth使用量エンドポイントへ通信する。
 
 ---
@@ -160,11 +160,10 @@ Sparkle 2を使用し、起動中に更新を自動確認する。更新があ�
 `./scripts/release.sh finish`は、Keychain内のSparkle EdDSA鍵（account: `com.tokenmeter.app`）でZIPへ署名し、
 `appcast.xml`を更新する。秘密鍵はリポジトリへ保存しない。
 
-リリースごとに`MARKETING_VERSION`と、Sparkleが比較に使う`CURRENT_PROJECT_VERSION`を増やしてから実行する。
-完了後は次の2点を行う:
-
-1. `v<version>`タグのGitHub Releaseへ`build/TokenMeter-<version>.zip`をアップロード
-2. 更新された`appcast.xml`をmainブランチへcommit/push
+公開時は[docs/release-runbook.md](docs/release-runbook.md)の全手順に従う。
+バージョン・ビルド番号、4言語のリリースノートと紹介サイトの更新、検証、署名・公証、
+PRレビュー、タグ付け、公開までを含む。GitHub Releaseには完全版ZIPと`appcast.xml`が参照する
+すべての差分ファイルを添付し、公開後のダウンロードリンクも確認する。
 
 ## テスト
 
@@ -172,7 +171,6 @@ Sparkle 2を使用し、起動中に更新を自動確認する。更新があ�
 
 ```bash
 swift test --package-path TokenMeterCore
-# 111 tests, 0 failures
 ```
 
 カバーしている内容:
@@ -199,11 +197,21 @@ Windows版のテストは`Windows/`配下の.NET側にあり、この匿名化 f
 
 ## 初期設定
 
-初回起動時はセットアップ画面が開く（メニューバーの Token Meter → Dashboard → Setup からいつでも開ける）。
+初回起動時はオンボーディングが開く。その後は本体ウィンドウの「接続」で各プロバイダーの
+接続状態と対処用コマンドを確認し、「設定」でプロバイダー・表示・Claudeプラン利用状況の照会を変更できる。
 
-- 各プロバイダの接続状態と、未接続時の具体的な対処（コマンドはコピーできる）
-- メニューバーに表示するかどうか、表示形式、表示項目
-- 何を読み取っているかの明示
+### プロバイダーの表示設定（1.3.0）
+
+- **設定 > 表示場所**で、有効なプロバイダーごとにメニューバーとポップオーバーへの表示を個別に選べる。
+  ここで非表示にしても使用量の収集は続き、ダッシュボードやウィジェットのデータには影響しない。
+  ウィジェットの対応プロバイダーはClaude CodeとCodex。
+- メニューバーのリセットまでのカウントダウンは、メニューバーに表示しているプロバイダーだけを対象にする。
+- 初回はコンパクト表示でMeterアイコンを非表示にし、Copilot CLIとClaude OAuth使用量照会は無効。
+  保存済みの設定は維持する。
+- Codex Pro 100 / 200 / 500は、メニューバーとカードに週次のアカウント枠を表示する。
+  プラン名と利用枠はCodexのログに基づき、モデル別の短時間枠を週次のアカウント枠の代わりには使わない。
+
+詳細は[1.3.0のリリースノート](docs/releases/v1.3.0.md)を参照。
 
 ### Claude Code との接続
 
@@ -320,7 +328,7 @@ Claude OAuthの成功値はメモリに5分キャッシュし、失敗時も前�
 表示形式を Compact / Icon only にすると幅が縮むので改善することがある。
 
 **Claude Code の利用率が出ない**
-→ 設定 > Claude Pro / Max usage でOAuth使用量チェックを有効にし、Claude Codeでログイン済みか確認する。
+→ 設定 > Claudeプラン利用状況 でOAuth使用量チェックを有効にし、Claude Codeでログイン済みか確認する。
 Keychain拒否、401/403、レート制限、オフライン、API形式変更は画面上で区別して表示する。
 連携を無効にした場合も5時間枠・直近7日のローカルトークン数は表示できる。
 
@@ -337,7 +345,7 @@ claude.ai のブラウザ利用や他のマシンでの Claude Code 利用で枠
 
 **Codex の利用率が出ない**
 → `codex login` 済みか、Codex を1回でも実行したかを確認。
-Setup 画面に具体的な対処が出る。
+「接続」タブに具体的な対処が出る。
 
 **Copilot CLI のトークン数が出ない**
 → セッションを1回**終了**したか確認する。Copilot は `session.shutdown` イベントでしか
@@ -369,7 +377,7 @@ TokenMeterCore/          Swift Package（UI非依存・テスト対象）
   Support/               パス定義、利用枠リセット検出、残量から求める警告レベル
 TokenMeterApp/           メニューバー・ダッシュボード・設定・通知（英・日・簡体字中国語・韓国語）
 TokenMeterWidget/        Small / Medium / Large
-Windows/                 Windows版（C# / .NET 10 / WinUI 3、独立solution）
+Windows/                 凍結済みのWindows参照ソース（C# / .NET 10 / WinUI 3）
 docs/data-sources.md     データソース調査結果
 docs/claude-sign-in.md   Claude Codeのサインイン・Keychain許可の手動手順
 docs/release-runbook.md  macOSリリース手順
@@ -393,7 +401,7 @@ Windows版はmacOS版のソースに依存せず、匿名化fixtureだけを共�
 - メニューバーの空きが無いと macOS が項目を隠す（上記トラブルシューティング参照）
 - Developer ID署名済み・Notarization済みアプリでApp Groupコンテナ作成とスナップショット書き込みを確認済み。
   Widgetのデスクトップ上での最終描画は別Macでの配布テストが必要
-- 目視確認済み: メニューバー項目・ポップオーバー・ダッシュボード・Setup 画面（ライト/ダーク両モード）。
+- 目視確認済み: メニューバー項目・ポップオーバー・ダッシュボード・接続画面（ライト/ダーク両モード）。
   ただし時間枠の行（5時間枠・週次）はダークモードでのみ実機確認しており、ライトモードは未確認
 
 ## 貢献・報告
@@ -411,7 +419,7 @@ Issue・PR・fixtureに、プロンプト本文・応答本文・認証情報・
 Apache License 2.0。全文は [LICENSE](LICENSE) を参照。
 
 ```
-Copyright 2026 Takeru Fujii
+Copyright 2026 TakeruF
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -426,7 +434,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 ```
 
-「Token Meter」は Takeru Fujii の商標であり、Apache License 2.0 第6条により本ライセンスは
+「Token Meter」は TakeruF の商標であり、Apache License 2.0 第6条により本ライセンスは
 商標の使用を許諾しない。フォークや派生物は別の名前を使用すること。
 
 バイナリに同梱している第三者コンポーネント（Sparkle ほか）の著作権表示とライセンスは

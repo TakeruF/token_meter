@@ -26,7 +26,7 @@ Claude Code, Codex, Copilot CLI 사용량을 확인하는 macOS 네이티브 앱
 ![영어, 일본어, 중국어, 한국어를 선택할 수 있는 Token Meter 설정 화면](docs/screenshots/promo-languages.jpg)
 
 macOS 버전은 Swift / SwiftUI / WidgetKit으로 만들었습니다. WebView도 Electron도 사용하지 않습니다. 토큰 기록은 로컬에서 집계합니다.
-사용자가 명시적으로 활성화한 경우에만 Claude Pro / Max 사용량 확인을 위해
+사용자가 명시적으로 활성화한 경우에만 Claude 플랜 사용량 확인을 위해
 Anthropic의 OAuth 사용량 엔드포인트와 통신합니다.
 
 ---
@@ -161,11 +161,10 @@ Settings > Updates 또는 앱 메뉴의 `Check for Updates…`에서 수동 확�
 `./scripts/release.sh finish`는 키체인의 Sparkle EdDSA 키(account: `com.tokenmeter.app`)로
 ZIP에 서명하고 `appcast.xml`을 갱신합니다. 비밀 키는 저장소에 보관하지 않습니다.
 
-릴리스마다 `MARKETING_VERSION`과 Sparkle이 비교에 사용하는 `CURRENT_PROJECT_VERSION`을 올린 뒤
-실행하세요. 완료 후에는 다음 두 가지를 수행합니다:
-
-1. `v<version>` 태그의 GitHub Release에 `build/TokenMeter-<version>.zip` 업로드
-2. 갱신된 `appcast.xml`을 main 브랜치에 커밋·푸시
+릴리스는 [docs/release-runbook.md](docs/release-runbook.md)의 전체 절차를 따르세요.
+버전·빌드 번호, 네 언어의 릴리스 노트와 소개 사이트 갱신, 검증, 서명·공증, PR 검토, 태그 및 공개를
+포함합니다. GitHub Release에는 전체 ZIP과 `appcast.xml`이 참조하는 모든 델타 파일을 첨부하고,
+공개 후 다운로드 링크도 확인합니다.
 
 ## 테스트
 
@@ -173,7 +172,6 @@ ZIP에 서명하고 `appcast.xml`을 갱신합니다. 비밀 키는 저장소에
 
 ```bash
 swift test --package-path TokenMeterCore
-# 111 tests, 0 failures
 ```
 
 커버하는 내용:
@@ -201,11 +199,21 @@ Windows 버전의 테스트는 `Windows/` 아래 .NET 쪽에 있으며, 이 익�
 
 ## 초기 설정
 
-첫 실행 시 설정 화면이 열립니다(메뉴 막대의 Token Meter → Dashboard → Setup에서 언제든 열 수 있습니다).
+첫 실행 시 온보딩이 열립니다. 이후에는 메인 창의 “연결”에서 제공자 연결 상태와 해결 명령을
+확인·복사하고, “설정”에서 제공자, 표시 옵션, Claude 플랜 사용량 조회를 변경할 수 있습니다.
 
-- 각 제공자의 연결 상태와, 연결되지 않았을 때의 구체적인 조치(커맨드는 복사 가능)
-- 메뉴 막대에 표시할지 여부, 표시 형식, 표시 항목
-- 무엇을 읽고 있는지에 대한 명시
+### 제공자 표시 설정(1.3.0)
+
+- **설정 > 표시 위치**에서 활성화된 각 제공자를 메뉴 막대와 팝오버에 표시할지 따로 선택할 수 있습니다.
+  여기서 숨겨도 사용량 수집은 계속되며 대시보드와 위젯 데이터에는 영향을 주지 않습니다.
+  위젯은 Claude Code와 Codex를 지원합니다.
+- 메뉴 막대의 초기화 카운트다운은 메뉴 막대에 표시된 제공자만 대상으로 합니다.
+- 처음 설치하면 컴팩트 표시를 사용하고 Meter 아이콘을 숨깁니다. Copilot CLI와 Claude OAuth 사용량
+  조회는 기본적으로 꺼져 있으며, 저장된 설정은 유지됩니다.
+- Codex Pro 100 / 200 / 500은 메뉴 막대와 제공자 카드에 주간 계정 한도를 표시합니다. 요금제 이름과
+  한도 기간은 Codex 로그에서 가져오며, 모델별 단기 한도로 주간 계정 한도를 대체하지 않습니다.
+
+자세한 내용은 [1.3.0 릴리스 노트](docs/releases/v1.3.0.md)를 참조하세요.
 
 ### Claude Code 연결
 
@@ -326,7 +334,7 @@ Claude OAuth의 성공 값은 메모리에 5분간 캐시하고, 실패 시에�
 표시 형식을 Compact / Icon only로 바꾸면 폭이 줄어 개선되기도 합니다.
 
 **Claude Code의 사용률이 나오지 않음**
-→ 설정 > Claude Pro / Max usage에서 OAuth 사용량 확인을 활성화하고, Claude Code에 로그인되어
+→ 설정 > Claude 플랜 사용량에서 OAuth 사용량 확인을 활성화하고, Claude Code에 로그인되어
 있는지 확인하세요. 키체인 거부, 401/403, 레이트 리밋, 오프라인, API 형식 변경은 화면에서
 구분해 표시합니다. 연동을 꺼도 5시간 한도·최근 7일의 로컬 토큰 수는 표시할 수 있습니다.
 
@@ -343,7 +351,7 @@ Claude OAuth의 성공 값은 메모리에 5분간 캐시하고, 실패 시에�
 
 **Codex의 사용률이 나오지 않음**
 → `codex login`을 했는지, Codex를 한 번이라도 실행했는지 확인하세요.
-Setup 화면에 구체적인 조치가 나옵니다.
+“연결” 탭에 구체적인 조치가 나옵니다.
 
 **Copilot CLI의 토큰 수가 나오지 않음**
 → 세션을 한 번 **종료**했는지 확인하세요. Copilot은 `session.shutdown` 이벤트에서만 토큰 수를
@@ -375,7 +383,7 @@ TokenMeterCore/          Swift Package(UI 비의존, 테스트 대상)
   Support/               경로 정의, 한도 초기화 감지, 잔여량으로 구하는 경고 레벨
 TokenMeterApp/           메뉴 막대·대시보드·설정·알림(영어·일본어·간체 중국어·한국어)
 TokenMeterWidget/        Small / Medium / Large
-Windows/                 Windows 버전(C# / .NET 10 / WinUI 3, 독립 solution)
+Windows/                 동결된 Windows 참고 소스(C# / .NET 10 / WinUI 3)
 docs/data-sources.md     데이터 소스 조사 결과
 docs/claude-sign-in.md   Claude Code 로그인·키체인 허용의 수동 절차
 docs/release-runbook.md  macOS 릴리스 절차
@@ -402,7 +410,7 @@ Windows 버전은 macOS 버전의 소스에 의존하지 않고 익명화 fixtur
 - 메뉴 막대에 공간이 없으면 macOS가 항목을 숨깁니다(위 문제 해결 참조)
 - Developer ID 서명·공증을 마친 앱에서 App Group 컨테이너 생성과 스냅샷 쓰기를 확인했습니다.
   위젯의 데스크탑상 최종 렌더링은 다른 Mac에서의 배포 테스트가 필요합니다
-- 육안 확인 완료: 메뉴 막대 항목·팝오버·대시보드·Setup 화면(라이트/다크 두 모드).
+- 육안 확인 완료: 메뉴 막대 항목·팝오버·대시보드·연결 화면(라이트/다크 두 모드).
   다만 시간 한도 행(5시간 한도·주간)은 다크 모드에서만 실기 확인했으며, 라이트 모드는 미확인입니다
 
 ## 기여와 신고
@@ -420,7 +428,7 @@ Issue·PR·fixture에 프롬프트 본문, 응답 본문, 자격 증명, 실제 
 Apache License 2.0. 전문은 [LICENSE](LICENSE)를 참조하세요.
 
 ```
-Copyright 2026 Takeru Fujii
+Copyright 2026 TakeruF
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -435,7 +443,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 ```
 
-"Token Meter"는 Takeru Fujii의 상표이며, Apache License 2.0 제6조에 따라 본 라이선스는
+"Token Meter"는 TakeruF의 상표이며, Apache License 2.0 제6조에 따라 본 라이선스는
 상표 사용을 허락하지 않습니다. 포크와 파생물은 다른 이름을 사용하세요.
 
 바이너리에 동봉한 서드파티 컴포넌트(Sparkle 등)의 저작권 표시와 라이선스는

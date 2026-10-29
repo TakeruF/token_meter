@@ -24,3 +24,6 @@ AGENTS.md
 
 # Stray temp upload dirs
 .codex-3d-upload.*/
+
+# Local editor settings
+.vscode/
