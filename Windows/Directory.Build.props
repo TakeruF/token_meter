@@ -20,9 +20,9 @@
     <InformationalVersion>$(TokenMeterVersion)</InformationalVersion>
     <IncludeSourceRevisionInInformationalVersion>false</IncludeSourceRevisionInInformationalVersion>
     <Product>Token Meter</Product>
-    <Company>Takeru Fujii</Company>
-    <Authors>Takeru Fujii</Authors>
-    <Copyright>Copyright © 2026 Takeru Fujii. Licensed under the Apache License, Version 2.0.</Copyright>
+    <Company>TakeruF</Company>
+    <Authors>TakeruF</Authors>
+    <Copyright>Copyright © 2026 TakeruF. Licensed under the Apache License, Version 2.0.</Copyright>
     <RepositoryUrl>https://github.com/TakeruF/token_meter</RepositoryUrl>
   </PropertyGroup>
 </Project>

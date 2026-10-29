@@ -26,7 +26,7 @@
 ![Token Meter 设置界面中打开的英语、日语、中文、韩语切换菜单](docs/screenshots/promo-languages.jpg)
 
 macOS 版使用 Swift / SwiftUI / WidgetKit，既不使用 WebView 也不使用 Electron。Token 历史在本地汇总。
-只有在你明确启用后，应用才会为查询 Claude Pro / Max 用量而访问 Anthropic 的 OAuth 用量端点。
+只有在你明确启用后，应用才会为查询 Claude 套餐用量而访问 Anthropic 的 OAuth 用量端点。
 
 ---
 
@@ -159,11 +159,9 @@ Release Archive、Developer ID 签名、公证以及分发用 ZIP 的生成都�
 `./scripts/release.sh finish` 会用钥匙串中的 Sparkle EdDSA 密钥（account: `com.tokenmeter.app`）
 为 ZIP 签名，并更新 `appcast.xml`。私钥不会保存到仓库中。
 
-每次发布前，请先递增 `MARKETING_VERSION` 和 Sparkle 用于比较的 `CURRENT_PROJECT_VERSION`。
-完成后再执行以下两件事：
-
-1. 将 `build/TokenMeter-<version>.zip` 上传到 `v<version>` 标签对应的 GitHub Release
-2. 将更新后的 `appcast.xml` 提交并推送到 main 分支
+发布时请遵循 [docs/release-runbook.md](docs/release-runbook.md) 的完整流程，包括版本与构建号、
+四种语言的发行说明与介绍网站更新、验证、签名与公证、PR 审核、标签及发布。
+GitHub Release 必须附带完整 ZIP 和 `appcast.xml` 引用的所有差分文件，发布后还需验证下载链接。
 
 ## 测试
 
@@ -171,7 +169,6 @@ Release Archive、Developer ID 签名、公证以及分发用 ZIP 的生成都�
 
 ```bash
 swift test --package-path TokenMeterCore
-# 111 tests, 0 failures
 ```
 
 覆盖范围：
@@ -198,11 +195,20 @@ Windows 版的测试位于 `Windows/` 下的 .NET 一侧，并共用这些匿名
 
 ## 初始设置
 
-首次启动时会打开设置向导（也可随时从菜单栏的 Token Meter → Dashboard → Setup 打开）。
+首次启动时会打开引导。之后可在主窗口的“连接”中检查服务商连接状态并复制修复命令，
+在“设置”中更改服务商、显示选项及 Claude 套餐用量查询。
 
-- 各提供方的连接状态，以及未连接时的具体处理办法（命令可复制）
-- 是否在菜单栏显示、显示形式、显示项目
-- 明确说明正在读取哪些内容
+### 服务商显示设置（1.3.0）
+
+- **设置 > 显示位置**可为每个已启用的服务商分别选择是否显示在菜单栏和弹出窗口中。
+  在此隐藏后仍会继续收集用量，不影响仪表板和小组件的数据。小组件支持 Claude Code 和 Codex。
+- 菜单栏的重置倒计时仅针对菜单栏中显示的服务商。
+- 首次安装默认使用紧凑显示并隐藏 Meter 图标，Copilot CLI 和 Claude OAuth 用量查询默认关闭。
+  已保存的设置保持不变。
+- Codex Pro 100 / 200 / 500 在菜单栏和服务卡片中显示账户每周额度。套餐名称与额度窗口来自
+  Codex 日志，不会用模型专属的短时额度替代账户每周额度。
+
+详见 [1.3.0 发行说明](docs/releases/v1.3.0.md)。
 
 ### 与 Claude Code 连接
 
@@ -319,7 +325,7 @@ Claude OAuth 的成功值在内存中缓存 5 分钟，失败时也会保留上�
 将显示形式改为 Compact / Icon only 可缩小宽度，有时也能改善。
 
 **不显示 Claude Code 的使用率**
-→ 在 设置 > Claude Pro / Max usage 中启用 OAuth 用量检查，并确认已在 Claude Code 中登录。
+→ 在 设置 > Claude 套餐用量 中启用 OAuth 用量检查，并确认已在 Claude Code 中登录。
 钥匙串拒绝、401/403、速率限制、离线、API 格式变更都会在界面上区分显示。
 即使关闭集成，5 小时限额与最近 7 天的本地 Token 数仍可显示。
 
@@ -336,7 +342,7 @@ Claude OAuth 的成功值在内存中缓存 5 分钟，失败时也会保留上�
 
 **不显示 Codex 的使用率**
 → 确认是否已执行 `codex login`，以及是否至少运行过一次 Codex。
-Setup 界面会给出具体的处理办法。
+“连接”标签页会给出具体的处理办法。
 
 **不显示 Copilot CLI 的 Token 数**
 → 确认是否**结束**过一次会话。Copilot 只在 `session.shutdown` 事件中确定 Token 数，
@@ -367,7 +373,7 @@ TokenMeterCore/          Swift Package（不依赖 UI，测试对象）
   Support/               路径定义、限额重置检测、由剩余量推导的警告级别
 TokenMeterApp/           菜单栏・仪表盘・设置・通知（英・日・简体中文・韩语）
 TokenMeterWidget/        Small / Medium / Large
-Windows/                 Windows 版（C# / .NET 10 / WinUI 3，独立 solution）
+Windows/                 已冻结的 Windows 参考源码（C# / .NET 10 / WinUI 3）
 docs/data-sources.md     数据源调查结果
 docs/claude-sign-in.md   Claude Code 登录与钥匙串授权的手动步骤
 docs/release-runbook.md  macOS 发布流程
@@ -391,7 +397,7 @@ Windows 版不依赖 macOS 版的源代码，只共享匿名化 fixture。
 - 菜单栏空间不足时 macOS 会隐藏该项目（参见上面的疑难排查）
 - 已确认经 Developer ID 签名并公证的应用能创建 App Group 容器并写入快照。
   小组件在桌面上的最终绘制仍需在另一台 Mac 上做分发测试
-- 已目视确认：菜单栏项目・弹窗・仪表盘・Setup 界面（浅色/深色两种模式）。
+- 已目视确认：菜单栏项目・弹窗・仪表盘・连接界面（浅色/深色两种模式）。
   但时间限额行（5 小时限额・每周）仅在深色模式下做过实机确认，浅色模式尚未确认
 
 ## 贡献与反馈
@@ -409,7 +415,7 @@ Windows 版不依赖 macOS 版的源代码，只共享匿名化 fixture。
 Apache License 2.0。全文请参见 [LICENSE](LICENSE)。
 
 ```
-Copyright 2026 Takeru Fujii
+Copyright 2026 TakeruF
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -424,7 +430,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 ```
 
-「Token Meter」是 Takeru Fujii 的商标，根据 Apache License 2.0 第 6 条，
+「Token Meter」是 TakeruF 的商标，根据 Apache License 2.0 第 6 条，
 本许可证并不授予商标使用权。派生项目与 fork 请使用其他名称。
 
 二进制中随附的第三方组件（Sparkle 等）的版权声明与许可证，

@@ -165,11 +165,10 @@ Releases. `./scripts/release.sh finish` signs the ZIP with the Sparkle EdDSA key
 (account: `com.tokenmeter.app`) and updates `appcast.xml`. The private key is never stored in the
 repository.
 
-For each release, bump `MARKETING_VERSION` and `CURRENT_PROJECT_VERSION` (the value Sparkle compares)
-before running the script. Afterwards, do two things:
-
-1. Upload `build/TokenMeter-<version>.zip` to the GitHub Release for the `v<version>` tag
-2. Commit and push the updated `appcast.xml` to `main`
+Follow [docs/release-runbook.md](docs/release-runbook.md) for the complete release procedure:
+version/build bumps, four-language release notes and website updates, verification, signing and
+notarization, a reviewed PR, tagging, and publication. Attach the full ZIP and every delta referenced
+by `appcast.xml` to the GitHub Release, then verify the published download links.
 
 ## Tests
 
@@ -177,7 +176,6 @@ The parser and store tests live in the Swift package.
 
 ```bash
 swift test --package-path TokenMeterCore
-# 111 tests, 0 failures
 ```
 
 What is covered:
@@ -207,13 +205,23 @@ See [Windows/README.md](Windows/README.md) for how to run them.
 
 ## Getting set up
 
-The setup screen opens on first launch (and any time from Token Meter in the menu bar → Dashboard →
-Setup).
+First launch opens an onboarding guide. Afterwards, use **Connections** in the main window to check provider
+connections and copy commands for fixing missing connections, or **Settings** to change providers,
+display options, and Claude plan usage checks.
 
-- Connection status for each provider, with concrete fixes when a provider is not connected
-  (commands are copyable)
-- Whether to show in the menu bar, the display style, and which items to show
-- An explicit statement of what is being read
+### Provider display settings (1.3.0)
+
+- **Settings > Show providers in** chooses separately for each enabled provider whether it appears
+  in the menu bar and popover. Hiding it here keeps collecting usage and does not change the dashboard
+  or widget data. Widgets support Claude Code and Codex.
+- The menu bar reset countdown follows only the providers shown in the menu bar.
+- New installs use Compact format with the Meter icon hidden. Copilot CLI and Claude OAuth usage
+  checks are off by default; saved preferences are preserved.
+- Codex Pro 100 / 200 / 500 show the weekly account limit in the menu bar and provider card. Plan
+  names and quota windows come from Codex logs; the app does not substitute a model-specific short
+  window for the weekly account limit.
+
+See the [1.3.0 release notes](docs/releases/v1.3.0.md) for details.
 
 ### Connecting Claude Code
 
@@ -361,7 +369,7 @@ accurate value, use `/usage` inside Claude Code.
 weekly one). When it is not reported, the app does not guess — it hides the row.
 
 **No Codex usage percentage**
-→ Check that you have run `codex login` and used Codex at least once. The Setup screen shows the
+→ Check that you have run `codex login` and used Codex at least once. The Connections tab shows the
 specific fix.
 
 **No Copilot CLI token counts**
@@ -394,7 +402,7 @@ TokenMeterCore/          Swift package (UI-independent, the tested part)
   Support/               Path definitions, allowance reset detection, warning levels from remaining usage
 TokenMeterApp/           Menu bar, dashboard, settings, notifications (en / ja / zh-Hans / ko)
 TokenMeterWidget/        Small / Medium / Large
-Windows/                 The Windows app (C# / .NET 10 / WinUI 3, separate solution)
+Windows/                 Frozen Windows reference source (C# / .NET 10 / WinUI 3)
 docs/data-sources.md     Data source investigation results
 docs/claude-sign-in.md   Manual Claude Code sign-in and Keychain approval steps
 docs/release-runbook.md  macOS release procedure
@@ -425,7 +433,7 @@ anonymized fixtures.
 - App Group container creation and snapshot writing are verified with the Developer ID-signed,
   notarized app. Final widget rendering on the desktop still needs a distribution test on a
   different Mac
-- Visually verified: the menu bar item, popover, dashboard, and Setup screen (both light and dark
+- Visually verified: the menu bar item, popover, dashboard, and Connections screen (both light and dark
   mode). The time window rows (5-hour and weekly) have been verified on a real machine in dark mode
   only; light mode is unverified
 
@@ -445,7 +453,7 @@ issues, pull requests, or fixtures.
 Apache License 2.0. See [LICENSE](LICENSE) for the full text.
 
 ```
-Copyright 2026 Takeru Fujii
+Copyright 2026 TakeruF
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -460,7 +468,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 ```
 
-"Token Meter" is a trademark of Takeru Fujii, and under section 6 of the Apache License 2.0 this
+"Token Meter" is a trademark of TakeruF, and under section 6 of the Apache License 2.0 this
 license does not grant permission to use it. Forks and derivative works must use a different name.
 
 Copyright notices and licenses for the third-party components bundled in the binary (Sparkle and
