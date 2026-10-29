@@ -417,8 +417,7 @@ final class UsageMonitor {
     /// Values are kept separate from provider names so Compact mode can use the
     /// real brand marks instead of textual C / X abbreviations.
     var menuBarProviderValues: [MenuBarProviderValue] {
-        let visible = UsageProviderID.allCases.filter { settings.enabledProviders().contains($0) }
-        return visible.compactMap { id in
+        settings.providers(on: .menuBar).compactMap { id in
             guard let state = states[id] else { return nil }
 
             guard state.hasCurrentReadableValues else {
@@ -465,11 +464,10 @@ final class UsageMonitor {
         return title
     }
 
-    /// "↻1h20m" for the soonest selected-limit reset across the visible providers.
+    /// "↻1h20m" for the soonest selected-limit reset across the menu bar's providers.
     /// Menu bar width is scarce, so this is the countdown only.
     private func nextResetCountdown(now: Date = Date()) -> String? {
-        let resets = UsageProviderID.allCases
-            .filter { settings.enabledProviders().contains($0) }
+        let resets = settings.providers(on: .menuBar)
             .compactMap {
                 guard let snapshot = states[$0]?.snapshot else { return nil }
                 return menuBarWindow(for: snapshot)?.resetsAt

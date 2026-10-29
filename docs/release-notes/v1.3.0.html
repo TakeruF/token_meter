@@ -1,0 +1,97 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Token Meter 1.3.0 Release Notes</title>
+  <style>
+    body { color: #252525; font: 15px -apple-system, BlinkMacSystemFont, "Helvetica Neue", sans-serif; line-height: 1.55; }
+    .notes { max-width: 44rem; margin: 0 auto; padding: 1rem 1.5rem; }
+    h1 { font-size: 1.5rem; }
+    h2 { font-size: 1.1rem; margin-top: 1.75rem; }
+    h3 { font-size: 1rem; margin-top: 1.25rem; }
+    ul { padding-left: 1.3rem; }
+  </style>
+</head>
+<body>
+<div class="notes">
+<h1>Token Meter 1.3.0</h1>
+<h2>English</h2>
+<p>This update lets you choose where each provider appears, and reorganizes Settings.</p>
+<h3>Changes</h3>
+<ul>
+<li>Add “Show providers in” to Settings. Choose separately for each provider whether it appears in the menu bar and in the popover — for example, show only Codex in the menu bar and still see Claude when you open the popover.</li>
+<li>Hiding a provider from the menu bar or popover keeps collecting its usage. Dashboard and widgets still include every enabled provider.</li>
+<li>The menu bar reset countdown now follows only the providers shown in the menu bar.</li>
+<li>Reorganize Settings: language, number format, and Launch at login are grouped under General, and display settings come before less frequently used options such as refresh, data, and diagnostics.</li>
+<li>Existing preferences are preserved. Every provider stays visible in the menu bar and popover until you change it.</li>
+</ul>
+<h3>System Requirements</h3>
+<ul>
+<li>macOS 14.0 or later</li>
+<li>Apple Silicon / Intel Mac (Universal Binary)</li>
+</ul>
+<h3>Installation</h3>
+<p>Choose “Check for Updates…” in the app menu, or unzip <code>TokenMeter-1.3.0.zip</code> and move <code>TokenMeter.app</code> to <code>/Applications</code>.</p>
+<p>The app is Developer ID signed and notarized by Apple. Sparkle verifies update ZIPs with an EdDSA signature.</p>
+<hr>
+<h2>日本語</h2>
+<p>プロバイダーごとに表示場所を選べるようにし、設定画面を整理しました。</p>
+<h3>変更内容</h3>
+<ul>
+<li>設定に「表示場所」を追加しました。プロバイダーごとに、メニューバーとポップオーバーに表示するかを個別に選べます。たとえば、メニューバーにはCodexだけを表示し、ポップオーバーを開けばClaudeも確認できます。</li>
+<li>メニューバーやポップオーバーで非表示にしても、使用量の収集は続きます。ダッシュボードとウィジェットには有効なすべてのプロバイダーが表示されます。</li>
+<li>メニューバーのリセットまでのカウントダウンは、メニューバーに表示しているプロバイダーだけを対象にします。</li>
+<li>設定画面を整理しました。言語・数値の表記・ログイン時に起動を「一般」にまとめ、表示に関する設定を更新間隔・データ・診断など使用頻度の低い項目より前に配置しました。</li>
+<li>保存済みの設定は維持します。変更するまで、すべてのプロバイダーがメニューバーとポップオーバーに表示されます。</li>
+</ul>
+<h3>動作環境</h3>
+<ul>
+<li>macOS 14.0以降</li>
+<li>Apple Silicon / Intel Mac（Universal Binary）</li>
+</ul>
+<h3>インストール</h3>
+<p>メニューの「Check for Updates…」から更新するか、<code>TokenMeter-1.3.0.zip</code>を展開し、<code>TokenMeter.app</code>を<code>/Applications</code>へ移動してください。</p>
+<p>アプリはDeveloper ID署名・Apple公証済みです。更新ZIPはSparkleのEdDSA署名で検証されます。</p>
+<hr>
+<h2>中文</h2>
+<p>本次更新可分别选择每个服务商的显示位置，并重新整理了设置界面。</p>
+<h3>变更内容</h3>
+<ul>
+<li>设置中新增“显示位置”。可为每个服务商分别选择是否显示在菜单栏和弹出窗口中——例如菜单栏只显示 Codex，打开弹出窗口时仍可查看 Claude。</li>
+<li>在菜单栏或弹出窗口中隐藏服务商后，仍会继续收集其用量。仪表板和小组件始终包含所有已启用的服务商。</li>
+<li>菜单栏中的重置倒计时仅针对菜单栏中显示的服务商。</li>
+<li>重新整理设置界面：语言、数字格式和登录时启动归入“通用”，显示相关设置排在刷新、数据、诊断等较少使用的选项之前。</li>
+<li>已保存的设置保持不变。在更改之前，所有服务商都会显示在菜单栏和弹出窗口中。</li>
+</ul>
+<h3>运行环境</h3>
+<ul>
+<li>macOS 14.0或更高版本</li>
+<li>Apple Silicon / Intel Mac（通用二进制）</li>
+</ul>
+<h3>安装方法</h3>
+<p>从应用菜单选择“Check for Updates…”，或解压<code>TokenMeter-1.3.0.zip</code>，将<code>TokenMeter.app</code>移至<code>/Applications</code>。</p>
+<p>应用已使用Developer ID签名并通过Apple公证。Sparkle使用EdDSA签名验证更新ZIP包。</p>
+<hr>
+<h2>한국어</h2>
+<p>제공자별로 표시 위치를 선택할 수 있게 하고 설정 화면을 정리했습니다.</p>
+<h3>변경 내용</h3>
+<ul>
+<li>설정에 “표시 위치”를 추가했습니다. 제공자마다 메뉴 막대와 팝오버에 표시할지 따로 선택할 수 있습니다. 예를 들어 메뉴 막대에는 Codex만 표시하고, 팝오버를 열면 Claude도 확인할 수 있습니다.</li>
+<li>메뉴 막대나 팝오버에서 숨겨도 사용량 수집은 계속됩니다. 대시보드와 위젯에는 활성화된 모든 제공자가 표시됩니다.</li>
+<li>메뉴 막대의 초기화 카운트다운은 메뉴 막대에 표시된 제공자만 대상으로 합니다.</li>
+<li>설정 화면을 정리했습니다. 언어, 숫자 표기, 로그인 시 실행을 “일반”으로 묶고, 표시 관련 설정을 새로고침·데이터·진단 등 자주 쓰지 않는 항목보다 앞에 배치했습니다.</li>
+<li>저장된 설정은 유지됩니다. 변경하기 전까지 모든 제공자가 메뉴 막대와 팝오버에 표시됩니다.</li>
+</ul>
+<h3>작동 환경</h3>
+<ul>
+<li>macOS 14.0 이상</li>
+<li>Apple Silicon / Intel Mac (Universal Binary)</li>
+</ul>
+<h3>설치 방법</h3>
+<p>앱 메뉴에서 “Check for Updates…”를 선택하거나 <code>TokenMeter-1.3.0.zip</code>을 풀고 <code>TokenMeter.app</code>을 <code>/Applications</code>로 이동하세요.</p>
+<p>앱은 Developer ID로 서명되었으며 Apple 공증을 받았습니다. Sparkle은 EdDSA 서명으로 업데이트 ZIP을 검증합니다.</p>
+
+</div>
+</body>
+</html>

@@ -292,6 +292,11 @@
 "5-hour limit" = "5時間枠";
 "Weekly limit" = "週次枠";
 "Countdown to the selected limit reset" = "選択した利用枠のリセットまで";
+"General" = "一般";
+"Popover" = "ポップオーバー";
+"Show providers in" = "表示場所";
+"Hiding a provider here keeps collecting its usage. For example, show only Codex in the menu bar and still see Claude in the popover. Dashboard and widgets always include every enabled provider." = "ここで非表示にしても使用量の収集は続きます。たとえば、メニューバーにはCodexだけを表示し、ポップオーバーではClaudeも確認できます。ダッシュボードとウィジェットには有効なすべてのプロバイダーが表示されます。";
+"All providers are hidden here. Choose which to show in Settings." = "ここに表示するプロバイダーがありません。設定で表示するものを選んでください。";
 
 /* Widget / accessibility strings that previously fell back to English */
 "today" = "今日";

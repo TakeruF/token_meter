@@ -292,6 +292,11 @@
 "5-hour limit" = "5 小时限额";
 "Weekly limit" = "每周限额";
 "Countdown to the selected limit reset" = "所选限额的重置倒计时";
+"General" = "通用";
+"Popover" = "弹出窗口";
+"Show providers in" = "显示位置";
+"Hiding a provider here keeps collecting its usage. For example, show only Codex in the menu bar and still see Claude in the popover. Dashboard and widgets always include every enabled provider." = "在此隐藏后仍会继续收集用量。例如，菜单栏只显示 Codex，弹出窗口中仍可查看 Claude。仪表板和小组件始终包含所有已启用的服务商。";
+"All providers are hidden here. Choose which to show in Settings." = "此处未显示任何服务商。请在设置中选择要显示的服务商。";
 
 /* Widget / accessibility strings that previously fell back to English */
 "today" = "今天";
